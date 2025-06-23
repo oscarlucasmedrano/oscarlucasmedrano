@@ -3,18 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Oscar-Lucas Medrano>
+  <title>PDF Flipbook</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="book-wrapper">
-    <div id="flipbook">
-      <div class="page"><embed src="assets:/page1.pdf" type="application/pdf"></div>
-    </div>
+  <div id="flipbook">
+    <div class="page"><iframe src="Oscar-Lucas Medrano.pdf" frameborder="0"></iframe></div>
+    <div class="page"><iframe src="your-pdf.pdf#page=2" frameborder="0"></iframe></div>
+    <div class="page"><iframe src="your-pdf.pdf#page=3" frameborder="0"></iframe></div>
+    <div class="page"><iframe src="your-pdf.pdf#page=4" frameborder="0"></iframe></div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="turn.min.js"></script>
-  <script src="script.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      $("#flipbook").turn({
+        width: "100%",
+        height: "100%",
+        elevation: 50,
+        gradients: true,
+        autoCenter: true,
+      });
+    });
+  </script>
 </body>
 </html>
