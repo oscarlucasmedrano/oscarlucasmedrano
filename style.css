@@ -1,23 +1,37 @@
 body {
-  margin:0;
-  background:#e6e6e6;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+  background: #e0e0e0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
+
+#book-wrapper {
+  width: 90vw;
+  max-width: 1000px;
+  height: 90vh;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  background: white;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
 #flipbook {
-  box-shadow:0 10px 40px rgba(0,0,0,0.2);
-  background:#fff;
-  width:90vw;
-  height:90vh;
+  width: 100%;
+  height: 100%;
 }
+
 .page {
-  width:100%;
-  height:100%;
+  background: white;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
+
 .page embed {
-  width:100%;
-  height:100%;
-  border:none;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
