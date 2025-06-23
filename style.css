@@ -1,11 +1,23 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
+body {
+  margin:0;
+  background:#e6e6e6;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
-
-#pdf {
-  width: 100vw;
-  height: 100vh;
-  border: none;
+#flipbook {
+  box-shadow:0 10px 40px rgba(0,0,0,0.2);
+  background:#fff;
+  width:90vw;
+  height:90vh;
+}
+.page {
+  width:100%;
+  height:100%;
+}
+.page embed {
+  width:100%;
+  height:100%;
+  border:none;
 }
