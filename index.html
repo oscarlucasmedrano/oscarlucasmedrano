@@ -1,45 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oscar-Lucas Medrano</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Fullscreen</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="book-container">
-        <div class="book">
-            <!-- Page 1: Cover -->
-            <div class="page">
-                <div class="page-content front">
-                    <h1></h1>
-                    <p></p>
-                </div>
-                <div class="page-content back">
-                    <h2></h2>
-                    <p></p>
-                </div>
-            </div>
-            <!-- Page 2: PDF 1 -->
-            <div class="page">
-                <div class="page-content front">
-                    <h2></h2>
-                    <iframe src=".pdf" class="pdf-embed"></iframe>
-                    <p></p>
-                </div>
-            
-                <div class="page-content back">
-                    <h2></h2>
-                    <p></p>
-                    <p><a href=""></a></p>
-                </div>
-            </div>
-        </div>
-        <div class="controls">
-            <button id="prev" aria-label="Previous page">&#8592;</button>
-            <button id="next" aria-label="Next page">&#8594;</button>
-        </div>
-    </div>
-    <script src="script.js"></script>
+  <iframe src="your-file.pdf" id="pdf" frameborder="0"></iframe>
 </body>
 </html>
