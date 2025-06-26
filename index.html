@@ -35,7 +35,7 @@
       justify-content: center;
       align-items: center;
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1), 10px 10px 20px rgba(0, 0, 0, 0.3);
-      transform-origin: right;
+      transform-origin: left; /* Changed to left for real book flip */
     }
     .book-cover img {
       width: 100%;
@@ -43,7 +43,7 @@
       object-fit: contain;
     }
     .book.open .book-cover {
-      transform: rotateY(-180deg);
+      transform: rotateY(180deg); /* Flip to the left */
     }
     .book-pages {
       position: absolute;
@@ -220,6 +220,9 @@
       if (!isOpen && clickX > rect.width / 2) {
         book.classList.add('open');
         isOpen = true;
+        // Open to 2-3 (currentPair remains 0)
+        pages[0].classList.add('flipped');
+        pages[1].classList.add('flipped');
       } else if (isOpen) {
         if (clickX < rect.width / 2) {
           if (currentPair > 0) {
@@ -230,6 +233,7 @@
             book.classList.remove('open');
             isOpen = false;
             currentPair = 0;
+            pages.forEach(page => page.classList.remove('flipped'));
           }
         } else if (clickX >= rect.width / 2 && currentPair < totalPairs - 1) {
           pages[currentPair * 2].classList.add('flipped');
@@ -241,6 +245,7 @@
           book.classList.remove('open');
           isOpen = false;
           currentPair = 0;
+          pages.forEach(page => page.classList.remove('flipped'));
         }
       }
     });
@@ -258,11 +263,15 @@
           book.classList.remove('open');
           isOpen = false;
           currentPair = 0;
+          pages.forEach(page => page.classList.remove('flipped'));
         }
       } else if (e.key === 'ArrowRight') {
         if (!isOpen) {
           book.classList.add('open');
           isOpen = true;
+          // Open to 2-3 (currentPair remains 0)
+          pages[0].classList.add('flipped');
+          pages[1].classList.add('flipped');
         } else if (currentPair < totalPairs - 1) {
           pages[currentPair * 2].classList.add('flipped');
           pages[currentPair * 2 + 1].classList.add('flipped');
@@ -273,6 +282,7 @@
           book.classList.remove('open');
           isOpen = false;
           currentPair = 0;
+          pages.forEach(page => page.classList.remove('flipped'));
         }
       }
     });
