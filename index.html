@@ -115,6 +115,11 @@
       border-style: solid;
       cursor: pointer;
       z-index: 15;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    .arrow:hover {
+      opacity: 1;
     }
     .arrow.left {
       left: 10px;
@@ -188,7 +193,7 @@
     const rightArrow = document.querySelector('.arrow.right');
     let isOpen = false;
     let currentPair = 0;
-    const totalPairs = Math.floor((pages.length) / 2);
+    const totalPairs = Math.floor(pages.length / 2);
 
     // Set initial size based on cover PNG
     window.addEventListener('load', () => {
@@ -239,14 +244,12 @@
 
     // Arrow controls
     leftArrow.addEventListener('click', () => {
-      if (!isOpen) {
-        book.classList.add('open');
-        isOpen = true;
-      } else if (currentPair > 0) {
-        pages[currentPair * 2].classList.remove('flipped');
-        pages[currentPair * 2 + 1].classList.remove('flipped');
-        currentPair--;
-        if (currentPair < 0) {
+      if (isOpen) {
+        if (currentPair > 0) {
+          pages[currentPair * 2].classList.remove('flipped');
+          pages[currentPair * 2 + 1].classList.remove('flipped');
+          currentPair--;
+        } else {
           book.classList.remove('open');
           isOpen = false;
           currentPair = 0;
