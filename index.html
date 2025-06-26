@@ -25,8 +25,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 80vw; /* Adjusted to fit two full PNGs at 40% scale */
-      height: 80vh; /* Adjusted to fit cover height */
+      width: 80vw;
+      height: 80vh;
+      background-color: black; /* Changed to black */
     }
     .book-cover {
       position: absolute;
@@ -63,7 +64,7 @@
       display: flex;
     }
     .page {
-      width: 50%; /* Each page takes half the book width */
+      width: 50%;
       height: 100%;
       background: #fff;
       position: absolute;
@@ -89,9 +90,6 @@
     .page-back {
       background: #fff;
       transform: rotateY(180deg);
-    }
-    .page.flipped {
-      transform: rotateY(-180deg);
     }
     .crease {
       position: absolute;
@@ -130,14 +128,6 @@
         <div class="page-front"><img src="table of contents.pdf" alt="Table of Contents"></div>
         <div class="page-back"></div>
       </div>
-      <div class="page left" style="left: 0;">
-        <div class="page-front"><img src="page4.png" alt="Page 4"></div>
-        <div class="page-back"></div>
-      </div>
-      <div class="page right" style="right: 0;">
-        <div class="page-front"><img src="page5.png" alt="Page 5"></div>
-        <div class="page-back"></div>
-      </div>
     </div>
   </div>
 
@@ -146,21 +136,19 @@
     const cover = document.querySelector('.book-cover');
     const pages = document.querySelectorAll('.page');
     let isOpen = false;
-    let currentPair = 0;
-    const totalPairs = Math.floor(pages.length / 2);
 
-    // Set initial size based on cover PNG, scaled to fit two full PNGs
+    // Set initial size based on cover PNG
     window.addEventListener('load', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.complete) {
-        const width = coverImg.naturalWidth * 0.4; // 40% of cover width for each side
+        const width = coverImg.naturalWidth * 0.4;
         const height = coverImg.naturalHeight * 0.4;
-        book.style.width = width * 2 + 'px'; // Total width for two PNGs
+        book.style.width = width * 2 + 'px';
         book.style.height = height + 'px';
         cover.style.width = width * 2 + 'px';
         cover.style.height = height + 'px';
         pages.forEach(page => {
-          page.style.width = width + 'px'; // Full PNG width per page
+          page.style.width = width + 'px';
           page.style.height = height + 'px';
         });
       } else {
@@ -204,68 +192,20 @@
       if (!isOpen && clickX > rect.width / 2) {
         book.classList.add('open');
         isOpen = true;
-        currentPair = 0; // Start at first pair (about.pdf - table of contents.pdf)
-        pages.forEach(page => page.classList.remove('flipped')); // Show only first pair
       } else if (isOpen) {
-        if (clickX < rect.width / 2) {
-          if (currentPair > 0) {
-            pages[currentPair * 2].classList.remove('flipped');
-            pages[currentPair * 2 + 1].classList.remove('flipped');
-            currentPair--;
-          } else {
-            book.classList.remove('open');
-            isOpen = false;
-            currentPair = 0;
-            pages.forEach(page => page.classList.remove('flipped'));
-          }
-        } else if (clickX >= rect.width / 2 && currentPair < totalPairs - 1) {
-          pages[currentPair * 2].classList.add('flipped');
-          pages[currentPair * 2 + 1].classList.add('flipped');
-          currentPair++;
-        } else if (clickX >= rect.width / 2 && currentPair === totalPairs - 1) {
-          pages[currentPair * 2].classList.add('flipped');
-          pages[currentPair * 2 + 1].classList.add('flipped');
-          book.classList.remove('open');
-          isOpen = false;
-          currentPair = 0;
-          pages.forEach(page => page.classList.remove('flipped'));
-        }
+        book.classList.remove('open');
+        isOpen = false;
       }
     });
 
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') {
-        if (!isOpen) {
-          return;
-        } else if (currentPair > 0) {
-          pages[currentPair * 2].classList.remove('flipped');
-          pages[currentPair * 2 + 1].classList.remove('flipped');
-          currentPair--;
-        } else {
-          book.classList.remove('open');
-          isOpen = false;
-          currentPair = 0;
-          pages.forEach(page => page.classList.remove('flipped'));
-        }
-      } else if (e.key === 'ArrowRight') {
-        if (!isOpen) {
-          book.classList.add('open');
-          isOpen = true;
-          currentPair = 0; // Start at first pair (about.pdf - table of contents.pdf)
-          pages.forEach(page => page.classList.remove('flipped')); // Show only first pair
-        } else if (currentPair < totalPairs - 1) {
-          pages[currentPair * 2].classList.add('flipped');
-          pages[currentPair * 2 + 1].classList.add('flipped');
-          currentPair++;
-        } else if (currentPair === totalPairs - 1) {
-          pages[currentPair * 2].classList.add('flipped');
-          pages[currentPair * 2 + 1].classList.add('flipped');
-          book.classList.remove('open');
-          isOpen = false;
-          currentPair = 0;
-          pages.forEach(page => page.classList.remove('flipped'));
-        }
+      if (e.key === 'ArrowLeft' && isOpen) {
+        book.classList.remove('open');
+        isOpen = false;
+      } else if (e.key === 'ArrowRight' && !isOpen) {
+        book.classList.add('open');
+        isOpen = true;
       }
     });
 
