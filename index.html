@@ -220,10 +220,8 @@
       if (!isOpen && clickX > rect.width / 2) {
         book.classList.add('open');
         isOpen = true;
-        // Open directly to 2-3 with 2 on left, 3 on right
-        currentPair = 0; // Ensure start at first pair
-        pages.forEach(page => page.classList.remove('flipped')); // Reset all flips
-        // Display 2-3 without flipping
+        currentPair = 0; // Start at first pair (2-3)
+        pages.forEach(page => page.classList.remove('flipped')); // Reset to show 2-3
       } else if (isOpen) {
         if (clickX < rect.width / 2) {
           if (currentPair > 0) {
@@ -270,10 +268,8 @@
         if (!isOpen) {
           book.classList.add('open');
           isOpen = true;
-          // Open directly to 2-3 with 2 on left, 3 on right
-          currentPair = 0; // Ensure start at first pair
-          pages.forEach(page => page.classList.remove('flipped')); // Reset all flips
-          // Display 2-3 without flipping
+          currentPair = 0; // Start at first pair (2-3)
+          pages.forEach(page => page.classList.remove('flipped')); // Reset to show 2-3
         } else if (currentPair < totalPairs - 1) {
           pages[currentPair * 2].classList.add('flipped');
           pages[currentPair * 2 + 1].classList.add('flipped');
