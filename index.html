@@ -106,35 +106,6 @@
       transform-origin: left;
       z-index: 1;
     }
-    .arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 0;
-      height: 0;
-      border-style: solid;
-      cursor: pointer;
-      z-index: 15;
-      opacity: 0.8;
-      transition: opacity 0.3s;
-    }
-    .arrow:hover {
-      opacity: 1;
-    }
-    .arrow.left {
-      left: 10px;
-      border-width: 20px 30px 20px 0;
-      border-color: transparent #fff transparent transparent;
-    }
-    .arrow.right {
-      right: 10px;
-      border-width: 20px 0 20px 30px;
-      border-color: transparent transparent transparent #fff;
-    }
-    @media (max-width: 800px) {
-      .book { max-width: 100vw; max-height: 100vh; }
-      .arrow { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -181,16 +152,12 @@
         <div class="page-back"></div>
       </div>
     </div>
-    <div class="arrow left"></div>
-    <div class="arrow right"></div>
   </div>
 
   <script>
     const book = document.querySelector('.book');
     const cover = document.querySelector('.book-cover');
     const pages = document.querySelectorAll('.page');
-    const leftArrow = document.querySelector('.arrow.left');
-    const rightArrow = document.querySelector('.arrow.right');
     let isOpen = false;
     let currentPair = 0;
     const totalPairs = Math.floor(pages.length / 2);
@@ -242,14 +209,26 @@
       }
     });
 
-    // Arrow controls
-    leftArrow.addEventListener('click', () => {
-      if (isOpen) {
-        if (currentPair > 0) {
+    // Click navigation
+    book.addEventListener('click', (e) => {
+      const rect = book.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+
+      if (!isOpen && clickX > rect.width / 2) {
+        book.classList.add('open');
+        isOpen = true;
+      } else if (isOpen) {
+        if (clickX < rect.width / 2 && currentPair > 0) {
           pages[currentPair * 2].classList.remove('flipped');
           pages[currentPair * 2 + 1].classList.remove('flipped');
           currentPair--;
-        } else {
+        } else if (clickX >= rect.width / 2 && currentPair < totalPairs - 1) {
+          pages[currentPair * 2].classList.add('flipped');
+          pages[currentPair * 2 + 1].classList.add('flipped');
+          currentPair++;
+        } else if (clickX >= rect.width / 2 && currentPair === totalPairs - 1) {
+          pages[currentPair * 2].classList.add('flipped');
+          pages[currentPair * 2 + 1].classList.add('flipped');
           book.classList.remove('open');
           isOpen = false;
           currentPair = 0;
@@ -257,20 +236,31 @@
       }
     });
 
-    rightArrow.addEventListener('click', () => {
-      if (!isOpen) {
-        book.classList.add('open');
-        isOpen = true;
-      } else if (currentPair < totalPairs - 1) {
-        pages[currentPair * 2].classList.add('flipped');
-        pages[currentPair * 2 + 1].classList.add('flipped');
-        currentPair++;
-      } else if (currentPair === totalPairs - 1) {
-        pages[currentPair * 2].classList.add('flipped');
-        pages[currentPair * 2 + 1].classList.add('flipped');
-        book.classList.remove('open');
-        isOpen = false;
-        currentPair = 0;
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        if (!isOpen) {
+          return;
+        } else if (currentPair > 0) {
+          pages[currentPair * 2].classList.remove('flipped');
+          pages[currentPair * 2 + 1].classList.remove('flipped');
+          currentPair--;
+        }
+      } else if (e.key === 'ArrowRight') {
+        if (!isOpen) {
+          book.classList.add('open');
+          isOpen = true;
+        } else if (currentPair < totalPairs - 1) {
+          pages[currentPair * 2].classList.add('flipped');
+          pages[currentPair * 2 + 1].classList.add('flipped');
+          currentPair++;
+        } else if (currentPair === totalPairs - 1) {
+          pages[currentPair * 2].classList.add('flipped');
+          pages[currentPair * 2 + 1].classList.add('flipped');
+          book.classList.remove('open');
+          isOpen = false;
+          currentPair = 0;
+        }
       }
     });
 
