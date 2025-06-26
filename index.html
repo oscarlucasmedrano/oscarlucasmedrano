@@ -119,11 +119,11 @@
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page left" style="left: 0;">
-        <div class="page-front"><img src="about.png" alt="Page 2"></div>
+        <div class="page-front"><img src="about.png" alt="About"></div>
         <div class="page-back"></div>
       </div>
       <div class="page right" style="right: 0;">
-        <div class="page-front"><img src="table of contents.png" alt="Page 3"></div>
+        <div class="page-front"><img src="table of contents.png" alt="Table of Contents"></div>
         <div class="page-back"></div>
       </div>
       <div class="page left" style="left: 0;">
@@ -132,26 +132,6 @@
       </div>
       <div class="page right" style="right: 0;">
         <div class="page-front"><img src="page5.png" alt="Page 5"></div>
-        <div class="page-back"></div>
-      </div>
-      <div class="page left" style="left: 0;">
-        <div class="page-front"><img src="page6.png" alt="Page 6"></div>
-        <div class="page-back"></div>
-      </div>
-      <div class="page right" style="right: 0;">
-        <div class="page-front"><img src="page7.png" alt="Page 7"></div>
-        <div class="page-back"></div>
-      </div>
-      <div class="page left" style="left: 0;">
-        <div class="page-front"><img src="page8.png" alt="Page 8"></div>
-        <div class="page-back"></div>
-      </div>
-      <div class="page right" style="right: 0;">
-        <div class="page-front"><img src="page9.png" alt="Page 9"></div>
-        <div class="page-back"></div>
-      </div>
-      <div class="page left" style="left: 0;">
-        <div class="page-front"><img src="page10.png" alt="Page 10"></div>
         <div class="page-back"></div>
       </div>
     </div>
@@ -220,8 +200,8 @@
       if (!isOpen && clickX > rect.width / 2) {
         book.classList.add('open');
         isOpen = true;
-        currentPair = 0; // Start at first pair (2-3)
-        pages.forEach(page => page.classList.remove('flipped')); // Reset to show 2-3
+        currentPair = 0; // Start at first pair (about.pdf - table of contents.pdf)
+        pages.forEach(page => page.classList.remove('flipped')); // Reset to show first pair
       } else if (isOpen) {
         if (clickX < rect.width / 2) {
           if (currentPair > 0) {
@@ -268,8 +248,8 @@
         if (!isOpen) {
           book.classList.add('open');
           isOpen = true;
-          currentPair = 0; // Start at first pair (2-3)
-          pages.forEach(page => page.classList.remove('flipped')); // Reset to show 2-3
+          currentPair = 0; // Start at first pair (about.pdf - table of contents.pdf)
+          pages.forEach(page => page.classList.remove('flipped')); // Reset to show first pair
         } else if (currentPair < totalPairs - 1) {
           pages[currentPair * 2].classList.add('flipped');
           pages[currentPair * 2 + 1].classList.add('flipped');
