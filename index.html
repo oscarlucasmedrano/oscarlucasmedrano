@@ -200,8 +200,8 @@
       if (!isOpen && clickX > rect.width / 2) {
         book.classList.add('open');
         isOpen = true;
-        currentPair = 0; // Explicitly start at first pair (about.pdf - table of contents.pdf)
-        pages.forEach(page => page.classList.remove('flipped')); // Ensure first pair is visible
+        currentPair = 0; // Start at first pair (about.pdf - table of contents.pdf)
+        pages.forEach(page => page.classList.remove('flipped')); // Show only first pair
       } else if (isOpen) {
         if (clickX < rect.width / 2) {
           if (currentPair > 0) {
@@ -248,8 +248,8 @@
         if (!isOpen) {
           book.classList.add('open');
           isOpen = true;
-          currentPair = 0; // Explicitly start at first pair (about.pdf - table of contents.pdf)
-          pages.forEach(page => page.classList.remove('flipped')); // Ensure first pair is visible
+          currentPair = 0; // Start at first pair (about.pdf - table of contents.pdf)
+          pages.forEach(page => page.classList.remove('flipped')); // Show only first pair
         } else if (currentPair < totalPairs - 1) {
           pages[currentPair * 2].classList.add('flipped');
           pages[currentPair * 2 + 1].classList.add('flipped');
