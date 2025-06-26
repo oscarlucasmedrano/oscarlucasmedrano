@@ -16,13 +16,21 @@
       background: #d3d3d3;
       overflow: hidden;
     }
-    .book {
+    .book-container {
       position: relative;
       width: 100%;
       height: 100%;
       max-width: 800px;
       max-height: 500px;
       perspective: 1000px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .book {
+      position: relative;
+      width: 100%;
+      height: 100%;
       transform-style: preserve-3d;
       transition: all 0.6s;
       box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
@@ -40,7 +48,7 @@
       justify-content: center;
       align-items: center;
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1), 10px 10px 20px rgba(0, 0, 0, 0.3);
-      transform-origin: right; /* Changed to right for correct flip direction */
+      transform-origin: right;
     }
     .book-cover img {
       width: 100%;
@@ -49,6 +57,7 @@
     }
     .book.open .book-cover {
       transform: rotateY(-180deg);
+      z-index: 0;
     }
     .book-pages {
       position: absolute;
@@ -112,32 +121,90 @@
       transform-origin: left;
       z-index: 1;
     }
+    .arrow {
+      position: absolute;
+      font-size: 24px;
+      color: #fff;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 5px 10px;
+      border-radius: 50%;
+      transition: opacity 0.3s;
+    }
+    .arrow:hover {
+      opacity: 0.8;
+    }
+    .arrow.left {
+      left: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .arrow.right {
+      right: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
     @media (max-width: 800px) {
-      .book { max-width: 100vw; max-height: 100vh; }
+      .book-container { max-width: 100vw; max-height: 100vh; }
+      .arrow.left { left: 10px; }
+      .arrow.right { right: 10px; }
     }
   </style>
 </head>
 <body>
-  <div class="book">
-    <div class="book-cover">
-      <img src="cover.png" alt="Cover">
-    </div>
-    <div class="book-pages">
-      <div class="crease"></div>
-      <div class="page left">
-        <div class="page-front"><img src="about.png" alt="Page 2"></div>
-        <div class="page-back"></div>
+  <div class="book-container">
+    <div class="book">
+      <div class="book-cover">
+        <img src="page1.png" alt="Cover">
       </div>
-      <div class="page right">
-        <div class="page-front"><img src="table of contents.png" alt="Page 3"></div>
-        <div class="page-back"></div>
+      <div class="book-pages">
+        <div class="crease"></div>
+        <div class="page left">
+          <div class="page-front"><img src="page2.png" alt="Page 2"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page right">
+          <div class="page-front"><img src="page3.png" alt="Page 3"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page left">
+          <div class="page-front"><img src="page4.png" alt="Page 4"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page right">
+          <div class="page-front"><img src="page5.png" alt="Page 5"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page left">
+          <div class="page-front"><img src="page6.png" alt="Page 6"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page right">
+          <div class="page-front"><img src="page7.png" alt="Page 7"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page left">
+          <div class="page-front"><img src="page8.png" alt="Page 8"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page right">
+          <div class="page-front"><img src="page9.png" alt="Page 9"></div>
+          <div class="page-back"></div>
+        </div>
+        <div class="page left">
+          <div class="page-front"><img src="page10.png" alt="Page 10"></div>
+          <div class="page-back"></div>
+        </div>
       </div>
     </div>
+    <div class="arrow left">&lt;</div>
+    <div class="arrow right">&gt;</div>
   </div>
 
   <script>
     const book = document.querySelector('.book');
     const pages = document.querySelectorAll('.page');
+    const arrows = document.querySelectorAll('.arrow');
     let currentPage = 0;
     let touchStartX = 0;
     let touchEndX = 0;
@@ -148,6 +215,27 @@
         book.classList.add('open');
       }
     }, { once: true });
+
+    // Arrow controls
+    arrows.forEach(arrow => {
+      arrow.addEventListener('click', () => {
+        if (!book.classList.contains('open')) {
+          book.classList.add('open');
+        } else {
+          const rect = book.getBoundingClientRect();
+          const clickX = arrow.classList.contains('left') ? 0 : rect.width;
+          if (clickX < rect.width / 2 && currentPage > 0) {
+            currentPage -= 2;
+            pages[currentPage].classList.remove('flipped');
+            if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.remove('flipped');
+          } else if (clickX >= rect.width / 2 && currentPage < pages.length - 2) {
+            pages[currentPage].classList.add('flipped');
+            if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.add('flipped');
+            currentPage += 2;
+          }
+        }
+      });
+    });
 
     // Improved swipe detection
     book.addEventListener('touchstart', (e) => {
@@ -162,34 +250,17 @@
       const diff = touchStartX - touchEndX;
       const minSwipeDistance = 50;
       if (Math.abs(diff) > minSwipeDistance) {
-        if (diff > 0 && currentPage < pages.length - 1) {
+        if (diff > 0 && currentPage < pages.length - 2) {
           pages[currentPage].classList.add('flipped');
           if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.add('flipped');
-          currentPage += 1;
+          currentPage += 2;
         } else if (diff < 0 && currentPage > 0) {
-          currentPage -= 1;
+          currentPage -= 2;
           pages[currentPage].classList.remove('flipped');
           if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.remove('flipped');
         }
       }
     }, { passive: true });
-
-    // Click detection for desktop
-    book.addEventListener('click', (e) => {
-      if (book.classList.contains('open')) {
-        const rect = e.target.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        if (clickX < rect.width / 2 && currentPage > 0) {
-          currentPage -= 1;
-          pages[currentPage].classList.remove('flipped');
-          if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.remove('flipped');
-        } else if (clickX >= rect.width / 2 && currentPage < pages.length - 1) {
-          pages[currentPage].classList.add('flipped');
-          if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.add('flipped');
-          currentPage += 1;
-        }
-      }
-    });
 
     // Ensure container matches PNG size on load
     window.addEventListener('load', () => {
