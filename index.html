@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oscar-Lucas Medrano</title>
+  <title>Interactive Book Portfolio</title>
   <style>
     body {
       margin: 0;
@@ -51,18 +51,17 @@
       background-position: center;
     }
     .page-back {
-      background: #f0f0f0;
+      background: #fff;
       transform: rotateY(180deg);
     }
     .page.flipped {
       transform: rotateY(-180deg);
     }
-    /* Cover and double-page styling */
     .cover {
       position: absolute;
       width: 100%;
       height: 100%;
-      background: #333 url('cover-image.jpg') no-repeat center;
+      background: #fff url('Cover.pdf') no-repeat center;
       background-size: contain;
       z-index: 10;
       transition: transform 0.6s;
@@ -97,7 +96,7 @@
     <div class="cover"></div>
     <div class="double-page">
       <div class="page left">
-        <div class="page-front" style="background: url('Cover.pdf')"></div>
+        <div class="page-front" style="background: url('About.pdf')"></div>
         <div class="page-back"></div>
       </div>
       <div class="page right">
