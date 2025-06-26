@@ -162,30 +162,30 @@
     let currentPair = 0;
     const totalPairs = Math.floor(pages.length / 2);
 
-    // Set initial size based on cover PNG
+    // Set initial size based on cover PNG, shrunk to 40%
     window.addEventListener('load', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.complete) {
-        const width = coverImg.naturalWidth;
-        const height = coverImg.naturalHeight;
+        const width = coverImg.naturalWidth * 0.4;
+        const height = coverImg.naturalHeight * 0.4;
         book.style.width = width + 'px';
         book.style.height = height + 'px';
         cover.style.width = width + 'px';
         cover.style.height = height + 'px';
         pages.forEach(page => {
-          page.style.width = width / 2 + 'px';
+          page.style.width = (width / 2) + 'px';
           page.style.height = height + 'px';
         });
       } else {
         coverImg.onload = () => {
-          const width = coverImg.naturalWidth;
-          const height = coverImg.naturalHeight;
+          const width = coverImg.naturalWidth * 0.4;
+          const height = coverImg.naturalHeight * 0.4;
           book.style.width = width + 'px';
           book.style.height = height + 'px';
           cover.style.width = width + 'px';
           cover.style.height = height + 'px';
           pages.forEach(page => {
-            page.style.width = width / 2 + 'px';
+            page.style.width = (width / 2) + 'px';
             page.style.height = height + 'px';
           });
         };
@@ -196,14 +196,14 @@
     window.addEventListener('resize', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.naturalWidth && coverImg.naturalHeight) {
-        const width = Math.min(coverImg.naturalWidth, window.innerWidth);
-        const height = Math.min(coverImg.naturalHeight, window.innerHeight);
+        const width = Math.min(coverImg.naturalWidth * 0.4, window.innerWidth);
+        const height = Math.min(coverImg.naturalHeight * 0.4, window.innerHeight);
         book.style.width = width + 'px';
         book.style.height = height + 'px';
         cover.style.width = width + 'px';
         cover.style.height = height + 'px';
         pages.forEach(page => {
-          page.style.width = width / 2 + 'px';
+          page.style.width = (width / 2) + 'px';
           page.style.height = height + 'px';
         });
       }
