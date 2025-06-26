@@ -1,30 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Oscar-Lucas Medrano</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Book Portfolio</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #d3d3d3;
+      overflow: hidden;
+    }
+    .book {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 800px;
+      max-height: 500px;
+      perspective: 1000px;
+      box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2);
+      background: #fff;
+    }
+    .page {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+      overflow: hidden;
+    }
+    .page-front, .page-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+    }
+    .page-front {
+      background: url('Oscar_Lucas_Medrano.pdf') no-repeat center;
+      background-size: contain;
+    }
+    .page-back {
+      background: #f0f0f0;
+      transform: rotateY(180deg);
+    }
+    .page.flipped {
+      transform: rotateY(-180deg);
+    }
+    @media (max-width: 800px) {
+      .book {
+        max-width: 100vw;
+        max-height: 100vh;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div id="flipbook">
-    <div class="page"><iframe src="Oscar-Lucas Medrano.pdf" frameborder="0"></iframe></div>
-    <div class="page"><iframe src="your-pdf.pdf#page=2" frameborder="0"></iframe></div>
-    <div class="page"><iframe src="your-pdf.pdf#page=3" frameborder="0"></iframe></div>
-    <div class="page"><iframe src="your-pdf.pdf#page=4" frameborder="0"></iframe></div>
+  <div class="book">
+    <div class="page">
+      <div class="page-front"></div>
+      <div class="page-back"></div>
+    </div>
+    <div class="page">
+      <div class="page-front"></div>
+      <div class="page-back"></div>
+    </div>
   </div>
 
-  <script src="turn.min.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      $("#flipbook").turn({
-        width: "100%",
-        height: "100%",
-        elevation: 50,
-        gradients: true,
-        autoCenter: true,
-      });
+    const pages = document.querySelectorAll('.page');
+    let currentPage = 0;
+
+    // Swipe detection
+    let touchstartX = 0;
+    let touchendX = 0;
+    document.addEventListener('touchstart', e => {
+      touchstartX = e.changedTouches[0].screenX;
     });
+    document.addEventListener('touchend', e => {
+      touchendX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+    function handleSwipe() {
+      const diff = touchstartX - touchendX;
+      const minSwipeDistance = 50;
+      if (diff > minSwipeDistance && currentPage < pages.length - 1) {
+        pages[currentPage].classList.add('flipped');
+        currentPage++;
+      } else if (diff < -minSwipeDistance && currentPage > 0) {
+        currentPage--;
+        pages[currentPage].classList.remove('flipped');
+      }
+    }
+
+    // Click detection for desktop
+    document.querySelector('.book').addEventListener('click', (e) => {
+      const rect = e.target.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      if (clickX < rect.width / 2 && currentPage > 0) {
+        currentPage--;
+        pages[currentPage].classList.remove('flipped');
+      } else if (clickX >= rect.width / 2 && currentPage < pages.length - 1) {
+        pages[currentPage].classList.add('flipped');
+        currentPage++;
+      }
+    });
+
+    // Ensure full screen on load
+    window.addEventListener('resize', () => {
+      const book = document.querySelector('.book');
+      book.style.height = window.innerHeight + 'px';
+      book.style.width = window.innerWidth > 800 ? '800px' : window.innerWidth + 'px';
+    });
+    window.dispatchEvent(new Event('resize'));
   </script>
 </body>
 </html>
