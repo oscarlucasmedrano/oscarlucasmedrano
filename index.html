@@ -220,9 +220,9 @@
       if (!isOpen && clickX > rect.width / 2) {
         book.classList.add('open');
         isOpen = true;
-        // Open directly to 2-3
-        pages[0].classList.add('flipped');
-        pages[1].classList.add('flipped');
+        // Open directly to 2-3 with 2 on left, 3 on right
+        pages[0].classList.add('flipped'); // Page 2 (left)
+        pages[1].classList.add('flipped'); // Page 3 (right)
       } else if (isOpen) {
         if (clickX < rect.width / 2) {
           if (currentPair > 0) {
@@ -269,9 +269,9 @@
         if (!isOpen) {
           book.classList.add('open');
           isOpen = true;
-          // Open directly to 2-3
-          pages[0].classList.add('flipped');
-          pages[1].classList.add('flipped');
+          // Open directly to 2-3 with 2 on left, 3 on right
+          pages[0].classList.add('flipped'); // Page 2 (left)
+          pages[1].classList.add('flipped'); // Page 3 (right)
         } else if (currentPair < totalPairs - 1) {
           pages[currentPair * 2].classList.add('flipped');
           pages[currentPair * 2 + 1].classList.add('flipped');
