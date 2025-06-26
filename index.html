@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interactive Book Portfolio</title>
+  <title>Oscar-Lucas Medrano</title>
   <style>
     body {
       margin: 0;
@@ -16,31 +16,18 @@
       background: #d3d3d3;
       overflow: hidden;
     }
-    .book-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: 800px;
-      max-height: 500px;
-      perspective: 1000px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
     .book {
       position: relative;
-      width: 100%;
-      height: 100%;
+      perspective: 1000px;
       transform-style: preserve-3d;
       transition: all 0.6s;
       box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
       display: flex;
       justify-content: center;
+      align-items: center;
     }
     .book-cover {
       position: absolute;
-      width: 100%;
-      height: 100%;
       background: #fff;
       z-index: 10;
       transition: transform 0.6s;
@@ -57,15 +44,13 @@
     }
     .book.open .book-cover {
       transform: rotateY(-180deg);
-      z-index: 0;
     }
     .book-pages {
       position: absolute;
-      width: 100%;
-      height: 100%;
       display: none;
       flex-direction: row;
       justify-content: center;
+      align-items: center;
     }
     .book.open .book-pages {
       display: flex;
@@ -123,170 +108,170 @@
     }
     .arrow {
       position: absolute;
-      font-size: 24px;
-      color: #fff;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-style: solid;
       cursor: pointer;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 5px 10px;
-      border-radius: 50%;
-      transition: opacity 0.3s;
-    }
-    .arrow:hover {
-      opacity: 0.8;
+      z-index: 15;
     }
     .arrow.left {
-      left: -40px;
-      top: 50%;
-      transform: translateY(-50%);
+      left: 10px;
+      border-width: 20px 30px 20px 0;
+      border-color: transparent #fff transparent transparent;
     }
     .arrow.right {
-      right: -40px;
-      top: 50%;
-      transform: translateY(-50%);
+      right: 10px;
+      border-width: 20px 0 20px 30px;
+      border-color: transparent transparent transparent #fff;
     }
     @media (max-width: 800px) {
-      .book-container { max-width: 100vw; max-height: 100vh; }
-      .arrow.left { left: 10px; }
-      .arrow.right { right: 10px; }
+      .book { max-width: 100vw; max-height: 100vh; }
+      .arrow { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="book-container">
-    <div class="book">
-      <div class="book-cover">
-        <img src="cover.png" alt="Cover">
+  <div class="book">
+    <div class="book-cover">
+      <img src="cover.png" alt="Cover">
+    </div>
+    <div class="book-pages">
+      <div class="crease"></div>
+      <div class="page left">
+        <div class="page-front"><img src="about.png" alt="Page 2"></div>
+        <div class="page-back"></div>
       </div>
-      <div class="book-pages">
-        <div class="crease"></div>
-        <div class="page left">
-          <div class="page-front"><img src="about.png" alt="Page 2"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page right">
-          <div class="page-front"><img src="table of contents.png" alt="Page 3"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page left">
-          <div class="page-front"><img src="page4.png" alt="Page 4"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page right">
-          <div class="page-front"><img src="page5.png" alt="Page 5"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page left">
-          <div class="page-front"><img src="page6.png" alt="Page 6"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page right">
-          <div class="page-front"><img src="page7.png" alt="Page 7"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page left">
-          <div class="page-front"><img src="page8.png" alt="Page 8"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page right">
-          <div class="page-front"><img src="page9.png" alt="Page 9"></div>
-          <div class="page-back"></div>
-        </div>
-        <div class="page left">
-          <div class="page-front"><img src="page10.png" alt="Page 10"></div>
-          <div class="page-back"></div>
-        </div>
+      <div class="page right">
+        <div class="page-front"><img src="table of contents.png" alt="Page 3"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front"><img src="page4.png" alt="Page 4"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front"><img src="page5.png" alt="Page 5"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front"><img src="page6.png" alt="Page 6"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front"><img src="page7.png" alt="Page 7"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front"><img src="page8.png" alt="Page 8"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front"><img src="page9.png" alt="Page 9"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front"><img src="page10.png" alt="Page 10"></div>
+        <div class="page-back"></div>
       </div>
     </div>
-    <div class="arrow left">&lt;</div>
-    <div class="arrow right">&gt;</div>
+    <div class="arrow left"></div>
+    <div class="arrow right"></div>
   </div>
 
   <script>
     const book = document.querySelector('.book');
+    const cover = document.querySelector('.book-cover');
     const pages = document.querySelectorAll('.page');
-    const arrows = document.querySelectorAll('.arrow');
-    let currentPage = 0;
-    let touchStartX = 0;
-    let touchEndX = 0;
+    const leftArrow = document.querySelector('.arrow.left');
+    const rightArrow = document.querySelector('.arrow.right');
+    let isOpen = false;
+    let currentPair = 0;
+    const totalPairs = Math.floor((pages.length) / 2);
 
-    // Open book on first interaction
-    book.addEventListener('click', () => {
-      if (!book.classList.contains('open')) {
-        book.classList.add('open');
-      }
-    }, { once: true });
-
-    // Arrow controls
-    arrows.forEach(arrow => {
-      arrow.addEventListener('click', () => {
-        if (!book.classList.contains('open')) {
-          book.classList.add('open');
-        } else {
-          const rect = book.getBoundingClientRect();
-          const clickX = arrow.classList.contains('left') ? 0 : rect.width;
-          if (clickX < rect.width / 2 && currentPage > 0) {
-            currentPage -= 2;
-            pages[currentPage].classList.remove('flipped');
-            if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.remove('flipped');
-          } else if (clickX >= rect.width / 2 && currentPage < pages.length - 2) {
-            pages[currentPage].classList.add('flipped');
-            if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.add('flipped');
-            currentPage += 2;
-          }
-        }
-      });
-    });
-
-    // Improved swipe detection
-    book.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    book.addEventListener('touchmove', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    book.addEventListener('touchend', () => {
-      const diff = touchStartX - touchEndX;
-      const minSwipeDistance = 50;
-      if (Math.abs(diff) > minSwipeDistance) {
-        if (diff > 0 && currentPage < pages.length - 2) {
-          pages[currentPage].classList.add('flipped');
-          if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.add('flipped');
-          currentPage += 2;
-        } else if (diff < 0 && currentPage > 0) {
-          currentPage -= 2;
-          pages[currentPage].classList.remove('flipped');
-          if (currentPage + 1 < pages.length) pages[currentPage + 1].classList.remove('flipped');
-        }
-      }
-    }, { passive: true });
-
-    // Ensure container matches PNG size on load
+    // Set initial size based on cover PNG
     window.addEventListener('load', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.complete) {
-        book.style.width = coverImg.naturalWidth + 'px';
-        book.style.height = coverImg.naturalHeight + 'px';
+        const width = coverImg.naturalWidth;
+        const height = coverImg.naturalHeight;
+        book.style.width = width + 'px';
+        book.style.height = height + 'px';
+        cover.style.width = width + 'px';
+        cover.style.height = height + 'px';
+        pages.forEach(page => {
+          page.style.width = width / 2 + 'px';
+          page.style.height = height + 'px';
+        });
       } else {
         coverImg.onload = () => {
-          book.style.width = coverImg.naturalWidth + 'px';
-          book.style.height = coverImg.naturalHeight + 'px';
+          const width = coverImg.naturalWidth;
+          const height = coverImg.naturalHeight;
+          book.style.width = width + 'px';
+          book.style.height = height + 'px';
+          cover.style.width = width + 'px';
+          cover.style.height = height + 'px';
+          pages.forEach(page => {
+            page.style.width = width / 2 + 'px';
+            page.style.height = height + 'px';
+          });
         };
       }
     });
 
-    // Ensure full screen responsiveness
+    // Responsiveness
     window.addEventListener('resize', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.naturalWidth && coverImg.naturalHeight) {
-        book.style.width = Math.min(coverImg.naturalWidth, window.innerWidth) + 'px';
-        book.style.height = Math.min(coverImg.naturalHeight, window.innerHeight) + 'px';
-      } else {
-        book.style.width = window.innerWidth > 800 ? '800px' : window.innerWidth + 'px';
-        book.style.height = window.innerHeight + 'px';
+        const width = Math.min(coverImg.naturalWidth, window.innerWidth);
+        const height = Math.min(coverImg.naturalHeight, window.innerHeight);
+        book.style.width = width + 'px';
+        book.style.height = height + 'px';
+        cover.style.width = width + 'px';
+        cover.style.height = height + 'px';
+        pages.forEach(page => {
+          page.style.width = width / 2 + 'px';
+          page.style.height = height + 'px';
+        });
       }
     });
+
+    // Arrow controls
+    leftArrow.addEventListener('click', () => {
+      if (!isOpen) {
+        book.classList.add('open');
+        isOpen = true;
+      } else if (currentPair > 0) {
+        pages[currentPair * 2].classList.remove('flipped');
+        pages[currentPair * 2 + 1].classList.remove('flipped');
+        currentPair--;
+        if (currentPair < 0) {
+          book.classList.remove('open');
+          isOpen = false;
+          currentPair = 0;
+        }
+      }
+    });
+
+    rightArrow.addEventListener('click', () => {
+      if (!isOpen) {
+        book.classList.add('open');
+        isOpen = true;
+      } else if (currentPair < totalPairs - 1) {
+        pages[currentPair * 2].classList.add('flipped');
+        pages[currentPair * 2 + 1].classList.add('flipped');
+        currentPair++;
+      } else if (currentPair === totalPairs - 1) {
+        pages[currentPair * 2].classList.add('flipped');
+        pages[currentPair * 2 + 1].classList.add('flipped');
+        book.classList.remove('open');
+        isOpen = false;
+        currentPair = 0;
+      }
+    });
+
+    // Initial resize
     window.dispatchEvent(new Event('resize'));
   </script>
 </body>
