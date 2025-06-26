@@ -25,10 +25,13 @@
       perspective: 1000px;
       box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2);
       background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .page {
       position: absolute;
-      width: 100%;
+      width: 50%;
       height: 100%;
       background: #fff;
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
@@ -43,8 +46,9 @@
       backface-visibility: hidden;
     }
     .page-front {
-      background: url('Cover.pdf') no-repeat center;
       background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
     }
     .page-back {
       background: #f0f0f0;
@@ -53,29 +57,99 @@
     .page.flipped {
       transform: rotateY(-180deg);
     }
+    /* Cover and double-page styling */
+    .cover {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #333 url('cover-image.jpg') no-repeat center;
+      background-size: contain;
+      z-index: 10;
+      transition: transform 0.6s;
+    }
+    .book.open .cover {
+      transform: translateX(-50%);
+    }
+    .double-page {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+    .book.open .double-page {
+      display: flex;
+    }
+    .page.left {
+      left: 0;
+      transform-origin: right;
+    }
+    .page.right {
+      right: 0;
+      transform-origin: left;
+    }
     @media (max-width: 800px) {
-      .book {
-        max-width: 100vw;
-        max-height: 100vh;
-      }
+      .book { max-width: 100vw; max-height: 100vh; }
+      .page { width: 50%; }
     }
   </style>
 </head>
 <body>
   <div class="book">
-    <div class="page">
-      <div class="page-front"></div>
-      <div class="page-back"></div>
-    </div>
-    <div class="page">
-      <div class="page-front"></div>
-      <div class="page-back"></div>
+    <div class="cover"></div>
+    <div class="double-page">
+      <div class="page left">
+        <div class="page-front" style="background: url('Cover.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front" style="background: url('page2.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front" style="background: url('page3.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front" style="background: url('page4.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front" style="background: url('page5.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front" style="background: url('page6.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front" style="background: url('page7.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front" style="background: url('page8.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page left">
+        <div class="page-front" style="background: url('page9.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
+      <div class="page right">
+        <div class="page-front" style="background: url('page10.pdf')"></div>
+        <div class="page-back"></div>
+      </div>
     </div>
   </div>
 
   <script>
+    const book = document.querySelector('.book');
     const pages = document.querySelectorAll('.page');
     let currentPage = 0;
+
+    // Open book on first interaction
+    book.addEventListener('click', () => {
+      if (!book.classList.contains('open')) {
+        book.classList.add('open');
+      }
+    }, { once: true });
 
     // Swipe detection
     let touchstartX = 0;
@@ -90,31 +164,36 @@
     function handleSwipe() {
       const diff = touchstartX - touchendX;
       const minSwipeDistance = 50;
-      if (diff > minSwipeDistance && currentPage < pages.length - 1) {
+      if (diff > minSwipeDistance && currentPage < pages.length - 2) {
         pages[currentPage].classList.add('flipped');
-        currentPage++;
+        pages[currentPage + 1].classList.add('flipped');
+        currentPage += 2;
       } else if (diff < -minSwipeDistance && currentPage > 0) {
-        currentPage--;
+        currentPage -= 2;
         pages[currentPage].classList.remove('flipped');
+        pages[currentPage + 1].classList.remove('flipped');
       }
     }
 
     // Click detection for desktop
-    document.querySelector('.book').addEventListener('click', (e) => {
-      const rect = e.target.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      if (clickX < rect.width / 2 && currentPage > 0) {
-        currentPage--;
-        pages[currentPage].classList.remove('flipped');
-      } else if (clickX >= rect.width / 2 && currentPage < pages.length - 1) {
-        pages[currentPage].classList.add('flipped');
-        currentPage++;
+    book.addEventListener('click', (e) => {
+      if (book.classList.contains('open')) {
+        const rect = e.target.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        if (clickX < rect.width / 2 && currentPage > 0) {
+          currentPage -= 2;
+          pages[currentPage].classList.remove('flipped');
+          pages[currentPage + 1].classList.remove('flipped');
+        } else if (clickX >= rect.width / 2 && currentPage < pages.length - 2) {
+          pages[currentPage].classList.add('flipped');
+          pages[currentPage + 1].classList.add('flipped');
+          currentPage += 2;
+        }
       }
     });
 
     // Ensure full screen on load
     window.addEventListener('resize', () => {
-      const book = document.querySelector('.book');
       book.style.height = window.innerHeight + 'px';
       book.style.width = window.innerWidth > 800 ? '800px' : window.innerWidth + 'px';
     });
