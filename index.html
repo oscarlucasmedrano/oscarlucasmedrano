@@ -25,6 +25,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      width: 80vw; /* Adjusted to fit two full PNGs at 40% scale */
+      height: 80vh; /* Adjusted to fit cover height */
     }
     .book-cover {
       position: absolute;
@@ -36,6 +38,8 @@
       align-items: center;
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1), 10px 10px 20px rgba(0, 0, 0, 0.3);
       transform-origin: left;
+      width: 100%;
+      height: 100%;
     }
     .book-cover img {
       width: 100%;
@@ -59,7 +63,7 @@
       display: flex;
     }
     .page {
-      width: 50%;
+      width: 50%; /* Each page takes half the book width */
       height: 100%;
       background: #fff;
       position: absolute;
@@ -145,30 +149,30 @@
     let currentPair = 0;
     const totalPairs = Math.floor(pages.length / 2);
 
-    // Set initial size based on cover PNG, shrunk to 40%
+    // Set initial size based on cover PNG, scaled to fit two full PNGs
     window.addEventListener('load', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.complete) {
-        const width = coverImg.naturalWidth * 0.4;
+        const width = coverImg.naturalWidth * 0.4; // 40% of cover width for each side
         const height = coverImg.naturalHeight * 0.4;
-        book.style.width = width + 'px';
+        book.style.width = width * 2 + 'px'; // Total width for two PNGs
         book.style.height = height + 'px';
-        cover.style.width = width + 'px';
+        cover.style.width = width * 2 + 'px';
         cover.style.height = height + 'px';
         pages.forEach(page => {
-          page.style.width = (width / 2) + 'px';
+          page.style.width = width + 'px'; // Full PNG width per page
           page.style.height = height + 'px';
         });
       } else {
         coverImg.onload = () => {
           const width = coverImg.naturalWidth * 0.4;
           const height = coverImg.naturalHeight * 0.4;
-          book.style.width = width + 'px';
+          book.style.width = width * 2 + 'px';
           book.style.height = height + 'px';
-          cover.style.width = width + 'px';
+          cover.style.width = width * 2 + 'px';
           cover.style.height = height + 'px';
           pages.forEach(page => {
-            page.style.width = (width / 2) + 'px';
+            page.style.width = width + 'px';
             page.style.height = height + 'px';
           });
         };
@@ -179,14 +183,14 @@
     window.addEventListener('resize', () => {
       const coverImg = document.querySelector('.book-cover img');
       if (coverImg.naturalWidth && coverImg.naturalHeight) {
-        const width = Math.min(coverImg.naturalWidth * 0.4, window.innerWidth);
+        const width = Math.min(coverImg.naturalWidth * 0.4, window.innerWidth / 2);
         const height = Math.min(coverImg.naturalHeight * 0.4, window.innerHeight);
-        book.style.width = width + 'px';
+        book.style.width = width * 2 + 'px';
         book.style.height = height + 'px';
-        cover.style.width = width + 'px';
+        cover.style.width = width * 2 + 'px';
         cover.style.height = height + 'px';
         pages.forEach(page => {
-          page.style.width = (width / 2) + 'px';
+          page.style.width = width + 'px';
           page.style.height = height + 'px';
         });
       }
