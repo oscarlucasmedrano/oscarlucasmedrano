@@ -98,17 +98,17 @@
       .page {
         width: 50%;
       }
-      .crease {
-        display: none;
-      }
       .book-cover {
         width: 80vw;
         height: auto;
       }
       .book-cover canvas {
         max-width: 80vw;
-        max-height: auto;
-        object-fit: fill;
+        max-height: calc(80vw * (9/16)); /* Adjust based on aspect ratio, e.g., 9:16 or use page height ratio */
+        object-fit: contain; /* Changed to contain for proper scaling */
+      }
+      .crease {
+        display: block; /* Removed display: none to allow visibility */
       }
     }
   </style>
