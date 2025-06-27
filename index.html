@@ -26,6 +26,8 @@
       justify-content: center;
       align-items: center;
       background-color: black; /* Container background set to black */
+      min-width: 300px; /* Minimum width to ensure visibility */
+      min-height: 300px; /* Minimum height to ensure visibility */
     }
     .book-cover {
       position: absolute;
@@ -114,16 +116,16 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <object data="Cover.pdf" type="application/pdf" alt="Cover"></object>
+      <object data="Cover.pdf" type="application/pdf" alt="Cover" onload="this.style.visibility='visible';"></object>
     </div>
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page left" style="left: 0;">
-        <div class="page-front"><object data="about.pdf" type="application/pdf" alt="About"></object></div>
+        <div class="page-front"><object data="about.pdf" type="application/pdf" alt="About" onload="this.style.visibility='visible';"></object></div>
         <div class="page-back"></div>
       </div>
       <div class="page right" style="right: 0;">
-        <div class="page-front"><object data="table_of_contents.pdf" type="application/pdf" alt="Table of Contents"></object></div>
+        <div class="page-front"><object data="table_of_contents.pdf" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible';"></object></div>
         <div class="page-back"></div>
       </div>
     </div>
@@ -135,53 +137,61 @@
     const pages = document.querySelectorAll('.page');
     let isOpen = false;
 
-    // Set initial size based on cover PDF
+    // Set initial size based on window and adjust with PDF load
     window.addEventListener('load', () => {
+      let initialWidth = window.innerWidth * 0.4;
+      let initialHeight = window.innerHeight * 0.4;
+      const size = Math.min(initialWidth * 2, initialHeight);
+      book.style.width = size + 'px';
+      book.style.height = size + 'px';
+      cover.style.width = size + 'px';
+      cover.style.height = size + 'px';
+      pages.forEach(page => {
+        page.style.width = size / 2 + 'px';
+        page.style.height = size + 'px';
+      });
+
       const coverObj = document.querySelector('.book-cover object');
       if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
-        const width = coverObj.contentDocument.documentElement.scrollWidth * 0.4;
-        const height = coverObj.contentDocument.documentElement.scrollHeight * 0.4;
-        const size = Math.min(width * 2, height); // Ensure vertical or square layout
-        book.style.width = size + 'px';
-        book.style.height = size + 'px';
-        cover.style.width = size + 'px';
-        cover.style.height = size + 'px';
-        pages.forEach(page => {
-          page.style.width = size / 2 + 'px';
-          page.style.height = size + 'px';
-        });
+        adjustSize(coverObj, size);
       } else {
-        coverObj.onload = () => {
-          const width = coverObj.contentDocument.documentElement.scrollWidth * 0.4;
-          const height = coverObj.contentDocument.documentElement.scrollHeight * 0.4;
-          const size = Math.min(width * 2, height);
-          book.style.width = size + 'px';
-          book.style.height = size + 'px';
-          cover.style.width = size + 'px';
-          cover.style.height = size + 'px';
+        coverObj.onload = () => adjustSize(coverObj, size);
+      }
+
+      function adjustSize(obj, initialSize) {
+        if (obj.contentDocument && obj.contentDocument.documentElement) {
+          const pdfWidth = obj.contentDocument.documentElement.scrollWidth * 0.4;
+          const pdfHeight = obj.contentDocument.documentElement.scrollHeight * 0.4;
+          const newSize = Math.min(pdfWidth * 2, pdfHeight);
+          book.style.width = newSize + 'px';
+          book.style.height = newSize + 'px';
+          cover.style.width = newSize + 'px';
+          cover.style.height = newSize + 'px';
           pages.forEach(page => {
-            page.style.width = size / 2 + 'px';
-            page.style.height = size + 'px';
+            page.style.width = newSize / 2 + 'px';
+            page.style.height = newSize + 'px';
           });
-        };
+        }
       }
     });
 
     // Responsiveness
     window.addEventListener('resize', () => {
+      let initialWidth = window.innerWidth * 0.4;
+      let initialHeight = window.innerHeight * 0.4;
+      const size = Math.min(initialWidth * 2, initialHeight);
+      book.style.width = size + 'px';
+      book.style.height = size + 'px';
+      cover.style.width = size + 'px';
+      cover.style.height = size + 'px';
+      pages.forEach(page => {
+        page.style.width = size / 2 + 'px';
+        page.style.height = size + 'px';
+      });
+
       const coverObj = document.querySelector('.book-cover object');
       if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
-        const width = Math.min(coverObj.contentDocument.documentElement.scrollWidth * 0.4, window.innerWidth / 2);
-        const height = Math.min(coverObj.contentDocument.documentElement.scrollHeight * 0.4, window.innerHeight);
-        const size = Math.min(width * 2, height);
-        book.style.width = size + 'px';
-        book.style.height = size + 'px';
-        cover.style.width = size + 'px';
-        cover.style.height = size + 'px';
-        pages.forEach(page => {
-          page.style.width = size / 2 + 'px';
-          page.style.height = size + 'px';
-        });
+        adjustSize(coverObj, size);
       }
     });
 
@@ -209,9 +219,6 @@
         isOpen = true;
       }
     });
-
-    // Initial resize
-    window.dispatchEvent(new Event('resize'));
   </script>
 </body>
 </html>
