@@ -27,6 +27,9 @@
     .book-cover-wrapper {
       width: 80vw;
       margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .book-cover {
       display: block;
@@ -39,7 +42,6 @@
       width: 100% !important;
       height: auto !important;
       max-width: 80vw !important;
-      max-height: calc(80vw * (9/16)) !important; /* Adjust aspect ratio as needed */
       object-fit: contain !important;
       border: none;
     }
@@ -105,6 +107,9 @@
       .book-cover-wrapper {
         width: 80vw;
         margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       .book-cover {
         width: 100%;
@@ -114,7 +119,6 @@
         width: 100% !important;
         height: auto !important;
         max-width: 80vw !important;
-        max-height: calc(80vw * (9/16)) !important; /* Adjust aspect ratio as needed */
         object-fit: contain !important;
       }
       .crease {
@@ -183,18 +187,13 @@
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered`);
 
-        // Set book size based on the width of a single page
-        if (canvasId === 'about-canvas' || canvasId === 'toc-canvas' || canvasId === 'page4-canvas' || 
-            canvasId === 'page5-canvas' || canvasId === 'page6-canvas' || canvasId === 'page7-canvas' ||
-            canvasId === 'page8-canvas' || canvasId === 'page9-canvas') {
+        // Set book and cover wrapper size based on the first page's dimensions
+        if (canvasId === 'about-canvas') {
           const pageWidth = viewport.width;
           const pageHeight = viewport.height;
-          if (!book.style.width) {
-            book.style.width = `${pageWidth * 2}px`; // Size based on a pair
-            book.style.height = `${pageHeight}px`;
-            document.querySelector('.book-cover').style.width = `${pageWidth * 2}px`;
-            document.querySelector('.book-cover').style.height = `${pageHeight}px`;
-          }
+          book.style.width = `${pageWidth * 2}px`;
+          book.style.height = `${pageHeight}px`;
+          document.querySelector('.book-cover-wrapper').style.height = `${pageHeight}px`;
         }
         // Adjust cover canvas to match book size if needed
         if (canvasId === 'cover-canvas' && book.style.width) {
