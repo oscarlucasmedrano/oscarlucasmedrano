@@ -39,11 +39,11 @@
       height: 100%;
       border: none;
     }
-    .book-cover embed {
-      width: 100%;
-      height: 100%;
+    .book-cover canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
       border: none;
-      overflow: hidden;
     }
     .book.open .book-cover {
       display: none;
@@ -73,11 +73,11 @@
       overflow: hidden;
       border: none;
     }
-    .page embed {
-      width: 100%;
-      height: 100%;
+    .page canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
       border: none;
-      overflow: hidden;
     }
     .crease {
       position: absolute;
@@ -90,7 +90,7 @@
     }
     @media (max-width: 768px) {
       .book {
-        width: 90vw;
+        width: 80vw;
         height: auto;
         min-width: 0;
         min-height: 0;
@@ -107,91 +107,48 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <embed src="page1.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed: 404 or file not found. Verify page1.pdf exists in the same directory as index.html or correct the path.');">
+      <canvas id="cover-canvas"></canvas>
     </div>
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page">
-        <embed src="about.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="About" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('About load failed: 404 or file not found. Verify about.pdf exists.');">
+        <canvas id="about-canvas"></canvas>
       </div>
       <div class="page">
-        <embed src="table_of_contents.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('TOC load failed: 404 or file not found. Verify table_of_contents.pdf exists.');">
+        <canvas id="toc-canvas"></canvas>
       </div>
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     const book = document.querySelector('.book');
     let isOpen = false;
-    let loadCount = 0;
 
-    function checkLoad() {
-      loadCount++;
-      console.log(`Load count: ${loadCount}`);
-      if (loadCount === 3) {
-        adjustSize();
-      } else if (loadCount < 3) {
-        setTimeout(adjustSize, 500);
+    // PDF.js setup
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    async function renderPDF(pdfUrl, canvasId) {
+      try {
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1); // Render the first page
+        const canvas = document.getElementById(canvasId);
+        const context = canvas.getContext('2d');
+        const viewport = page.getViewport({ scale: 1.5 }); // Adjust scale for clarity
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: context, viewport: viewport });
+        console.log(`${canvasId} rendered`);
+      } catch (error) {
+        console.error(`${canvasId} render failed:`, error);
       }
     }
 
-    function adjustSize() {
-      console.log("Adjusting size...");
-      const coverEmbed = document.querySelector('.book-cover embed');
-      const embed1 = document.querySelector('.book-pages .page:first-child embed');
-      const embed2 = document.querySelector('.book-pages .page:last-child embed');
-      let coverWidth = 800;
-      let coverHeight = 600;
-      let width1 = 400;
-      let width2 = 400;
-      let height1 = 600;
-      let height2 = 600;
-
-      if (coverEmbed && coverEmbed.offsetWidth > 0) {
-        console.log("Cover loaded");
-        coverWidth = coverEmbed.offsetWidth;
-        coverHeight = coverEmbed.offsetHeight;
-      } else {
-        console.log("Cover not loaded, using default");
-      }
-      if (embed1 && embed1.offsetWidth > 0) {
-        console.log("About loaded");
-        width1 = embed1.offsetWidth;
-        height1 = embed1.offsetHeight;
-      } else {
-        console.log("About not loaded, using default");
-      }
-      if (embed2 && embed2.offsetHeight > 0) {
-        console.log("TOC loaded");
-        width2 = embed2.offsetWidth;
-        height2 = embed2.offsetHeight;
-      } else {
-        console.log("TOC not loaded, using default");
-      }
-
-      const totalWidth = width1 + width2;
-      const maxHeight = Math.max(coverHeight, height1, height2);
-      book.style.width = totalWidth > 0 ? totalWidth + 'px' : '800px';
-      book.style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
-      document.querySelector('.book-cover').style.width = coverWidth > 0 ? coverWidth + 'px' : '800px';
-      document.querySelector('.book-cover').style.height = coverHeight > 0 ? coverHeight + 'px' : '600px';
-      document.querySelector('.book-pages').style.width = totalWidth > 0 ? totalWidth + 'px' : '800px';
-      document.querySelector('.book-pages').style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
-    }
-
-    window.addEventListener('load', () => {
-      const embeds = document.querySelectorAll('embed');
-      embeds.forEach(embed => {
-        embed.onload = checkLoad;
-        embed.onerror = () => console.log(`${embed.alt} load failed: 404 or file not found`);
-      });
-      setTimeout(() => {
-        if (loadCount < 3) {
-          console.log("Not all PDFs loaded, forcing adjustment");
-          adjustSize();
-        }
-      }, 1000);
-    });
+    // Render PDFs
+    renderPDF('page1.pdf', 'cover-canvas');
+    renderPDF('about.pdf', 'about-canvas');
+    renderPDF('table_of_contents.pdf', 'toc-canvas');
 
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
@@ -203,6 +160,16 @@
       } else if (isOpen) {
         book.classList.remove('open');
         isOpen = false;
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && isOpen) {
+        isOpen = false;
+        book.classList.remove('open');
+      } else if (e.key === 'ArrowRight' && !isOpen) {
+        isOpen = true;
+        book.classList.add('open');
       }
     });
   </script>
