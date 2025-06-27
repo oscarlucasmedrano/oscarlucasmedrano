@@ -78,11 +78,13 @@
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
       z-index: 6;
       position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
     }
-    /* Position creases for page pairs */
-    .book-pages .crease:nth-child(2) { left: 50%; transform: translateX(-50%); }
-    .book-pages .crease:nth-child(4) { left: 50%; transform: translateX(-50%); visibility: hidden; }
-    .book-pages .crease:nth-child(6) { left: 50%; transform: translateX(-50%); visibility: hidden; }
+    /* Show crease for the active pair */
+    .book-pages .crease:nth-child(2) { visibility: hidden; }
+    .book-pages .crease:nth-child(4) { visibility: hidden; }
+    .book-pages .crease:nth-child(6) { visibility: hidden; }
     .page-pair-1 .crease:nth-child(2) { visibility: visible; }
     .page-pair-2 .crease:nth-child(4) { visibility: visible; }
     .page-pair-3 .crease:nth-child(6) { visibility: visible; }
@@ -99,6 +101,15 @@
       .crease {
         display: none;
       }
+      .book-cover {
+        width: 80vw;
+        height: auto;
+      }
+      .book-cover canvas {
+        max-width: 80vw;
+        max-height: auto;
+        object-fit: fill;
+      }
     }
   </style>
 </head>
@@ -108,28 +119,28 @@
       <canvas id="cover-canvas"></canvas>
     </div>
     <div class="book-pages">
-      <div class="crease"></div> <!-- Between cover and 2-3 -->
+      <div class="crease"></div> <!-- Between 2-3 -->
       <div class="page">
         <canvas id="about-canvas"></canvas>
       </div>
       <div class="page">
         <canvas id="toc-canvas"></canvas>
       </div>
-      <div class="crease"></div> <!-- Between 2-3 and 4-5 -->
+      <div class="crease"></div> <!-- Between 4-5 -->
       <div class="page">
         <canvas id="page4-canvas"></canvas>
       </div>
       <div class="page">
         <canvas id="page5-canvas"></canvas>
       </div>
-      <div class="crease"></div> <!-- Between 4-5 and 6-7 -->
+      <div class="crease"></div> <!-- Between 6-7 -->
       <div class="page">
         <canvas id="page6-canvas"></canvas>
       </div>
       <div class="page">
         <canvas id="page7-canvas"></canvas>
       </div>
-      <div class="crease"></div> <!-- Between 6-7 and 8-9 -->
+      <div class="crease"></div> <!-- Between 8-9 -->
       <div class="page">
         <canvas id="page8-canvas"></canvas>
       </div>
