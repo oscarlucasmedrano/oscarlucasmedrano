@@ -13,7 +13,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: black; /* Set body background to black for full screen */
+      background: black; /* Full screen black background */
       overflow: hidden;
     }
     .book {
@@ -23,8 +23,8 @@
       justify-content: center;
       align-items: center;
       background-color: black; /* Container background set to black */
-      min-width: 300px; /* Minimum width to ensure visibility */
-      min-height: 300px; /* Minimum height to ensure visibility */
+      min-width: 400px; /* Increased minimum width */
+      min-height: 400px; /* Increased minimum height */
     }
     .book-cover {
       position: absolute;
@@ -71,6 +71,19 @@
       height: 100%;
       object-fit: contain;
     }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .book {
+        min-width: 90vw; /* Full width on mobile */
+        min-height: 90vh; /* Full height on mobile */
+        width: 90vw;
+        height: 90vh;
+      }
+      .page {
+        width: 50%; /* Maintain symmetry */
+      }
+    }
   </style>
 </head>
 <body>
@@ -95,8 +108,8 @@
 
     // Set initial size based on window and adjust with PDF load
     window.addEventListener('load', () => {
-      let initialWidth = window.innerWidth * 0.4;
-      let initialHeight = window.innerHeight * 0.4;
+      let initialWidth = window.innerWidth * 0.6; // Increased to 60%
+      let initialHeight = window.innerHeight * 0.6; // Increased to 60%
       const size = Math.min(initialWidth * 2, initialHeight);
       book.style.width = size + 'px';
       book.style.height = size + 'px';
@@ -112,8 +125,8 @@
 
       function adjustSize(obj, initialSize) {
         if (obj.contentDocument && obj.contentDocument.documentElement) {
-          const pdfWidth = obj.contentDocument.documentElement.scrollWidth * 0.4;
-          const pdfHeight = obj.contentDocument.documentElement.scrollHeight * 0.4;
+          const pdfWidth = obj.contentDocument.documentElement.scrollWidth * 0.6; // Adjusted to 60%
+          const pdfHeight = obj.contentDocument.documentElement.scrollHeight * 0.6; // Adjusted to 60%
           const newSize = Math.min(pdfWidth * 2, pdfHeight);
           book.style.width = newSize + 'px';
           book.style.height = newSize + 'px';
@@ -125,8 +138,8 @@
 
     // Responsiveness
     window.addEventListener('resize', () => {
-      let initialWidth = window.innerWidth * 0.4;
-      let initialHeight = window.innerHeight * 0.4;
+      let initialWidth = window.innerWidth * 0.6; // Increased to 60%
+      let initialHeight = window.innerHeight * 0.6; // Increased to 60%
       const size = Math.min(initialWidth * 2, initialHeight);
       book.style.width = size + 'px';
       book.style.height = size + 'px';
