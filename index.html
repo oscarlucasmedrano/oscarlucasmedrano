@@ -16,6 +16,12 @@
       justify-content: center;
       align-items: center;
     }
+    .book-container {
+      max-width: 80vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
     .book {
       position: relative;
       box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
@@ -24,8 +30,7 @@
       border: none;
     }
     .book-content {
-      width: 80vw;
-      margin: 0 auto;
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -47,6 +52,7 @@
       width: 100% !important;
       height: auto !important;
       max-width: 80vw !important;
+      max-height: calc(80vw * (9/16)) !important; /* Adjust based on your PDF aspect ratio */
       object-fit: contain !important;
       border: none;
     }
@@ -55,7 +61,7 @@
     }
     .book-pages {
       position: absolute;
-      display: none;
+      display: flex; /* Force display for testing */
       flex-direction: row;
       align-items: center;
       width: 100%;
@@ -100,6 +106,9 @@
     .page-pair-2 .crease:nth-child(4) { visibility: visible; }
     .page-pair-3 .crease:nth-child(6) { visibility: visible; }
     @media (max-width: 768px) {
+      .book-container {
+        max-width: 80vw;
+      }
       .book {
         width: 80vw;
         height: auto;
@@ -107,8 +116,7 @@
         min-height: 0;
       }
       .book-content {
-        width: 80vw;
-        margin: 0 auto;
+        width: 100%;
       }
       .page {
         width: 50%;
@@ -120,6 +128,7 @@
         width: 100% !important;
         height: auto !important;
         max-width: 80vw !important;
+        max-height: calc(80vw * (9/16)) !important; /* Adjust based on your PDF aspect ratio */
         object-fit: contain !important;
       }
       .crease {
@@ -129,42 +138,44 @@
   </style>
 </head>
 <body>
-  <div class="book">
-    <div class="book-content">
-      <div class="book-cover-wrapper">
-        <div class="book-cover">
-          <canvas id="cover-canvas"></canvas>
+  <div class="book-container">
+    <div class="book">
+      <div class="book-content">
+        <div class="book-cover-wrapper">
+          <div class="book-cover">
+            <canvas id="cover-canvas"></canvas>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="book-pages">
-      <div class="crease"></div> <!-- Between 2-3 -->
-      <div class="page">
-        <canvas id="about-canvas"></canvas>
-      </div>
-      <div class="page">
-        <canvas id="toc-canvas"></canvas>
-      </div>
-      <div class="crease"></div> <!-- Between 4-5 -->
-      <div class="page">
-        <canvas id="page4-canvas"></canvas>
-      </div>
-      <div class="page">
-        <canvas id="page5-canvas"></canvas>
-      </div>
-      <div class="crease"></div> <!-- Between 6-7 -->
-      <div class="page">
-        <canvas id="page6-canvas"></canvas>
-      </div>
-      <div class="page">
-        <canvas id="page7-canvas"></canvas>
-      </div>
-      <div class="crease"></div> <!-- Between 8-9 -->
-      <div class="page">
-        <canvas id="page8-canvas"></canvas>
-      </div>
-      <div class="page">
-        <canvas id="page9-canvas"></canvas>
+      <div class="book-pages">
+        <div class="crease"></div> <!-- Between 2-3 -->
+        <div class="page">
+          <canvas id="about-canvas"></canvas>
+        </div>
+        <div class="page">
+          <canvas id="toc-canvas"></canvas>
+        </div>
+        <div class="crease"></div> <!-- Between 4-5 -->
+        <div class="page">
+          <canvas id="page4-canvas"></canvas>
+        </div>
+        <div class="page">
+          <canvas id="page5-canvas"></canvas>
+        </div>
+        <div class="crease"></div> <!-- Between 6-7 -->
+        <div class="page">
+          <canvas id="page6-canvas"></canvas>
+        </div>
+        <div class="page">
+          <canvas id="page7-canvas"></canvas>
+        </div>
+        <div class="crease"></div> <!-- Between 8-9 -->
+        <div class="page">
+          <canvas id="page8-canvas"></canvas>
+        </div>
+        <div class="page">
+          <canvas id="page9-canvas"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -190,17 +201,19 @@
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered successfully`);
 
-        // Set book and cover wrapper size based on the first page's dimensions
+        // Set book and content size based on the first page's dimensions
         if (canvasId === 'about-canvas') {
-          const pageWidth = viewport.width;
-          const pageHeight = viewport.height;
-          book.style.width = `${pageWidth * 2}px`;
-          book.style.height = `${pageHeight}px`;
-          document.querySelector('.book-content').style.height = `${pageHeight}px`;
-          document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
+          setTimeout(() => {
+            const pageWidth = viewport.width;
+            const pageHeight = viewport.height;
+            book.style.width = `${pageWidth * 2}px`;
+            book.style.height = `${pageHeight}px`;
+            document.querySelector('.book-content').style.height = `${pageHeight}px`;
+            document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
+          }, 100);
         }
       } catch (error) {
-        console.error(`${canvasId} render failed:`, error);
+        console.error(`${canvasId} render failed:`, error.message, error.stack);
         if (canvasId === 'cover-canvas') {
           const coverCanvas = document.getElementById('cover-canvas');
           console.log('Cover canvas exists:', !!coverCanvas);
