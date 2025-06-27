@@ -202,18 +202,6 @@
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered successfully`);
-
-        // Set book and content size based on the first page's dimensions
-        if (canvasId === 'about-canvas') {
-          setTimeout(() => {
-            const pageWidth = viewport.width;
-            const pageHeight = viewport.height;
-            book.style.width = `${pageWidth * 2}px`;
-            book.style.height = `${pageHeight}px`;
-            document.querySelector('.book-content').style.height = `${pageHeight}px`;
-            document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
-          }, 100);
-        }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.message, error.stack);
         if (canvasId === 'cover-canvas') {
@@ -235,18 +223,36 @@
       }
     }
 
-    // Render PDFs
-    renderPDF('page1.pdf', 'cover-canvas');
-    renderPDF('about.pdf', 'about-canvas');
-    renderPDF('table_of_contents.pdf', 'toc-canvas');
-    renderPDF('page4.pdf', 'page4-canvas');
-    renderPDF('page5.pdf', 'page5-canvas');
-    renderPDF('page6.pdf', 'page6-canvas');
-    renderPDF('page7.pdf', 'page7-canvas');
-    renderPDF('page8.pdf', 'page8-canvas');
-    renderPDF('page9.pdf', 'page9-canvas');
+    // Render PDFs and check
+    const pdfPromises = [
+      renderPDF('page1.pdf', 'cover-canvas'),
+      renderPDF('about.pdf', 'about-canvas'),
+      renderPDF('table_of_contents.pdf', 'toc-canvas'),
+      renderPDF('page4.pdf', 'page4-canvas'),
+      renderPDF('page5.pdf', 'page5-canvas'),
+      renderPDF('page6.pdf', 'page6-canvas'),
+      renderPDF('page7.pdf', 'page7-canvas'),
+      renderPDF('page8.pdf', 'page8-canvas'),
+      renderPDF('page9.pdf', 'page9-canvas')
+    ];
+
+    Promise.all(pdfPromises).then(() => {
+      setTimeout(() => {
+        console.log('All PDFs attempted to render');
+        if (document.getElementById('about-canvas').width > 0) {
+          const pageWidth = document.getElementById('about-canvas').width;
+          const pageHeight = document.getElementById('about-canvas').height;
+          book.style.width = `${pageWidth * 2}px`;
+          book.style.height = `${pageHeight}px`;
+          document.querySelector('.book-content').style.height = `${pageHeight}px`;
+          document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
+          document.querySelector('.book-pages').style.height = `${pageHeight}px`;
+        }
+      }, 200);
+    });
 
     function updatePageDisplay() {
+      console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
       book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
       if (currentPage === 1) book.classList.add('page-pair-1');
@@ -274,6 +280,7 @@
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
+      console.log('Click detected, clickX:', clickX, 'rect.width:', rect.width);
 
       if (currentPage === 0 && clickX > rect.width / 2) {
         currentPage = 1;
