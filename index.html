@@ -23,8 +23,8 @@
       justify-content: center;
       align-items: center;
       background-color: black; /* Container background set to black */
-      min-width: 400px; /* Increased minimum width */
-      min-height: 400px; /* Increased minimum height */
+      min-width: 600px; /* Minimum to ensure visibility if PDFs are small */
+      min-height: 400px; /* Minimum to ensure visibility */
     }
     .book-cover {
       position: absolute;
@@ -71,6 +71,15 @@
       height: 100%;
       object-fit: contain;
     }
+    .crease {
+      position: absolute;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+    }
 
     /* Mobile responsiveness */
     @media (max-width: 768px) {
@@ -78,10 +87,13 @@
         min-width: 90vw; /* Full width on mobile */
         min-height: 90vh; /* Full height on mobile */
         width: 90vw;
-        height: 90vh;
+        height: auto; /* Adjust height based on content */
       }
       .page {
         width: 50%; /* Maintain symmetry */
+      }
+      .crease {
+        display: none; /* Hide crease on mobile for better fit */
       }
     }
   </style>
@@ -89,9 +101,10 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <object data="Cover.pdf" type="application/pdf" alt="Cover" onload="this.style.visibility='visible';"></object>
+      <object data="cover.pdf" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; adjustSize(this);"></object>
     </div>
     <div class="book-pages">
+      <div class="crease"></div>
       <div class="page">
         <object data="about.pdf" type="application/pdf" alt="About" onload="this.style.visibility='visible';"></object>
       </div>
@@ -106,49 +119,43 @@
     const cover = document.querySelector('.book-cover');
     let isOpen = false;
 
-    // Set initial size based on window and adjust with PDF load
-    window.addEventListener('load', () => {
-      let initialWidth = window.innerWidth * 0.6; // Increased to 60%
-      let initialHeight = window.innerHeight * 0.6; // Increased to 60%
-      const size = Math.min(initialWidth * 2, initialHeight);
-      book.style.width = size + 'px';
-      book.style.height = size + 'px';
-      cover.style.width = size + 'px';
-      cover.style.height = size + 'px';
+    // Adjust size based on PDF dimensions
+    function adjustSize(obj) {
+      if (obj.contentDocument && obj.contentDocument.documentElement) {
+        const pdf1 = document.querySelector('.book-pages .page:first-child object');
+        const pdf2 = document.querySelector('.book-pages .page:last-child object');
+        if (pdf1.contentDocument && pdf1.contentDocument.documentElement && pdf2.contentDocument && pdf2.contentDocument.documentElement) {
+          const width1 = pdf1.contentDocument.documentElement.scrollWidth;
+          const width2 = pdf2.contentDocument.documentElement.scrollWidth;
+          const height1 = pdf1.contentDocument.documentElement.scrollHeight;
+          const height2 = pdf2.contentDocument.documentElement.scrollHeight;
+          const totalWidth = width1 + width2; // Combined width of two PDFs
+          const maxHeight = Math.max(height1, height2); // Height of taller PDF
+          book.style.width = totalWidth + 'px';
+          book.style.height = maxHeight + 'px';
+          cover.style.width = totalWidth + 'px';
+          cover.style.height = maxHeight + 'px';
+          document.querySelector('.book-pages').style.width = totalWidth + 'px';
+          document.querySelector('.book-pages').style.height = maxHeight + 'px';
+        }
+      }
+    }
 
+    // Set initial size and adjust with PDF load
+    window.addEventListener('load', () => {
       const coverObj = document.querySelector('.book-cover object');
       if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
-        adjustSize(coverObj, size);
+        adjustSize(coverObj);
       } else {
-        coverObj.onload = () => adjustSize(coverObj, size);
-      }
-
-      function adjustSize(obj, initialSize) {
-        if (obj.contentDocument && obj.contentDocument.documentElement) {
-          const pdfWidth = obj.contentDocument.documentElement.scrollWidth * 0.6; // Adjusted to 60%
-          const pdfHeight = obj.contentDocument.documentElement.scrollHeight * 0.6; // Adjusted to 60%
-          const newSize = Math.min(pdfWidth * 2, pdfHeight);
-          book.style.width = newSize + 'px';
-          book.style.height = newSize + 'px';
-          cover.style.width = newSize + 'px';
-          cover.style.height = newSize + 'px';
-        }
+        coverObj.onload = () => adjustSize(coverObj);
       }
     });
 
     // Responsiveness
     window.addEventListener('resize', () => {
-      let initialWidth = window.innerWidth * 0.6; // Increased to 60%
-      let initialHeight = window.innerHeight * 0.6; // Increased to 60%
-      const size = Math.min(initialWidth * 2, initialHeight);
-      book.style.width = size + 'px';
-      book.style.height = size + 'px';
-      cover.style.width = size + 'px';
-      cover.style.height = size + 'px';
-
       const coverObj = document.querySelector('.book-cover object');
       if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
-        adjustSize(coverObj, size);
+        adjustSize(coverObj);
       }
     });
 
