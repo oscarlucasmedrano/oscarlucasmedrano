@@ -12,6 +12,9 @@
       width: 100vw;
       background: black;
       overflow: hidden;
+      display: flex; /* Added for vertical centering */
+      justify-content: center; /* Center horizontally */
+      align-items: center; /* Center vertically */
     }
     .book {
       position: relative;
@@ -125,7 +128,7 @@
         const page = await pdf.getPage(1);
         const canvas = document.getElementById(canvasId);
         const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 0.7 }); // Reduced from 1.0 to 0.7 to shrink
+        const viewport = page.getViewport({ scale: 0.7 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
@@ -136,7 +139,7 @@
           const pageWidth = viewport.width;
           const pageHeight = viewport.height;
           if (!book.style.width) {
-            book.style.width = `${pageWidth * 2}px`; // Double width for cover
+            book.style.width = `${pageWidth * 2}px`;
             book.style.height = `${pageHeight}px`;
             document.querySelector('.book-cover').style.width = `${pageWidth * 2}px`;
             document.querySelector('.book-cover').style.height = `${pageHeight}px`;
