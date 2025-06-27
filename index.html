@@ -30,6 +30,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      text-align: center;
     }
     .book-cover {
       display: block;
@@ -110,6 +111,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        text-align: center;
       }
       .book-cover {
         width: 100%;
@@ -196,16 +198,17 @@
           document.querySelector('.book-cover-wrapper').style.height = `${pageHeight}px`;
           document.querySelector('.book-cover-wrapper').style.width = `${pageWidth * 2}px`;
         }
-        // Adjust cover canvas to match the first page's size
+        // No direct style assignment for cover canvas, let CSS handle it
+      } catch (error) {
+        console.error(`${canvasId} render failed:`, error);
         if (canvasId === 'cover-canvas') {
           const aboutCanvas = document.getElementById('about-canvas');
           if (aboutCanvas) {
-            canvas.style.width = `${aboutCanvas.width}px`;
-            canvas.style.height = `${aboutCanvas.height}px`;
+            canvas.width = aboutCanvas.width;
+            canvas.height = aboutCanvas.height;
+            console.log(`Fallback size for ${canvasId}: ${canvas.width}x${canvas.height}`);
           }
         }
-      } catch (error) {
-        console.error(`${canvasId} render failed:`, error);
       }
     }
 
