@@ -24,6 +24,8 @@
       align-items: center;
       background-color: black; /* Container background set to black */
       overflow: hidden; /* Remove scrollbars */
+      min-width: 600px; /* Default minimum width */
+      min-height: 400px; /* Default minimum height */
     }
     .book-cover {
       position: absolute;
@@ -86,6 +88,8 @@
       .book {
         width: 90vw;
         height: auto;
+        min-width: 0; /* Allow full scaling */
+        min-height: 0;
       }
       .page {
         width: 50%;
@@ -119,34 +123,48 @@
 
     // Adjust size based on PDF dimensions
     function adjustSize() {
+      console.log("Adjusting size...");
+      const coverObj = document.querySelector('.book-cover object');
       const pdf1 = document.querySelector('.book-pages .page:first-child object');
       const pdf2 = document.querySelector('.book-pages .page:last-child object');
-      const coverObj = document.querySelector('.book-cover object');
-      if (pdf1.contentDocument && pdf1.contentDocument.documentElement && pdf2.contentDocument && pdf2.contentDocument.documentElement && coverObj.contentDocument && coverObj.contentDocument.documentElement) {
+      if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
+        console.log("Cover loaded");
+        let coverWidth = coverObj.contentDocument.documentElement.scrollWidth;
+        let coverHeight = coverObj.contentDocument.documentElement.scrollHeight;
+        book.style.width = coverWidth + 'px';
+        book.style.height = coverHeight + 'px';
+        cover.style.width = coverWidth + 'px';
+        cover.style.height = coverHeight + 'px';
+      } else {
+        console.log("Cover not loaded, using default size");
+        book.style.width = '600px';
+        book.style.height = '400px';
+      }
+      if (pdf1.contentDocument && pdf1.contentDocument.documentElement && pdf2.contentDocument && pdf2.contentDocument.documentElement) {
+        console.log("Pages loaded");
         const width1 = pdf1.contentDocument.documentElement.scrollWidth;
         const width2 = pdf2.contentDocument.documentElement.scrollWidth;
         const height1 = pdf1.contentDocument.documentElement.scrollHeight;
         const height2 = pdf2.contentDocument.documentElement.scrollHeight;
-        const coverHeight = coverObj.contentDocument.documentElement.scrollHeight;
-        const coverWidth = coverObj.contentDocument.documentElement.scrollWidth;
-        const totalWidth = width1 + width2; // Combined width of about and toc PDFs
-        const maxHeight = Math.max(height1, height2, coverHeight); // Height of tallest PDF
+        const totalWidth = width1 + width2;
+        const maxHeight = Math.max(height1, height2);
         book.style.width = totalWidth + 'px';
         book.style.height = maxHeight + 'px';
-        cover.style.width = coverWidth + 'px'; // Cover width based on its PDF
-        cover.style.height = coverHeight + 'px'; // Cover height based on its PDF
         document.querySelector('.book-pages').style.width = totalWidth + 'px';
         document.querySelector('.book-pages').style.height = maxHeight + 'px';
+      } else {
+        console.log("Pages not loaded yet");
       }
     }
 
     // Set initial size and adjust with PDF load
     window.addEventListener('load', () => {
       const coverObj = document.querySelector('.book-cover object');
-      if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
-        adjustSize();
+      if (coverObj) {
+        coverObj.onload = adjustSize;
       } else {
-        coverObj.onload = () => adjustSize();
+        console.log("Cover object not found");
+        adjustSize();
       }
     });
 
