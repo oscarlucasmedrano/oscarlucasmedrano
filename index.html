@@ -27,7 +27,7 @@
       align-items: center;
       width: 80vw;
       height: 80vh;
-      background-color: black; /* Changed to black */
+      background-color: black; /* Container background set to black */
     }
     .book-cover {
       position: absolute;
@@ -42,7 +42,7 @@
       width: 100%;
       height: 100%;
     }
-    .book-cover img {
+    .book-cover object {
       width: 100%;
       height: 100%;
       object-fit: contain;
@@ -66,7 +66,7 @@
     .page {
       width: 50%;
       height: 100%;
-      background: #fff;
+      background: black; /* Page background set to black */
       position: absolute;
       transform-style: preserve-3d;
       transition: transform 0.6s;
@@ -82,13 +82,13 @@
       justify-content: center;
       align-items: center;
     }
-    .page-front img {
+    .page-front object {
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
     .page-back {
-      background: #fff;
+      background: black;
       transform: rotateY(180deg);
     }
     .crease {
@@ -116,16 +116,16 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <img src="cover.png" alt="Cover">
+      <object data="cover.pdf" type="application/pdf" alt="Cover"></object>
     </div>
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page left" style="left: 0;">
-        <div class="page-front"><img src="about.pdf" alt="About"></div>
+        <div class="page-front"><object data="about.pdf" type="application/pdf" alt="About"></object></div>
         <div class="page-back"></div>
       </div>
       <div class="page right" style="right: 0;">
-        <div class="page-front"><img src="table of contents.pdf" alt="Table of Contents"></div>
+        <div class="page-front"><object data="table_of_contents.pdf" type="application/pdf" alt="Table of Contents"></object></div>
         <div class="page-back"></div>
       </div>
     </div>
@@ -137,12 +137,12 @@
     const pages = document.querySelectorAll('.page');
     let isOpen = false;
 
-    // Set initial size based on cover PNG
+    // Set initial size based on cover PDF
     window.addEventListener('load', () => {
-      const coverImg = document.querySelector('.book-cover img');
-      if (coverImg.complete) {
-        const width = coverImg.naturalWidth * 0.4;
-        const height = coverImg.naturalHeight * 0.4;
+      const coverObj = document.querySelector('.book-cover object');
+      if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
+        const width = coverObj.contentDocument.documentElement.scrollWidth * 0.4;
+        const height = coverObj.contentDocument.documentElement.scrollHeight * 0.4;
         book.style.width = width * 2 + 'px';
         book.style.height = height + 'px';
         cover.style.width = width * 2 + 'px';
@@ -152,9 +152,9 @@
           page.style.height = height + 'px';
         });
       } else {
-        coverImg.onload = () => {
-          const width = coverImg.naturalWidth * 0.4;
-          const height = coverImg.naturalHeight * 0.4;
+        coverObj.onload = () => {
+          const width = coverObj.contentDocument.documentElement.scrollWidth * 0.4;
+          const height = coverObj.contentDocument.documentElement.scrollHeight * 0.4;
           book.style.width = width * 2 + 'px';
           book.style.height = height + 'px';
           cover.style.width = width * 2 + 'px';
@@ -169,10 +169,10 @@
 
     // Responsiveness
     window.addEventListener('resize', () => {
-      const coverImg = document.querySelector('.book-cover img');
-      if (coverImg.naturalWidth && coverImg.naturalHeight) {
-        const width = Math.min(coverImg.naturalWidth * 0.4, window.innerWidth / 2);
-        const height = Math.min(coverImg.naturalHeight * 0.4, window.innerHeight);
+      const coverObj = document.querySelector('.book-cover object');
+      if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
+        const width = Math.min(coverObj.contentDocument.documentElement.scrollWidth * 0.4, window.innerWidth / 2);
+        const height = Math.min(coverObj.contentDocument.documentElement.scrollHeight * 0.4, window.innerHeight);
         book.style.width = width * 2 + 'px';
         book.style.height = height + 'px';
         cover.style.width = width * 2 + 'px';
