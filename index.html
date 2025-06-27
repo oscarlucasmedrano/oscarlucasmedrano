@@ -13,7 +13,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: black; /* Full screen black background */
+      background: black;
       overflow: hidden;
     }
     .book {
@@ -22,11 +22,11 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: black; /* Container background set to black */
-      overflow: hidden; /* Remove scrollbars */
-      border: none; /* Hide any border artifacts */
-      width: 800px; /* Default width */
-      height: 600px; /* Default height */
+      background-color: black;
+      overflow: hidden;
+      border: none;
+      width: 800px;
+      height: 600px;
     }
     .book-cover {
       position: absolute;
@@ -45,7 +45,7 @@
       border: none;
     }
     .book.open .book-cover {
-      display: none; /* Hide cover when open */
+      display: none;
     }
     .book-pages {
       position: absolute;
@@ -56,7 +56,7 @@
       width: 100%;
       height: 100%;
       z-index: 5;
-      overflow: hidden; /* Remove scrollbars */
+      overflow: hidden;
       border: none;
     }
     .book.open .book-pages {
@@ -65,11 +65,11 @@
     .page {
       width: 50%;
       height: 100%;
-      background: black; /* Page background set to black */
+      background: black;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden; /* Remove scrollbars */
+      overflow: hidden;
       border: none;
     }
     .page embed {
@@ -86,8 +86,6 @@
       transform: translateX(-50%);
       z-index: 6;
     }
-
-    /* Mobile responsiveness */
     @media (max-width: 768px) {
       .book {
         width: 90vw;
@@ -99,7 +97,7 @@
         width: 50%;
       }
       .crease {
-        display: none; /* Hide crease on mobile */
+        display: none;
       }
     }
   </style>
@@ -107,7 +105,7 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <embed src="page1.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed: 404 or file not found. Check if page1.pdf exists in the same directory as index.html or correct the path.');">
+      <embed src="page1.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed: 404 or file not found. Check if page1.pdf exists.');">
     </div>
     <div class="book-pages">
       <div class="crease"></div>
@@ -122,32 +120,30 @@
 
   <script>
     const book = document.querySelector('.book');
-    let isOpen = false; // Start closed with cover
+    let isOpen = false;
     let loadCount = 0;
 
-    // Check if all PDFs are loaded and adjust size
     function checkLoad() {
       loadCount++;
       console.log(`Load count: ${loadCount}`);
-      if (loadCount === 3) { // Cover, About, TOC
+      if (loadCount === 3) {
         adjustSize();
       } else if (loadCount < 3) {
-        setTimeout(adjustSize, 500); // Retry if not all loaded
+        setTimeout(adjustSize, 500);
       }
     }
 
-    // Adjust size based on PDF dimensions
     function adjustSize() {
       console.log("Adjusting size...");
       const coverEmbed = document.querySelector('.book-cover embed');
       const embed1 = document.querySelector('.book-pages .page:first-child embed');
       const embed2 = document.querySelector('.book-pages .page:last-child embed');
-      let coverWidth = 800; // Default
-      let coverHeight = 600; // Default
-      let width1 = 400; // Default half
-      let width2 = 400; // Default half
-      let height1 = 600; // Default
-      let height2 = 600; // Default
+      let coverWidth = 800;
+      let coverHeight = 600;
+      let width1 = 400;
+      let width2 = 400;
+      let height1 = 600;
+      let height2 = 600;
 
       if (coverEmbed && coverEmbed.offsetWidth > 0) {
         console.log("Cover loaded");
@@ -181,7 +177,6 @@
       document.querySelector('.book-pages').style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
     }
 
-    // Set initial size and adjust with PDF load
     window.addEventListener('load', () => {
       const embeds = document.querySelectorAll('embed');
       embeds.forEach(embed => {
@@ -193,10 +188,9 @@
           console.log("Not all PDFs loaded, forcing adjustment");
           adjustSize();
         }
-      }, 1000); // Wait 1 second as a final fallback
+      }, 1000);
     });
 
-    // Click navigation (open book)
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
@@ -210,7 +204,6 @@
       }
     });
 
-    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' && isOpen) {
         isOpen = false;
