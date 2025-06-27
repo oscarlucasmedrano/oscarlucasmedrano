@@ -19,6 +19,7 @@
       background-color: black;
       overflow: hidden;
       border: none;
+      margin: 0 auto; /* Added to center the book */
     }
     .book-cover {
       position: absolute;
@@ -124,7 +125,7 @@
         const page = await pdf.getPage(1);
         const canvas = document.getElementById(canvasId);
         const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1.5 });
+        const viewport = page.getViewport({ scale: 1.0 }); // Reduced from 1.5 to shrink
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
