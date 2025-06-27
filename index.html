@@ -26,7 +26,7 @@
     }
     .book-cover {
       position: absolute;
-      background: black; /* Changed to black to remove white space */
+      background: black;
       z-index: 10;
       display: flex;
       justify-content: center;
@@ -36,7 +36,7 @@
     .book-cover canvas {
       max-width: 100%;
       max-height: 100%;
-      object-fit: fill; /* Changed to fill to eliminate white space */
+      object-fit: fill;
       border: none;
     }
     .book.open .book-cover {
@@ -111,6 +111,15 @@
       <div class="page">
         <canvas id="toc-canvas"></canvas>
       </div>
+      <div class="page">
+        <canvas id="page4-5-canvas"></canvas>
+      </div>
+      <div class="page">
+        <canvas id="page6-7-canvas"></canvas>
+      </div>
+      <div class="page">
+        <canvas id="page8-9-canvas"></canvas>
+      </div>
     </div>
   </div>
 
@@ -135,11 +144,11 @@
         console.log(`${canvasId} rendered`);
 
         // Set book size based on the width of a single page (about.pdf or toc.pdf) doubled for cover
-        if (canvasId === 'about-canvas' || canvasId === 'toc-canvas') {
+        if (canvasId === 'about-canvas' || canvasId === 'toc-canvas' || canvasId === 'page4-5-canvas' || canvasId === 'page6-7-canvas' || canvasId === 'page8-9-canvas') {
           const pageWidth = viewport.width;
           const pageHeight = viewport.height;
           if (!book.style.width) {
-            book.style.width = `${pageWidth * 2}px`;
+            book.style.width = `${pageWidth * 2}px`; // Adjusted for two pages at a time
             book.style.height = `${pageHeight}px`;
             document.querySelector('.book-cover').style.width = `${pageWidth * 2}px`;
             document.querySelector('.book-cover').style.height = `${pageHeight}px`;
@@ -167,6 +176,9 @@
     renderPDF('page1.pdf', 'cover-canvas');
     renderPDF('about.pdf', 'about-canvas');
     renderPDF('table_of_contents.pdf', 'toc-canvas');
+    renderPDF('page4-5.pdf', 'page4-5-canvas');
+    renderPDF('page6-7.pdf', 'page6-7-canvas');
+    renderPDF('page8-9.pdf', 'page8-9-canvas');
 
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
