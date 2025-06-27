@@ -24,23 +24,26 @@
       border: none;
       margin: 0 auto;
     }
+    .book-cover-wrapper {
+      width: 80vw;
+      margin: 0 auto;
+    }
     .book-cover {
       display: block;
-      width: 80vw;
+      width: 100%;
       height: auto;
-      margin: 0 auto;
       background: black;
       border: none;
     }
     .book-cover canvas {
-      width: 100%;
-      height: auto;
-      max-width: 80vw;
-      max-height: calc(80vw * (9/16)); /* Adjust aspect ratio as needed */
-      object-fit: contain;
+      width: 100% !important;
+      height: auto !important;
+      max-width: 80vw !important;
+      max-height: calc(80vw * (9/16)) !important; /* Adjust aspect ratio as needed */
+      object-fit: contain !important;
       border: none;
     }
-    .book.open .book-cover {
+    .book.open .book-cover-wrapper {
       display: none;
     }
     .book-pages {
@@ -99,17 +102,20 @@
       .page {
         width: 50%;
       }
-      .book-cover {
+      .book-cover-wrapper {
         width: 80vw;
-        height: auto;
         margin: 0 auto;
       }
-      .book-cover canvas {
+      .book-cover {
         width: 100%;
         height: auto;
-        max-width: 80vw;
-        max-height: calc(80vw * (9/16)); /* Adjust aspect ratio as needed */
-        object-fit: contain;
+      }
+      .book-cover canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 80vw !important;
+        max-height: calc(80vw * (9/16)) !important; /* Adjust aspect ratio as needed */
+        object-fit: contain !important;
       }
       .crease {
         display: block;
@@ -119,8 +125,10 @@
 </head>
 <body>
   <div class="book">
-    <div class="book-cover">
-      <canvas id="cover-canvas"></canvas>
+    <div class="book-cover-wrapper">
+      <div class="book-cover">
+        <canvas id="cover-canvas"></canvas>
+      </div>
     </div>
     <div class="book-pages">
       <div class="crease"></div> <!-- Between 2-3 -->
