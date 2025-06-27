@@ -107,15 +107,15 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <embed src="cover.pdf" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed: 404 or file not found. Check if cover.pdf exists in the same directory as index.html or correct the path.');">
+      <embed src="page1.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed: 404 or file not found. Check if page1.pdf exists in the same directory as index.html or correct the path.');">
     </div>
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page">
-        <embed src="about.pdf" type="application/pdf" alt="About" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('About load failed: 404 or file not found');">
+        <embed src="about.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="About" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('About load failed: 404 or file not found');">
       </div>
       <div class="page">
-        <embed src="table of contents.pdf" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('TOC load failed: 404 or file not found');">
+        <embed src="table_of_contents.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('TOC load failed: 404 or file not found');">
       </div>
     </div>
   </div>
