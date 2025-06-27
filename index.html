@@ -194,18 +194,14 @@
           book.style.width = `${pageWidth * 2}px`;
           book.style.height = `${pageHeight}px`;
           document.querySelector('.book-cover-wrapper').style.height = `${pageHeight}px`;
+          document.querySelector('.book-cover-wrapper').style.width = `${pageWidth * 2}px`;
         }
-        // Adjust cover canvas to match book size if needed
-        if (canvasId === 'cover-canvas' && book.style.width) {
-          const bookWidth = parseInt(book.style.width, 10);
-          const bookHeight = parseInt(book.style.height, 10);
-          const coverAspect = viewport.width / viewport.height;
-          if (bookWidth / bookHeight > coverAspect) {
-            canvas.style.height = `${bookHeight}px`;
-            canvas.style.width = `${bookHeight * coverAspect}px`;
-          } else {
-            canvas.style.width = `${bookWidth}px`;
-            canvas.style.height = `${bookWidth / coverAspect}px`;
+        // Adjust cover canvas to match the first page's size
+        if (canvasId === 'cover-canvas') {
+          const aboutCanvas = document.getElementById('about-canvas');
+          if (aboutCanvas) {
+            canvas.style.width = `${aboutCanvas.width}px`;
+            canvas.style.height = `${aboutCanvas.height}px`;
           }
         }
       } catch (error) {
