@@ -101,14 +101,17 @@
       .book-cover {
         width: 80vw;
         height: auto;
+        position: relative; /* Changed to relative to respect flex centering */
       }
       .book-cover canvas {
+        width: 100%;
+        height: auto;
         max-width: 80vw;
-        max-height: calc(80vw * (9/16)); /* Adjust based on aspect ratio, e.g., 9:16 or use page height ratio */
-        object-fit: contain; /* Changed to contain for proper scaling */
+        max-height: calc(80vw * (9/16)); /* Adjust aspect ratio as needed */
+        object-fit: contain; /* Ensure it fits and centers */
       }
       .crease {
-        display: block; /* Removed display: none to allow visibility */
+        display: block;
       }
     }
   </style>
