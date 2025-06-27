@@ -25,8 +25,6 @@
       background-color: black;
       overflow: hidden;
       border: none;
-      width: 800px;
-      height: 600px;
     }
     .book-cover {
       position: absolute;
@@ -35,8 +33,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 100%;
-      height: 100%;
       border: none;
     }
     .book-cover canvas {
@@ -125,21 +121,28 @@
     const book = document.querySelector('.book');
     let isOpen = false;
 
-    // PDF.js setup
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     async function renderPDF(pdfUrl, canvasId) {
       try {
         const loadingTask = pdfjsLib.getDocument(pdfUrl);
         const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1); // Render the first page
+        const page = await pdf.getPage(1);
         const canvas = document.getElementById(canvasId);
         const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1.5 }); // Adjust scale for clarity
+        const viewport = page.getViewport({ scale: 1.5 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered`);
+
+        // Set book size based on cover
+        if (canvasId === 'cover-canvas') {
+          book.style.width = `${viewport.width}px`;
+          book.style.height = `${viewport.height}px`;
+          document.querySelector('.book-cover').style.width = `${viewport.width}px`;
+          document.querySelector('.book-cover').style.height = `${viewport.height}px`;
+        }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error);
       }
