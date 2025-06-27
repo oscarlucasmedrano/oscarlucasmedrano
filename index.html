@@ -125,7 +125,7 @@
         const page = await pdf.getPage(1);
         const canvas = document.getElementById(canvasId);
         const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1.0 });
+        const viewport = page.getViewport({ scale: 0.7 }); // Reduced from 1.0 to 0.7 to shrink
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
@@ -190,5 +190,3 @@
   </script>
 </body>
 </html>
-</xArtifact>
-
