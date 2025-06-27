@@ -28,9 +28,28 @@
       width: 800px; /* Default width */
       height: 600px; /* Default height */
     }
+    .book-cover {
+      position: absolute;
+      background: #fff;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .book-cover embed {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .book.open .book-cover {
+      display: none; /* Hide cover when open */
+    }
     .book-pages {
       position: absolute;
-      display: flex; /* Always display pages */
+      display: none;
       flex-direction: row;
       justify-content: center;
       align-items: center;
@@ -39,6 +58,9 @@
       z-index: 5;
       overflow: hidden; /* Remove scrollbars */
       border: none;
+    }
+    .book.open .book-pages {
+      display: flex;
     }
     .page {
       width: 50%;
@@ -50,10 +72,9 @@
       overflow: hidden; /* Remove scrollbars */
       border: none;
     }
-    .page object {
+    .page embed {
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Fit without scroll or download bar */
       border: none;
     }
     .crease {
@@ -85,89 +106,107 @@
 </head>
 <body>
   <div class="book">
+    <div class="book-cover">
+      <embed src="cover.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed');">
+    </div>
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page">
-        <object data="about.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="About" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('About load failed');"></object>
+        <embed src="about.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="About" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('About load failed');">
       </div>
       <div class="page">
-        <object data="table_of_contents.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('TOC load failed');"></object>
+        <embed src="table_of_contents.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('TOC load failed');">
       </div>
     </div>
   </div>
 
   <script>
     const book = document.querySelector('.book');
-    let isOpen = true; // Start as open
+    let isOpen = false; // Start closed with cover
     let loadCount = 0;
 
-    // Check if both PDFs are loaded and adjust size
+    // Check if all PDFs are loaded and adjust size
     function checkLoad() {
       loadCount++;
       console.log(`Load count: ${loadCount}`);
-      if (loadCount === 2) {
+      if (loadCount === 3) { // Cover, About, TOC
         adjustSize();
-      } else if (loadCount < 2) {
-        setTimeout(adjustSize, 500); // Retry if not both loaded
+      } else if (loadCount < 3) {
+        setTimeout(adjustSize, 500); // Retry if not all loaded
       }
     }
 
     // Adjust size based on PDF dimensions
     function adjustSize() {
       console.log("Adjusting size...");
-      const pdf1 = document.querySelector('.book-pages .page:first-child object');
-      const pdf2 = document.querySelector('.book-pages .page:last-child object');
+      const coverEmbed = document.querySelector('.book-cover embed');
+      const embed1 = document.querySelector('.book-pages .page:first-child embed');
+      const embed2 = document.querySelector('.book-pages .page:last-child embed');
+      let coverWidth = 800; // Default
+      let coverHeight = 600; // Default
       let width1 = 400; // Default half
       let width2 = 400; // Default half
       let height1 = 600; // Default
       let height2 = 600; // Default
 
-      if (pdf1 && pdf1.contentDocument && pdf1.contentDocument.documentElement) {
+      if (coverEmbed && coverEmbed.offsetWidth > 0) {
+        console.log("Cover loaded");
+        coverWidth = coverEmbed.offsetWidth;
+        coverHeight = coverEmbed.offsetHeight;
+      } else {
+        console.log("Cover not loaded, using default");
+      }
+      if (embed1 && embed1.offsetWidth > 0) {
         console.log("About loaded");
-        width1 = pdf1.contentDocument.documentElement.scrollWidth;
-        height1 = pdf1.contentDocument.documentElement.scrollHeight;
+        width1 = embed1.offsetWidth;
+        height1 = embed1.offsetHeight;
       } else {
         console.log("About not loaded, using default");
       }
-      if (pdf2 && pdf2.contentDocument && pdf2.contentDocument.documentElement) {
+      if (embed2 && embed2.offsetHeight > 0) {
         console.log("TOC loaded");
-        width2 = pdf2.contentDocument.documentElement.scrollWidth;
-        height2 = pdf2.contentDocument.documentElement.scrollHeight;
+        width2 = embed2.offsetWidth;
+        height2 = embed2.offsetHeight;
       } else {
         console.log("TOC not loaded, using default");
       }
 
       const totalWidth = width1 + width2;
-      const maxHeight = Math.max(height1, height2);
+      const maxHeight = Math.max(coverHeight, height1, height2);
       book.style.width = totalWidth > 0 ? totalWidth + 'px' : '800px';
       book.style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
+      document.querySelector('.book-cover').style.width = coverWidth > 0 ? coverWidth + 'px' : '800px';
+      document.querySelector('.book-cover').style.height = coverHeight > 0 ? coverHeight + 'px' : '600px';
       document.querySelector('.book-pages').style.width = totalWidth > 0 ? totalWidth + 'px' : '800px';
       document.querySelector('.book-pages').style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
     }
 
     // Set initial size and adjust with PDF load
     window.addEventListener('load', () => {
+      const embeds = document.querySelectorAll('embed');
+      embeds.forEach(embed => {
+        embed.onload = checkLoad;
+        embed.onerror = () => console.log(`${embed.alt} load failed`);
+      });
       setTimeout(() => {
-        if (loadCount < 2) {
+        if (loadCount < 3) {
           console.log("Not all PDFs loaded, forcing adjustment");
           adjustSize();
         }
       }, 1000); // Wait 1 second as a final fallback
     });
 
-    // Responsiveness
-    window.addEventListener('resize', () => {
-      adjustSize();
-    });
-
-    // Click navigation (toggle open/close)
+    // Click navigation (open book)
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
 
-      if (clickX > rect.width / 2) {
-        isOpen = !isOpen;
-        book.classList.toggle('open', isOpen);
+      if (!isOpen && clickX > rect.width / 2) {
+        book.classList.add('open');
+        isOpen = true;
+      } else if (isOpen) {
+        book.classList.remove('open');
+        isOpen = false;
       }
     });
 
