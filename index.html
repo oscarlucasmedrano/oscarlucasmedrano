@@ -74,14 +74,14 @@
       border: none;
     }
     .crease {
-      position: absolute;
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      left: 50%;
-      transform: translateX(-50%);
       z-index: 6;
     }
+    /* Add creases between page pairs */
+    .book-pages .crease:nth-child(2) { left: 33.33%; transform: translateX(-50%); }
+    .book-pages .crease:nth-child(4) { left: 66.67%; transform: translateX(-50%); }
     @media (max-width: 768px) {
       .book {
         width: 80vw;
@@ -104,21 +104,26 @@
       <canvas id="cover-canvas"></canvas>
     </div>
     <div class="book-pages">
-      <div class="crease"></div>
+      <div class="crease"></div> <!-- Between cover and 4-5 -->
       <div class="page">
-        <canvas id="about-canvas"></canvas>
+        <canvas id="page4-canvas"></canvas>
       </div>
       <div class="page">
-        <canvas id="toc-canvas"></canvas>
+        <canvas id="page5-canvas"></canvas>
+      </div>
+      <div class="crease"></div> <!-- Between 4-5 and 6-7 -->
+      <div class="page">
+        <canvas id="page6-canvas"></canvas>
       </div>
       <div class="page">
-        <canvas id="page4-5-canvas"></canvas>
+        <canvas id="page7-canvas"></canvas>
+      </div>
+      <div class="crease"></div> <!-- Between 6-7 and 8-9 -->
+      <div class="page">
+        <canvas id="page8-canvas"></canvas>
       </div>
       <div class="page">
-        <canvas id="page6-7-canvas"></canvas>
-      </div>
-      <div class="page">
-        <canvas id="page8-9-canvas"></canvas>
+        <canvas id="page9-canvas"></canvas>
       </div>
     </div>
   </div>
@@ -143,12 +148,14 @@
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered`);
 
-        // Set book size based on the width of a single page (about.pdf or toc.pdf) doubled for cover
-        if (canvasId === 'about-canvas' || canvasId === 'toc-canvas' || canvasId === 'page4-5-canvas' || canvasId === 'page6-7-canvas' || canvasId === 'page8-9-canvas') {
+        // Set book size based on the width of a single page (using the first page rendered)
+        if (canvasId === 'page4-canvas' || canvasId === 'page5-canvas' || canvasId === 'page6-canvas' || 
+            canvasId === 'page7-canvas' || canvasId === 'page8-canvas' || canvasId === 'page9-canvas' ||
+            canvasId === 'about-canvas' || canvasId === 'toc-canvas') {
           const pageWidth = viewport.width;
           const pageHeight = viewport.height;
           if (!book.style.width) {
-            book.style.width = `${pageWidth * 2}px`; // Adjusted for two pages at a time
+            book.style.width = `${pageWidth * 2}px`; // Size based on a pair
             book.style.height = `${pageHeight}px`;
             document.querySelector('.book-cover').style.width = `${pageWidth * 2}px`;
             document.querySelector('.book-cover').style.height = `${pageHeight}px`;
@@ -176,9 +183,12 @@
     renderPDF('page1.pdf', 'cover-canvas');
     renderPDF('about.pdf', 'about-canvas');
     renderPDF('table_of_contents.pdf', 'toc-canvas');
-    renderPDF('page4-5.pdf', 'page4-5-canvas');
-    renderPDF('page6-7.pdf', 'page6-7-canvas');
-    renderPDF('page8-9.pdf', 'page8-9-canvas');
+    renderPDF('page4.pdf', 'page4-canvas');
+    renderPDF('page5.pdf', 'page5-canvas');
+    renderPDF('page6.pdf', 'page6-canvas');
+    renderPDF('page7.pdf', 'page7-canvas');
+    renderPDF('page8.pdf', 'page8-canvas');
+    renderPDF('page9.pdf', 'page9-canvas');
 
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
