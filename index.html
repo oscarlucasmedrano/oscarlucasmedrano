@@ -19,7 +19,7 @@
       background-color: black;
       overflow: hidden;
       border: none;
-      margin: 0 auto; /* Added to center the book */
+      margin: 0 auto;
     }
     .book-cover {
       position: absolute;
@@ -125,18 +125,35 @@
         const page = await pdf.getPage(1);
         const canvas = document.getElementById(canvasId);
         const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 1.0 }); // Reduced from 1.5 to shrink
+        const viewport = page.getViewport({ scale: 1.0 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered`);
 
-        // Set book size based on cover
-        if (canvasId === 'cover-canvas') {
-          book.style.width = `${viewport.width}px`;
-          book.style.height = `${viewport.height}px`;
-          document.querySelector('.book-cover').style.width = `${viewport.width}px`;
-          document.querySelector('.book-cover').style.height = `${viewport.height}px`;
+        // Set book size based on the width of a single page (about.pdf or toc.pdf) doubled for cover
+        if (canvasId === 'about-canvas' || canvasId === 'toc-canvas') {
+          const pageWidth = viewport.width;
+          const pageHeight = viewport.height;
+          if (!book.style.width) {
+            book.style.width = `${pageWidth * 2}px`; // Double width for cover
+            book.style.height = `${pageHeight}px`;
+            document.querySelector('.book-cover').style.width = `${pageWidth * 2}px`;
+            document.querySelector('.book-cover').style.height = `${pageHeight}px`;
+          }
+        }
+        // Adjust cover canvas to match book size if needed
+        if (canvasId === 'cover-canvas' && book.style.width) {
+          const bookWidth = parseInt(book.style.width, 10);
+          const bookHeight = parseInt(book.style.height, 10);
+          const coverAspect = viewport.width / viewport.height;
+          if (bookWidth / bookHeight > coverAspect) {
+            canvas.style.height = `${bookHeight}px`;
+            canvas.style.width = `${bookHeight * coverAspect}px`;
+          } else {
+            canvas.style.width = `${bookWidth}px`;
+            canvas.style.height = `${bookWidth / coverAspect}px`;
+          }
         }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error);
@@ -173,3 +190,5 @@
   </script>
 </body>
 </html>
+</xArtifact>
+
