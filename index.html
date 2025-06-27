@@ -22,11 +22,16 @@
       background-color: black;
       overflow: hidden;
       border: none;
-      margin: 0 auto;
     }
-    .book-cover-wrapper {
+    .book-content {
       width: 80vw;
       margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .book-cover-wrapper {
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -101,19 +106,15 @@
         min-width: 0;
         min-height: 0;
       }
+      .book-content {
+        width: 80vw;
+        margin: 0 auto;
+      }
       .page {
         width: 50%;
       }
       .book-cover-wrapper {
-        width: 80vw;
-        margin: 0 auto;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .book-cover {
         width: 100%;
-        height: auto;
       }
       .book-cover canvas {
         width: 100% !important;
@@ -129,9 +130,11 @@
 </head>
 <body>
   <div class="book">
-    <div class="book-cover-wrapper">
-      <div class="book-cover">
-        <canvas id="cover-canvas"></canvas>
+    <div class="book-content">
+      <div class="book-cover-wrapper">
+        <div class="book-cover">
+          <canvas id="cover-canvas"></canvas>
+        </div>
       </div>
     </div>
     <div class="book-pages">
@@ -185,7 +188,7 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
-        console.log(`${canvasId} rendered`);
+        console.log(`${canvasId} rendered successfully`);
 
         // Set book and cover wrapper size based on the first page's dimensions
         if (canvasId === 'about-canvas') {
@@ -193,8 +196,8 @@
           const pageHeight = viewport.height;
           book.style.width = `${pageWidth * 2}px`;
           book.style.height = `${pageHeight}px`;
-          document.querySelector('.book-cover-wrapper').style.height = `${pageHeight}px`;
-          document.querySelector('.book-cover-wrapper').style.width = `${pageWidth * 2}px`;
+          document.querySelector('.book-content').style.height = `${pageHeight}px`;
+          document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
         }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error);
@@ -207,6 +210,10 @@
               coverCanvas.width = aboutCanvas.width;
               coverCanvas.height = aboutCanvas.height;
               console.log(`Fallback size for cover-canvas: ${coverCanvas.width}x${coverCanvas.height}`);
+            } else {
+              coverCanvas.width = 300;
+              coverCanvas.height = 400;
+              console.log(`Default fallback size for cover-canvas: 300x400`);
             }
           }
         }
