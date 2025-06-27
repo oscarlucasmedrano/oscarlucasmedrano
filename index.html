@@ -12,9 +12,9 @@
       width: 100vw;
       background: black;
       overflow: hidden;
-      display: flex; /* Added for vertical centering */
-      justify-content: center; /* Center horizontally */
-      align-items: center; /* Center vertically */
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .book {
       position: relative;
@@ -26,7 +26,7 @@
     }
     .book-cover {
       position: absolute;
-      background: #fff;
+      background: black; /* Changed to black to remove white space */
       z-index: 10;
       display: flex;
       justify-content: center;
@@ -36,7 +36,7 @@
     .book-cover canvas {
       max-width: 100%;
       max-height: 100%;
-      object-fit: contain;
+      object-fit: fill; /* Changed to fill to eliminate white space */
       border: none;
     }
     .book.open .book-cover {
