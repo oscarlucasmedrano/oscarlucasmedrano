@@ -39,7 +39,7 @@
       height: 100%;
       border: none;
     }
-    .book-cover iframe {
+    .book-cover embed {
       width: 100%;
       height: 100%;
       border: none;
@@ -73,7 +73,7 @@
       overflow: hidden;
       border: none;
     }
-    .page iframe {
+    .page embed {
       width: 100%;
       height: 100%;
       border: none;
@@ -107,15 +107,15 @@
 <body>
   <div class="book">
     <div class="book-cover">
-      <iframe src="page1.pdf#toolbar=0&navpanes=0&scrollbar=0" sandbox="allow-same-origin" frameborder="0" alt="Cover" onload="this.style.visibility='visible';" onerror="console.log('Cover load failed: 404 or file not found. Check if page1.pdf exists.');"></iframe>
+      <embed src="page1.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Cover" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('Cover load failed: 404 or file not found. Verify page1.pdf exists in the same directory as index.html or correct the path.');">
     </div>
     <div class="book-pages">
       <div class="crease"></div>
       <div class="page">
-        <iframe src="about.pdf#toolbar=0&navpanes=0&scrollbar=0" sandbox="allow-same-origin" frameborder="0" alt="About" onload="this.style.visibility='visible';" onerror="console.log('About load failed: 404 or file not found');"></iframe>
+        <embed src="about.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="About" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('About load failed: 404 or file not found. Verify about.pdf exists.');">
       </div>
       <div class="page">
-        <iframe src="table_of_contents.pdf#toolbar=0&navpanes=0&scrollbar=0" sandbox="allow-same-origin" frameborder="0" alt="Table of Contents" onload="this.style.visibility='visible';" onerror="console.log('TOC load failed: 404 or file not found');"></iframe>
+        <embed src="table_of_contents.pdf?toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" alt="Table of Contents" onload="this.style.visibility='visible'; checkLoad();" onerror="console.log('TOC load failed: 404 or file not found. Verify table_of_contents.pdf exists.');">
       </div>
     </div>
   </div>
@@ -123,6 +123,75 @@
   <script>
     const book = document.querySelector('.book');
     let isOpen = false;
+    let loadCount = 0;
+
+    function checkLoad() {
+      loadCount++;
+      console.log(`Load count: ${loadCount}`);
+      if (loadCount === 3) {
+        adjustSize();
+      } else if (loadCount < 3) {
+        setTimeout(adjustSize, 500);
+      }
+    }
+
+    function adjustSize() {
+      console.log("Adjusting size...");
+      const coverEmbed = document.querySelector('.book-cover embed');
+      const embed1 = document.querySelector('.book-pages .page:first-child embed');
+      const embed2 = document.querySelector('.book-pages .page:last-child embed');
+      let coverWidth = 800;
+      let coverHeight = 600;
+      let width1 = 400;
+      let width2 = 400;
+      let height1 = 600;
+      let height2 = 600;
+
+      if (coverEmbed && coverEmbed.offsetWidth > 0) {
+        console.log("Cover loaded");
+        coverWidth = coverEmbed.offsetWidth;
+        coverHeight = coverEmbed.offsetHeight;
+      } else {
+        console.log("Cover not loaded, using default");
+      }
+      if (embed1 && embed1.offsetWidth > 0) {
+        console.log("About loaded");
+        width1 = embed1.offsetWidth;
+        height1 = embed1.offsetHeight;
+      } else {
+        console.log("About not loaded, using default");
+      }
+      if (embed2 && embed2.offsetHeight > 0) {
+        console.log("TOC loaded");
+        width2 = embed2.offsetWidth;
+        height2 = embed2.offsetHeight;
+      } else {
+        console.log("TOC not loaded, using default");
+      }
+
+      const totalWidth = width1 + width2;
+      const maxHeight = Math.max(coverHeight, height1, height2);
+      book.style.width = totalWidth > 0 ? totalWidth + 'px' : '800px';
+      book.style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
+      document.querySelector('.book-cover').style.width = coverWidth > 0 ? coverWidth + 'px' : '800px';
+      document.querySelector('.book-cover').style.height = coverHeight > 0 ? coverHeight + 'px' : '600px';
+      document.querySelector('.book-pages').style.width = totalWidth > 0 ? totalWidth + 'px' : '800px';
+      document.querySelector('.book-pages').style.height = maxHeight > 0 ? maxHeight + 'px' : '600px';
+    }
+
+    window.addEventListener('load', () => {
+      const embeds = document.querySelectorAll('embed');
+      embeds.forEach(embed => {
+        embed.onload = checkLoad;
+        embed.onerror = () => console.log(`${embed.alt} load failed: 404 or file not found`);
+      });
+      setTimeout(() => {
+        if (loadCount < 3) {
+          console.log("Not all PDFs loaded, forcing adjustment");
+          adjustSize();
+        }
+      }, 1000);
+    });
 
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
