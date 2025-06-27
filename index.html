@@ -37,6 +37,7 @@
     }
     .book-cover-wrapper {
       width: 100%;
+      height: auto;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -61,7 +62,7 @@
     }
     .book-pages {
       position: absolute;
-      display: flex; /* Force display for testing */
+      display: none;
       flex-direction: row;
       align-items: center;
       width: 100%;
@@ -123,6 +124,7 @@
       }
       .book-cover-wrapper {
         width: 100%;
+        height: auto;
       }
       .book-cover canvas {
         width: 100% !important;
@@ -250,7 +252,7 @@
       if (currentPage === 1) book.classList.add('page-pair-1');
       else if (currentPage === 2) book.classList.add('page-pair-2');
       else if (currentPage === 3) book.classList.add('page-pair-3');
-      // Hide all pages except the current pair
+      // Show the current page pair
       document.querySelectorAll('.page').forEach((page, index) => {
         page.style.display = 'none';
       });
