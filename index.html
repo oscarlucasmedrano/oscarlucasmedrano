@@ -25,8 +25,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 80vw;
-      height: 80vh;
       background-color: black; /* Container background set to black */
     }
     .book-cover {
@@ -88,7 +86,7 @@
       object-fit: contain;
     }
     .page-back {
-      background: black;
+      background: black; /* Back page background set to black */
       transform: rotateY(180deg);
     }
     .crease {
@@ -143,25 +141,27 @@
       if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
         const width = coverObj.contentDocument.documentElement.scrollWidth * 0.4;
         const height = coverObj.contentDocument.documentElement.scrollHeight * 0.4;
-        book.style.width = width * 2 + 'px';
-        book.style.height = height + 'px';
-        cover.style.width = width * 2 + 'px';
-        cover.style.height = height + 'px';
+        const size = Math.min(width * 2, height); // Ensure vertical or square layout
+        book.style.width = size + 'px';
+        book.style.height = size + 'px';
+        cover.style.width = size + 'px';
+        cover.style.height = size + 'px';
         pages.forEach(page => {
-          page.style.width = width + 'px';
-          page.style.height = height + 'px';
+          page.style.width = size / 2 + 'px';
+          page.style.height = size + 'px';
         });
       } else {
         coverObj.onload = () => {
           const width = coverObj.contentDocument.documentElement.scrollWidth * 0.4;
           const height = coverObj.contentDocument.documentElement.scrollHeight * 0.4;
-          book.style.width = width * 2 + 'px';
-          book.style.height = height + 'px';
-          cover.style.width = width * 2 + 'px';
-          cover.style.height = height + 'px';
+          const size = Math.min(width * 2, height);
+          book.style.width = size + 'px';
+          book.style.height = size + 'px';
+          cover.style.width = size + 'px';
+          cover.style.height = size + 'px';
           pages.forEach(page => {
-            page.style.width = width + 'px';
-            page.style.height = height + 'px';
+            page.style.width = size / 2 + 'px';
+            page.style.height = size + 'px';
           });
         };
       }
@@ -173,13 +173,14 @@
       if (coverObj.contentDocument && coverObj.contentDocument.documentElement) {
         const width = Math.min(coverObj.contentDocument.documentElement.scrollWidth * 0.4, window.innerWidth / 2);
         const height = Math.min(coverObj.contentDocument.documentElement.scrollHeight * 0.4, window.innerHeight);
-        book.style.width = width * 2 + 'px';
-        book.style.height = height + 'px';
-        cover.style.width = width * 2 + 'px';
-        cover.style.height = height + 'px';
+        const size = Math.min(width * 2, height);
+        book.style.width = size + 'px';
+        book.style.height = size + 'px';
+        cover.style.width = size + 'px';
+        cover.style.height = size + 'px';
         pages.forEach(page => {
-          page.style.width = width + 'px';
-          page.style.height = height + 'px';
+          page.style.width = size / 2 + 'px';
+          page.style.height = size + 'px';
         });
       }
     });
