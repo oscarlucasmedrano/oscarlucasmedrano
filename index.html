@@ -25,16 +25,18 @@
       margin: 0 auto;
     }
     .book-cover {
+      display: block;
+      width: 80vw;
+      height: auto;
+      margin: 0 auto;
       background: black;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       border: none;
     }
     .book-cover canvas {
       width: 100%;
       height: auto;
-      max-width: 100%;
+      max-width: 80vw;
+      max-height: calc(80vw * (9/16)); /* Adjust aspect ratio as needed */
       object-fit: contain;
       border: none;
     }
@@ -100,6 +102,7 @@
       .book-cover {
         width: 80vw;
         height: auto;
+        margin: 0 auto;
       }
       .book-cover canvas {
         width: 100%;
