@@ -66,9 +66,9 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 20; /* Above cover */
+      z-index: 20;
       overflow: hidden;
-      border: 2px dashed yellow; /* Highlight pages */
+      border: 2px dashed yellow;
     }
     .book.open .book-pages {
       display: flex;
@@ -80,17 +80,17 @@
       justify-content: center;
       align-items: center;
       overflow: auto;
-      border: 1px solid green; /* Highlight page boundary */
+      border: 1px solid green;
       position: relative;
-      background: #f0f0f0; /* Light background */
+      background: #f0f0f0;
     }
     .page iframe {
       max-width: 100%;
       max-height: 100%;
       border: none;
       background: transparent;
-      display: block; /* Force display */
-      z-index: 21; /* Above page */
+      display: block;
+      z-index: 21;
     }
     .page canvas {
       max-width: 100%;
@@ -104,15 +104,15 @@
       color: red;
       font-size: 24px;
       text-align: center;
-      z-index: 22; /* Above iframe/canvas */
-      background: #fff; /* White background for readability */
+      z-index: 22;
+      background: #fff;
     }
     .page .fallback-link {
       position: absolute;
       color: blue;
       font-size: 18px;
       text-align: center;
-      z-index: 23; /* Above fallback content */
+      z-index: 23;
       text-decoration: underline;
     }
     .crease {
@@ -155,7 +155,7 @@
         </div>
       </div>
       <div class="book-pages">
-        <div class="crease"></div> <!-- Between About and TOC -->
+        <div class="crease"></div>
         <div class="page">
           <iframe id="about-pdf-iframe" src="about.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('About PDF iframe loaded')" onerror="console.error('About PDF iframe load error:', JSON.stringify(event))">
             <canvas id="about-pdf-canvas"></canvas>
@@ -174,16 +174,12 @@
     </div>
   </div>
 
-  <script type="module" src="./pdf.js" onload="console.log('PDF.js script loaded successfully')" onerror="console.error('Failed to load PDF.js script:', event)"></script>
-  <script type="module">
-    import pdfjsLib from './pdf.js'; // Adjust path if needed
+  <script src="./pdf.min.js" defer onload="console.log('PDF.js script loaded successfully')" onerror="console.error('Failed to load PDF.js script:', event)"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
 
     const book = document.querySelector('.book');
-    let currentPage = 0; // 0 = cover, 1 = About/TOC
-
-    // Wait for pdfjsLib to be available (handled by module import)
-    console.log('pdfjsLib initialized successfully');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js'; // Adjust based on your downloaded files
+    let currentPage = 0;
 
     async function renderPDF(pdfUrl, canvasId, iframeId, fallbackId, scale = 2) {
       const canvas = document.getElementById(canvasId);
@@ -198,7 +194,6 @@
       context.fillStyle = 'transparent';
       context.fillRect(0, 0, 300, 400);
       try {
-        console.log(`Attempting to render ${canvasId} from ${pdfUrl}`);
         const loadingTask = pdfjsLib.getDocument(pdfUrl);
         const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
@@ -221,7 +216,6 @@
       }
     }
 
-    // Render cover PDF
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM fully loaded and parsed');
       renderPDF('page1.pdf', 'cover-canvas', null, 'cover-fallback', 2).then(() => {
@@ -303,15 +297,15 @@
       const clickX = e.clientX - rect.left;
       console.log('Click detected at:', clickX, 'within rect:', JSON.stringify(rect), 'currentPage before:', currentPage);
 
-      if (clickX > 0) { // Any click to advance
+      if (clickX > 0) {
         currentPage = Math.min(1, currentPage + 1);
         console.log('Advanced to page:', currentPage);
-      } else if (currentPage > 0 && clickX < rect.width * 0.3) { // Left click to go back
+      } else if (currentPage > 0 && clickX < rect.width * 0.3) {
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
       }
       console.log('currentPage after:', currentPage, 'Calling updatePageDisplay');
-      await updatePageDisplay(); // Ensure rendering completes
+      await updatePageDisplay();
     });
 
     document.addEventListener('keydown', async (e) => {
@@ -326,7 +320,6 @@
       }
     });
 
-    // Check iframe load status
     setInterval(() => {
       const aboutPdfIframe = document.getElementById('about-pdf-iframe');
       const tocPdfIframe = document.getElementById('toc-pdf-iframe');
