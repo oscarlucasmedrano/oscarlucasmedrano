@@ -34,7 +34,7 @@
       position: relative;
       background: white;
       box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.15), 0 5px 20px rgba(0,0,0,0.7);
-      max-height: 90vh;
+      max-height: 720px;
       max-width: 48vw;
       overflow: hidden;
       display: flex;
@@ -44,7 +44,7 @@
 
     canvas {
       display: block;
-      max-height: 90vh;
+      max-height: 720px;
       width: auto;
       height: auto;
     }
@@ -53,11 +53,11 @@
     #crease {
       position: absolute;
       width: 2px;
-      height: 90vh;
+      height: 720px;
       background: linear-gradient(to bottom, #00000022 0%, #ffffff11 50%, #00000022 100%);
       left: 50%;
-      top: 5%;
-      transform: translateX(-1px);
+      top: 50%;
+      transform: translate(-1px, -50%);
       z-index: 2;
       pointer-events: none;
     }
@@ -107,7 +107,7 @@
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     let currentPage = 0;
 
-    const MAX_HEIGHT = 1000; // px — consistent across all PDFs
+    const MAX_HEIGHT = 720; // 📏 Smaller height for desktop
 
     async function renderPDF(url) {
       const pdf = await pdfjsLib.getDocument(url).promise;
@@ -152,7 +152,6 @@
         const leftWrapper = document.createElement('div');
         leftWrapper.className = 'page-wrapper';
         leftWrapper.appendChild(leftCanvas);
-
         viewer.appendChild(leftWrapper);
 
         if (rightCanvas) {
@@ -201,5 +200,6 @@
   </script>
 </body>
 </html>
+
 
 
