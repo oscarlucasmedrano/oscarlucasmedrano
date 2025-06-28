@@ -66,7 +66,8 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 10; /* Increased to ensure it appears over cover */
+      z-index: 15; /* Increased to ensure it appears over everything */
+      background: rgba(0, 0, 255, 0.3); /* Solid blue background for visibility */
       overflow: hidden;
       border: none;
     }
@@ -76,7 +77,7 @@
     .page {
       width: 50%;
       height: 100%;
-      background: rgba(0, 0, 255, 0.2); /* Blue tint for visibility */
+      background: rgba(0, 0, 255, 0.2); /* Blue tint for each page */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -89,19 +90,20 @@
       max-height: 100%;
       object-fit: contain;
       border: none;
+      background: rgba(0, 255, 0, 0.1); /* Green tint as fallback */
     }
     .page .test-content {
       position: absolute;
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 11;
+      z-index: 16;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 12;
+      z-index: 17;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -205,6 +207,12 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     async function renderPDF(pdfUrl, canvasId, maxRetries = 3) {
+      const canvas = document.getElementById(canvasId);
+      if (canvas) {
+        const context = canvas.getContext('2d');
+        context.fillStyle = 'rgba(0, 255, 0, 0.1)'; // Green fallback
+        context.fillRect(0, 0, 300, 400); // Initial fallback
+      }
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           const loadingTask = pdfjsLib.getDocument(pdfUrl);
@@ -279,7 +287,7 @@
             canvas.height = maxHeight;
             const context = canvas.getContext('2d');
             if (context) {
-              context.fillStyle = 'gray'; // Fallback if PDF fails
+              context.fillStyle = 'rgba(0, 255, 0, 0.1)'; // Green fallback
               context.fillRect(0, 0, maxWidth, maxHeight);
             }
             console.log(`Set ${canvas.id} to ${maxWidth}x${maxHeight}`);
@@ -325,25 +333,32 @@
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      console.log('Click detected, clickX:', clickX, 'rect.width:', rect.width);
+      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'currentPage before:', currentPage);
 
       if (currentPage === 0 && clickX > rect.width / 2) {
         currentPage = 1;
+        console.log('Switched to page 1 (about, toc)');
       } else if (currentPage > 0 && clickX < rect.width / 2) {
         currentPage = Math.max(0, currentPage - 1);
+        console.log('Switched back, currentPage:', currentPage);
       } else if (currentPage < 4) {
         currentPage = Math.min(4, currentPage + 1);
+        console.log('Advanced to page:', currentPage);
       }
+      console.log('currentPage after:', currentPage);
       updatePageDisplay();
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' && currentPage > 0) {
         currentPage = Math.max(0, currentPage - 1);
+        updatePageDisplay();
+        console.log('ArrowLeft, currentPage:', currentPage);
       } else if (e.key === 'ArrowRight' && currentPage < 4) {
         currentPage = Math.min(4, currentPage + 1);
+        updatePageDisplay();
+        console.log('ArrowRight, currentPage:', currentPage);
       }
-      updatePageDisplay();
     });
 
     // Initialize with cover
