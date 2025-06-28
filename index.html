@@ -34,7 +34,7 @@
             z-index: 1;
         }
         #canvas-container {
-            position: relative;
+            position: absolute;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -165,7 +165,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.35; // Increase size by 35%
+            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80%
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -189,7 +189,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.35; // Increase size by 35%
+            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80%
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
