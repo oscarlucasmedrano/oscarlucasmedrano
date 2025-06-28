@@ -315,7 +315,7 @@
       const clickX = e.clientX - rect.left;
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
 
-      if (currentPage === 0 && clickX > rect.width * 0.3) { // Right click to show About/TOC
+      if (currentPage === 0 && clickX > rect.width * 0.2) { // Looser right click threshold
         currentPage = 1;
         console.log('Switched to page 1 (About, TOC)');
       } else if (currentPage === 1 && clickX > rect.width * 0.7) { // Right click to show Page 4/5
