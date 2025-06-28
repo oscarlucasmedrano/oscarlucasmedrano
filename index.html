@@ -324,13 +324,13 @@
       const clickX = e.clientX - rect.left;
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
 
-      if (currentPage === 0 && clickX > rect.width * 0.5) { // Adjusted to 50% for easier trigger
+      if (currentPage === 0 && clickX > rect.width * 0.4) { // Looser threshold for right click
         currentPage = 1;
         console.log('Switched to page 1 (About, TOC)');
-      } else if (currentPage > 0 && clickX < rect.width * 0.25) {
+      } else if (currentPage > 0 && clickX < rect.width * 0.2) {
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
-      } else if (currentPage < 4 && clickX > rect.width * 0.75) {
+      } else if (currentPage < 4 && clickX > rect.width * 0.8) {
         currentPage = Math.min(4, currentPage + 1);
         console.log('Advanced to page:', currentPage);
       }
