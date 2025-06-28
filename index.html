@@ -17,7 +17,6 @@
       align-items: center;
     }
     .book-container {
-      max-width: 80vw;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -28,8 +27,6 @@
       background-color: black;
       overflow: hidden;
       border: none;
-      max-width: 80vw;
-      width: 80vw;
     }
     .book-content {
       width: 100%;
@@ -38,26 +35,22 @@
       align-items: center;
     }
     .book-cover-wrapper {
-      width: 100%;
-      height: auto;
       display: flex;
       justify-content: center;
       align-items: center;
-      max-width: 80vw;
     }
     .book-cover {
       display: block;
-      width: 100%;
-      height: auto;
       background: #333;
       border: none;
     }
     .book-cover canvas {
-      width: 100% !important;
-      height: auto !important;
-      max-width: 80vw !important;
-      object-fit: contain !important;
+      max-width: 400px; /* Small centered cover */
+      width: 100%;
+      height: auto;
+      object-fit: contain;
       border: none;
+      margin: 0 auto; /* Center the cover */
     }
     .book.open .book-cover-wrapper {
       display: none;
@@ -67,8 +60,8 @@
       display: none;
       flex-direction: row;
       align-items: center;
-      width: 100%;
-      height: 100%;
+      width: 800px; /* Fixed book width */
+      height: 600px; /* Fixed book height */
       z-index: 60;
       background: black;
       overflow: hidden;
@@ -111,41 +104,23 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      visibility: hidden;
+      visibility: visible; /* Ensure crease is visible */
     }
-    .page-pair-1 .crease:nth-child(2) { visibility: visible; }
+    .page-pair-1 .crease { visibility: visible; }
     @media (max-width: 768px) {
-      .book-container {
-        max-width: 80vw;
-      }
       .book {
         width: 80vw;
         height: auto;
         min-width: 0;
         min-height: 0;
       }
-      .book-content {
-        width: 100%;
-      }
-      .page {
-        width: 50%;
-      }
-      .book-cover-wrapper {
-        width: 100%;
-        height: auto;
-        justify-content: center;
-        max-width: 50vw;
-      }
       .book-cover canvas {
-        width: 100% !important;
-        height: auto !important;
-        max-width: 50vw !important;
-        max-height: 100% !important;
-        object-fit: contain !important;
+        max-width: 50vw;
         margin: 0 auto; /* Center mobile cover */
       }
-      .crease {
-        display: block;
+      .book-pages {
+        width: 80vw;
+        height: auto;
       }
     }
   </style>
@@ -160,8 +135,8 @@
           </div>
         </div>
       </div>
-      <div class="book-pages">
-        <div class="crease"></div> <!-- Between 2-3 -->
+      <div class="book-pages page-pair-1">
+        <div class="crease"></div>
         <div class="page">
           <canvas id="about-canvas"></canvas>
           <div class="test-content">About</div>
@@ -237,13 +212,13 @@
         let maxHeight = 0;
         canvases.forEach(canvas => {
           if (canvas) {
-            maxHeight = Math.max(maxHeight, canvas.height || 400);
-            console.log(`${canvas.id} size: ${canvas.width || 300}x${canvas.height || 400}`);
+            maxHeight = Math.max(maxHeight, canvas.height || 600);
+            console.log(`${canvas.id} size: ${canvas.width || 400}x${canvas.height || 600}`);
           }
         });
         if (maxHeight === 0) {
-          maxHeight = 400;
-          console.warn('No valid canvas heights detected, using fallback 400');
+          maxHeight = 600;
+          console.warn('No valid canvas heights detected, using fallback 600');
         }
         book.style.height = `${maxHeight}px`;
         document.querySelector('.book-content').style.height = `${maxHeight}px`;
@@ -265,19 +240,12 @@
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
-      book.classList.remove('page-pair-1');
-      const pages = document.querySelectorAll('.page');
-      const creases = document.querySelectorAll('.crease');
-      document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
-      console.log('All pages and creases set to display: none');
-      if (currentPage === 1 && pages.length >= 2) {
-        pages[0].style.display = 'flex'; // About
-        pages[1].style.display = 'flex'; // TOC
-        creases[0].style.display = 'block';
-        book.classList.add('page-pair-1');
-        console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
-      } else if (currentPage === 0) {
-        console.log('Displaying cover, no pages or creases');
+      if (currentPage === 1) {
+        document.querySelector('.book-pages').style.display = 'flex';
+        console.log('Displaying pages (About and TOC)');
+      } else {
+        document.querySelector('.book-pages').style.display = 'none';
+        console.log('Displaying cover');
       }
     }
 
