@@ -11,184 +11,189 @@
       background: black;
       overflow: hidden;
       height: 100vh;
-      width: 100vw;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
     .book {
-      position: relative;
-      width: 800px;
+      width: 90vw;
+      height: 90vh;
+      max-width: 1000px;
       background: black;
-      box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6);
-    }
-
-    .book-content {
-      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      position: relative;
     }
 
-    .book-cover-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .book-cover canvas {
-      width: 100%;
-      height: auto;
-    }
-
-    .book-pages {
+    .spread {
       display: none;
       flex-direction: row;
       width: 100%;
+      height: 100%;
     }
 
-    .book.open .book-cover-wrapper {
-      display: none;
-    }
-
-    .book.open .book-pages {
+    .spread.visible {
       display: flex;
     }
 
     .page {
       width: 50%;
       height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: white;
       position: relative;
-      background: #fff;
+      overflow: hidden;
     }
 
-    canvas {
-      max-width: 100%;
-      height: auto;
+    canvas, iframe {
+      width: 100%;
+      height: 100%;
       display: block;
     }
 
     iframe {
-      width: 100%;
-      height: 100%;
       border: none;
       display: none;
     }
 
-    .fallback-content {
+    .fallback {
       position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       color: red;
-      font-size: 18px;
+      font-size: 16px;
       text-align: center;
     }
 
-    @media (max-width: 768px) {
-      .book {
-        width: 90vw;
-      }
+    #cover {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      cursor: pointer;
+    }
 
-      .book-pages {
+    @media (max-width: 768px) {
+      .spread {
         flex-direction: column;
       }
-
       .page {
         width: 100%;
-        height: 50vh;
+        height: 50%;
       }
     }
   </style>
 </head>
 <body>
   <div class="book" id="book">
-    <div class="book-content" id="book-content">
-      <div class="book-cover-wrapper">
-        <div class="book-cover">
-          <canvas id="cover-canvas"></canvas>
-        </div>
+    <!-- Cover page -->
+    <div class="spread visible" id="cover">
+      <canvas id="cover-canvas"></canvas>
+    </div>
+
+    <!-- First spread: About + TOC -->
+    <div class="spread" id="spread-1">
+      <div class="page">
+        <canvas id="about-canvas"></canvas>
+        <iframe id="about-iframe" src="about.pdf"></iframe>
+        <div class="fallback">About PDF failed to load.</div>
       </div>
-      <div class="book-pages" id="book-pages">
-        <div class="page">
-          <canvas id="about-pdf-canvas"></canvas>
-          <iframe id="about-pdf-iframe" src="about.pdf"></iframe>
-          <div class="fallback-content">About PDF failed to load.</div>
-        </div>
-        <div class="page">
-          <canvas id="toc-pdf-canvas"></canvas>
-          <iframe id="toc-pdf-iframe" src="table_of_contents.pdf"></iframe>
-          <div class="fallback-content">TOC PDF failed to load.</div>
-        </div>
+      <div class="page">
+        <canvas id="toc-canvas"></canvas>
+        <iframe id="toc-iframe" src="table_of_contents.pdf"></iframe>
+        <div class="fallback">TOC PDF failed to load.</div>
+      </div>
+    </div>
+
+    <!-- Second spread: page4 + page5 -->
+    <div class="spread" id="spread-2">
+      <div class="page">
+        <canvas id="page4-canvas"></canvas>
+        <iframe id="page4-iframe" src="page4.pdf"></iframe>
+        <div class="fallback">Page 4 PDF failed to load.</div>
+      </div>
+      <div class="page">
+        <canvas id="page5-canvas"></canvas>
+        <iframe id="page5-iframe" src="page5.pdf"></iframe>
+        <div class="fallback">Page 5 PDF failed to load.</div>
       </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
-    const book = document.getElementById('book');
-    const bookPages = document.getElementById('book-pages');
-    const bookContent = document.getElementById('book-content');
+    const spreads = [
+      { id: 'cover', pdfs: [{ url: 'page1.pdf', canvasId: 'cover-canvas' }] },
+      {
+        id: 'spread-1',
+        pdfs: [
+          { url: 'about.pdf', canvasId: 'about-canvas', iframeId: 'about-iframe' },
+          { url: 'table_of_contents.pdf', canvasId: 'toc-canvas', iframeId: 'toc-iframe' }
+        ]
+      },
+      {
+        id: 'spread-2',
+        pdfs: [
+          { url: 'page4.pdf', canvasId: 'page4-canvas', iframeId: 'page4-iframe' },
+          { url: 'page5.pdf', canvasId: 'page5-canvas', iframeId: 'page5-iframe' }
+        ]
+      }
+    ];
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, iframeId) {
-      const canvas = canvasId ? document.getElementById(canvasId) : null;
+    async function renderPDF(url, canvasId, iframeId) {
+      const canvas = document.getElementById(canvasId);
       const iframe = iframeId ? document.getElementById(iframeId) : null;
 
-      if (!canvas) {
-        console.warn(`Canvas with ID "${canvasId}" not found.`);
-        if (iframe) iframe.style.display = 'block';
-        return;
-      }
-
       try {
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        const pdf = await loadingTask.promise;
+        const pdf = await pdfjsLib.getDocument(url).promise;
         const page = await pdf.getPage(1);
         const viewport = page.getViewport({ scale: 1.5 });
-        const context = canvas.getContext('2d');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
+        const context = canvas.getContext('2d');
         await page.render({ canvasContext: context, viewport }).promise;
         canvas.style.display = 'block';
         if (iframe) iframe.style.display = 'none';
       } catch (err) {
-        console.warn(`Failed to render ${pdfUrl} on canvas:`, err.message);
+        console.warn(`Could not render ${url}:`, err.message);
         canvas.style.display = 'none';
         if (iframe) iframe.style.display = 'block';
       }
     }
 
-    async function initializeBook() {
-      try {
-        await renderPDF('page1.pdf', 'cover-canvas', null);
-        const coverCanvas = document.getElementById('cover-canvas');
-        if (coverCanvas) {
-          const height = coverCanvas.height || 600;
-          book.style.height = `${height}px`;
-          bookPages.style.height = `${height}px`;
-          bookContent.style.height = `${height}px`;
-        }
-      } catch (e) {
-        console.error('Error rendering cover:', e);
+    async function renderSpread(index) {
+      const spread = spreads[index];
+      for (const pdf of spread.pdfs) {
+        await renderPDF(pdf.url, pdf.canvasId, pdf.iframeId);
       }
     }
 
-    // Flip logic
-    let opened = false;
-    book.addEventListener('click', async () => {
-      opened = !opened;
-      book.classList.toggle('open', opened);
+    function showSpread(index) {
+      spreads.forEach((s, i) => {
+        const el = document.getElementById(s.id);
+        el.classList.toggle('visible', i === index);
+      });
+    }
 
-      if (opened) {
-        await renderPDF('about.pdf', 'about-pdf-canvas', 'about-pdf-iframe');
-        await renderPDF('table_of_contents.pdf', 'toc-pdf-canvas', 'toc-pdf-iframe');
-      }
+    document.addEventListener('DOMContentLoaded', async () => {
+      await renderSpread(0); // cover
     });
 
-    document.addEventListener('DOMContentLoaded', initializeBook);
+    document.getElementById('cover').addEventListener('click', async () => {
+      await renderSpread(1); // about + TOC
+      showSpread(1);
+
+      // Optional: auto-load next after 3 seconds
+      setTimeout(async () => {
+        await renderSpread(2);
+        showSpread(2);
+      }, 3000);
+    });
   </script>
 </body>
 </html>
