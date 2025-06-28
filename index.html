@@ -99,12 +99,21 @@
       font-size: 24px;
       text-align: center;
       z-index: 22; /* Above iframe */
+      background: #fff; /* White background for readability */
+    }
+    .page .fallback-link {
+      position: absolute;
+      color: blue;
+      font-size: 18px;
+      text-align: center;
+      z-index: 23; /* Above fallback content */
+      text-decoration: underline;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 23;
+      z-index: 24;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -142,13 +151,15 @@
       <div class="book-pages">
         <div class="crease"></div> <!-- Between About and TOC -->
         <div class="page">
-          <iframe id="about-pdf" src="about.pdf" type="application/pdf" width="100%" height="100%" frameborder="0">
+          <iframe id="about-pdf" src="about.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('About PDF loaded')" onerror="console.error('About PDF load error')">
             <div class="fallback-content">About (PDF Failed to Load)</div>
+            <div class="fallback-link"><a href="about.pdf" target="_blank">Open About PDF</a></div>
           </iframe>
         </div>
         <div class="page">
-          <iframe id="toc-pdf" src="table_of_contents.pdf" type="application/pdf" width="100%" height="100%" frameborder="0">
+          <iframe id="toc-pdf" src="table_of_contents.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('TOC PDF loaded')" onerror="console.error('TOC PDF load error')">
             <div class="fallback-content">TOC (PDF Failed to Load)</div>
+            <div class="fallback-link"><a href="table_of_contents.pdf" target="_blank">Open TOC PDF</a></div>
           </iframe>
         </div>
       </div>
@@ -165,8 +176,9 @@
     async function renderPDF(pdfUrl, canvasId, fallbackId, scale = 2) {
       const canvas = document.getElementById(canvasId);
       const fallback = fallbackId ? document.getElementById(fallbackId) : null;
-      if (!canvas) {
-        console.error(`Canvas ${canvasId} not found`);
+      if (!canvas || !fallback) {
+        console.error(`Canvas ${canvasId} or fallback ${fallbackId} not found`);
+        if (fallback) fallback.style.display = 'block';
         return;
       }
       const context = canvas.getContext('2d');
@@ -184,12 +196,11 @@
         console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
         canvas.style.display = 'block';
         canvas.style.opacity = '1';
-        if (fallback) fallback.style.display = 'none';
+        fallback.style.display = 'none';
       } catch (error) {
-        console.error(`${canvasId} render failed:`, error.message, error.stack);
-        canvas.style.display = 'block';
-        canvas.style.opacity = '1';
-        if (fallback) fallback.style.display = 'block';
+        console.error(`${canvasId} render failed:`, error.name, error.message, error.stack);
+        canvas.style.display = 'none';
+        fallback.style.display = 'block';
         console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
       }
     }
@@ -199,10 +210,10 @@
       console.log('DOM fully loaded and parsed');
       renderPDF('page1.pdf', 'cover-canvas', 'cover-fallback', 2).then(() => {
         setTimeout(() => {
-          let maxHeight = document.getElementById('cover-canvas').height || 600;
+          let maxHeight = document.getElementById('cover-canvas').height || document.getElementById('cover-fallback').height || 600;
           if (maxHeight === 0) {
             maxHeight = 600;
-            console.warn('No valid canvas height detected, using fallback 600');
+            console.warn('No valid canvas or fallback height detected, using fallback 600');
           }
           book.style.height = `${maxHeight}px`;
           document.querySelector('.book-content').style.height = `${maxHeight}px`;
@@ -217,7 +228,7 @@
           console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${getComputedStyle(document.querySelector('.book-cover-wrapper')).display}, book-pages display: ${getComputedStyle(document.querySelector('.book-pages')).display}`);
           updatePageDisplay();
         }, 200);
-      }).catch(error => console.error('Cover PDF rendering failed:', error));
+      }).catch(error => console.error('Cover PDF rendering failed (outer):', error));
     });
 
     function updatePageDisplay() {
@@ -243,7 +254,7 @@
           if (iframe) {
             iframe.style.display = 'block';
             iframe.style.visibility = 'visible';
-            console.log(`Page ${index} iframe display: ${getComputedStyle(iframe).display}, visibility: ${getComputedStyle(iframe).visibility}, contentWindow: ${iframe.contentWindow ? 'exists' : 'null'}`);
+            console.log(`Page ${index} iframe display: ${getComputedStyle(iframe).display}, visibility: ${getComputedStyle(iframe).visibility}, contentDocument: ${iframe.contentDocument ? 'exists' : 'null'}`);
           }
           page.style.display = index < 2 ? 'flex' : 'none';
         });
@@ -285,15 +296,12 @@
       const aboutPdf = document.getElementById('about-pdf');
       const tocPdf = document.getElementById('toc-pdf');
       if (aboutPdf) {
-        console.log('About PDF status:', aboutPdf.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdf).display, 'visibility:', getComputedStyle(aboutPdf).visibility, 'contentWindow:', aboutPdf.contentWindow ? 'exists' : 'null');
+        console.log('About PDF status:', aboutPdf.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdf).display, 'visibility:', getComputedStyle(aboutPdf).visibility, 'onerror:', aboutPdf.onerror ? 'error occurred' : 'no error');
       }
       if (tocPdf) {
-        console.log('TOC PDF status:', tocPdf.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdf).display, 'visibility:', getComputedStyle(tocPdf).visibility, 'contentWindow:', tocPdf.contentWindow ? 'exists' : 'null');
+        console.log('TOC PDF status:', tocPdf.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdf).display, 'visibility:', getComputedStyle(tocPdf).visibility, 'onerror:', tocPdf.onerror ? 'error occurred' : 'no error');
       }
     }, 1000);
-
-    // Initialize with cover
-    updatePageDisplay();
   </script>
 </body>
 </html>
