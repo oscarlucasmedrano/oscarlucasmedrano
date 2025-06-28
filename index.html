@@ -122,8 +122,8 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * (pdfFiles[currentSpreadIndex].type === 'single' ? 0.9 : 0.45);
-            const maxHeight = window.innerHeight * 0.9;
+            const maxWidth = window.innerWidth * (pdfFiles[currentSpreadIndex].type === 'single' ? 1 : 0.5);
+            const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY, scale);
@@ -146,8 +146,8 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.9;
-            const maxHeight = window.innerHeight * 0.9;
+            const maxWidth = window.innerWidth * 1;
+            const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY, scale);
