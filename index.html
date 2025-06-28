@@ -174,7 +174,7 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.1/pdf.min.js" defer></script>
+  <script src="./pdf.js" defer onload="console.log('PDF.js script loaded successfully')" onerror="console.error('Failed to load PDF.js script:', event)"></script>
   <script>
     const book = document.querySelector('.book');
     let currentPage = 0; // 0 = cover, 1 = About/TOC
@@ -186,7 +186,8 @@
         setTimeout(initializePDF, 500);
         return;
       }
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.1/pdf.worker.min.js';
+      console.log('pdfjsLib initialized successfully');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js'; // Adjust based on your downloaded files
 
       async function renderPDF(pdfUrl, canvasId, iframeId, fallbackId, scale = 2) {
         const canvas = document.getElementById(canvasId);
