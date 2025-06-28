@@ -150,21 +150,21 @@
         <div class="book-cover-wrapper">
           <div class="book-cover">
             <canvas id="cover-canvas"></canvas>
-            <img id="cover-fallback" src="https://via.placeholder.com/400x600?text=Cover" style="display: none;">
+            <img id="cover-fallback" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" alt="Fallback Image" style="display: none;">
           </div>
         </div>
       </div>
       <div class="book-pages">
         <div class="crease"></div> <!-- Between About and TOC -->
         <div class="page">
-          <iframe id="about-pdf-iframe" src="about.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('About PDF iframe loaded')" onerror="console.error('About PDF iframe load error')">
+          <iframe id="about-pdf-iframe" src="about.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('About PDF iframe loaded')" onerror="console.error('About PDF iframe load error:', event)">
             <canvas id="about-pdf-canvas"></canvas>
             <div class="fallback-content">About (PDF Failed to Load)</div>
             <div class="fallback-link"><a href="about.pdf" target="_blank">Open About PDF</a></div>
           </iframe>
         </div>
         <div class="page">
-          <iframe id="toc-pdf-iframe" src="table_of_contents.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('TOC PDF iframe loaded')" onerror="console.error('TOC PDF iframe load error')">
+          <iframe id="toc-pdf-iframe" src="table_of_contents.pdf" type="application/pdf" width="100%" height="100%" frameborder="0" onload="console.log('TOC PDF iframe loaded')" onerror="console.error('TOC PDF iframe load error:', event)">
             <canvas id="toc-pdf-canvas"></canvas>
             <div class="fallback-content">TOC (PDF Failed to Load)</div>
             <div class="fallback-link"><a href="table_of_contents.pdf" target="_blank">Open TOC PDF</a></div>
@@ -183,10 +183,10 @@
 
     async function renderPDF(pdfUrl, canvasId, iframeId, fallbackId, scale = 2) {
       const canvas = document.getElementById(canvasId);
-      const iframe = document.getElementById(iframeId);
+      const iframe = iframeId ? document.getElementById(iframeId) : null;
       const fallback = fallbackId ? document.getElementById(fallbackId) : null;
-      if (!canvas || !iframe || !fallback) {
-        console.error(`Canvas ${canvasId}, iframe ${iframeId}, or fallback ${fallbackId} not found`);
+      if (!canvas) {
+        console.error(`Canvas ${canvasId} not found`);
         if (fallback) fallback.style.display = 'block';
         return;
       }
@@ -204,12 +204,12 @@
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
         canvas.style.display = 'block';
-        iframe.style.display = 'none';
+        if (iframe) iframe.style.display = 'none';
         if (fallback) fallback.style.display = 'none';
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.name, error.message, error.stack);
         canvas.style.display = 'none';
-        iframe.style.display = 'block';
+        if (iframe) iframe.style.display = 'block';
         if (fallback) fallback.style.display = 'block';
         console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
       }
@@ -218,7 +218,7 @@
     // Render cover PDF
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM fully loaded and parsed');
-      renderPDF('page1.pdf', 'cover-canvas', 'cover-fallback', null, 2).then(() => {
+      renderPDF('page1.pdf', 'cover-canvas', null, 'cover-fallback', 2).then(() => {
         setTimeout(() => {
           let maxHeight = document.getElementById('cover-canvas').height || document.getElementById('cover-fallback').height || 600;
           if (maxHeight === 0) {
@@ -308,10 +308,10 @@
       const aboutPdfIframe = document.getElementById('about-pdf-iframe');
       const tocPdfIframe = document.getElementById('toc-pdf-iframe');
       if (aboutPdfIframe) {
-        console.log('About PDF status:', aboutPdfIframe.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdfIframe).display, 'visibility:', getComputedStyle(aboutPdfIframe).visibility, 'onerror:', aboutPdfIframe.onerror ? 'error occurred' : 'no error');
+        console.log('About PDF status:', aboutPdfIframe.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdfIframe).display, 'visibility:', getComputedStyle(aboutPdfIframe).visibility, 'onerror:', aboutPdfIframe.onerror ? 'error occurred' : 'no error', 'error:', aboutPdfIframe.error ? aboutPdfIframe.error : 'none');
       }
       if (tocPdfIframe) {
-        console.log('TOC PDF status:', tocPdfIframe.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdfIframe).display, 'visibility:', getComputedStyle(tocPdfIframe).visibility, 'onerror:', tocPdfIframe.onerror ? 'error occurred' : 'no error');
+        console.log('TOC PDF status:', tocPdfIframe.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdfIframe).display, 'visibility:', getComputedStyle(tocPdfIframe).visibility, 'onerror:', tocPdfIframe.onerror ? 'error occurred' : 'no error', 'error:', tocPdfIframe.error ? tocPdfIframe.error : 'none');
       }
     }, 1000);
   </script>
