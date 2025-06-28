@@ -87,7 +87,7 @@
       max-height: 100%;
       object-fit: contain;
       border: none;
-      background: transparent; /* Remove black background */
+      background: transparent;
       display: block;
     }
     .page .test-content {
@@ -104,7 +104,7 @@
       font-size: 24px;
       text-align: center;
       z-index: 61;
-      opacity: 0; /* Hidden until needed */
+      opacity: 0;
     }
     .crease {
       width: 4px;
@@ -157,39 +157,6 @@
           <div class="test-content">TOC</div>
           <div class="fallback-content">TOC (PDF Failed)</div>
         </div>
-        <div class="crease"></div> <!-- Between 4-5 -->
-        <div class="page">
-          <canvas id="page4-canvas"></canvas>
-          <div class="test-content">Page 4</div>
-          <div class="fallback-content">Page 4 (PDF Failed)</div>
-        </div>
-        <div class="page">
-          <canvas id="page5-canvas"></canvas>
-          <div class="test-content">Page 5</div>
-          <div class="fallback-content">Page 5 (PDF Failed)</div>
-        </div>
-        <div class="crease"></div> <!-- Between 6-7 -->
-        <div class="page">
-          <canvas id="page6-canvas"></canvas>
-          <div class="test-content">Page 6</div>
-          <div class="fallback-content">Page 6 (PDF Failed)</div>
-        </div>
-        <div class="page">
-          <canvas id="page7-canvas"></canvas>
-          <div class="test-content">Page 7</div>
-          <div class="fallback-content">Page 7 (PDF Failed)</div>
-        </div>
-        <div class="crease"></div> <!-- Between 8-9 -->
-        <div class="page">
-          <canvas id="page8-canvas"></canvas>
-          <div class="test-content">Page 8</div>
-          <div class="fallback-content">Page 8 (PDF Failed)</div>
-        </div>
-        <div class="page">
-          <canvas id="page9-canvas"></canvas>
-          <div class="test-content">Page 9</div>
-          <div class="fallback-content">Page 9 (PDF Failed)</div>
-        </div>
       </div>
     </div>
   </div>
@@ -197,7 +164,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     const book = document.querySelector('.book');
-    let currentPage = 0; // 0 = cover, 1 = About/TOC, 2 = 4-5, 3 = 6-7, 4 = 8-9
+    let currentPage = 0; // 0 = cover, 1 = About/TOC
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -209,7 +176,7 @@
         return;
       }
       const context = canvas.getContext('2d');
-      context.fillStyle = 'transparent'; // Avoid black background
+      context.fillStyle = 'transparent';
       context.fillRect(0, 0, 300, 400);
       const testContent = canvas.nextElementSibling;
       const fallbackContent = testContent.nextElementSibling;
@@ -237,7 +204,7 @@
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.message, error.stack);
         canvas.style.display = 'block';
-        canvas.style.opacity = '1'; // Ensure canvas is visible
+        canvas.style.opacity = '1';
         if (fallback) fallback.style.display = 'none';
         if (fallbackContent) fallbackContent.style.opacity = '1';
         console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
@@ -250,13 +217,7 @@
       const pdfPromises = [
         renderPDF('page1.pdf', 'cover-canvas', 'cover-fallback', 2),
         renderPDF('about.pdf', 'about-canvas', null, 2),
-        renderPDF('table_of_contents.pdf', 'toc-canvas', null, 2),
-        renderPDF('page4.pdf', 'page4-canvas', null, 2),
-        renderPDF('page5.pdf', 'page5-canvas', null, 2),
-        renderPDF('page6.pdf', 'page6-canvas', null, 2),
-        renderPDF('page7.pdf', 'page7-canvas', null, 2),
-        renderPDF('page8.pdf', 'page8-canvas', null, 2),
-        renderPDF('page9.pdf', 'page9-canvas', null, 2)
+        renderPDF('table_of_contents.pdf', 'toc-canvas', null, 2)
       ];
 
       Promise.all(pdfPromises).then(() => {
@@ -266,13 +227,7 @@
           const canvases = [
             document.getElementById('cover-canvas'),
             document.getElementById('about-canvas'),
-            document.getElementById('toc-canvas'),
-            document.getElementById('page4-canvas'),
-            document.getElementById('page5-canvas'),
-            document.getElementById('page6-canvas'),
-            document.getElementById('page7-canvas'),
-            document.getElementById('page8-canvas'),
-            document.getElementById('page9-canvas')
+            document.getElementById('toc-canvas')
           ];
           canvases.forEach(canvas => {
             if (canvas) {
@@ -303,7 +258,6 @@
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
-      book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
       const coverWrapper = document.querySelector('.book-cover-wrapper');
       const pages = document.querySelectorAll('.page');
       const creases = document.querySelectorAll('.crease');
@@ -317,26 +271,7 @@
         coverWrapper.style.display = 'none';
         pages.forEach((page, index) => page.style.display = index < 2 ? 'flex' : 'none');
         creases.forEach((crease, index) => crease.style.display = index === 0 ? 'block' : 'none');
-        book.classList.add('page-pair-1');
         console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
-      } else if (currentPage === 2 && pages.length >= 4) {
-        coverWrapper.style.display = 'none';
-        pages.forEach((page, index) => page.style.display = index >= 2 && index < 4 ? 'flex' : 'none');
-        creases.forEach((crease, index) => crease.style.display = index === 1 ? 'block' : 'none');
-        book.classList.add('page-pair-2');
-        console.log('Displaying pages 2 (Page 4) and 3 (Page 5) with crease 2');
-      } else if (currentPage === 3 && pages.length >= 6) {
-        coverWrapper.style.display = 'none';
-        pages.forEach((page, index) => page.style.display = index >= 4 && index < 6 ? 'flex' : 'none');
-        creases.forEach((crease, index) => crease.style.display = index === 2 ? 'block' : 'none');
-        book.classList.add('page-pair-3');
-        console.log('Displaying pages 4 and 5 (Page 6, Page 7) with crease 3');
-      } else if (currentPage === 4 && pages.length >= 8) {
-        coverWrapper.style.display = 'none';
-        pages.forEach((page, index) => page.style.display = index >= 6 && index < 8 ? 'flex' : 'none');
-        creases.forEach((crease, index) => crease.style.display = index === 3 ? 'block' : 'none');
-        book.classList.add('page-pair-3');
-        console.log('Displaying pages 6 and 7 (Page 8, Page 9) with crease 4');
       }
     }
 
@@ -346,7 +281,7 @@
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage, 'event:', e);
 
       if (clickX > 0) { // Any click to advance
-        currentPage = Math.min(4, currentPage + 1);
+        currentPage = Math.min(1, currentPage + 1);
         console.log('Advanced to page:', currentPage);
       } else if (currentPage > 0 && clickX < rect.width * 0.3) { // Left click to go back
         currentPage = Math.max(0, currentPage - 1);
@@ -361,8 +296,8 @@
         currentPage = Math.max(0, currentPage - 1);
         updatePageDisplay();
         console.log('ArrowLeft, currentPage:', currentPage);
-      } else if (e.key === 'ArrowRight' && currentPage < 4) {
-        currentPage = Math.min(4, currentPage + 1);
+      } else if (e.key === 'ArrowRight' && currentPage < 1) {
+        currentPage = Math.min(1, currentPage + 1);
         updatePageDisplay();
         console.log('ArrowRight, currentPage:', currentPage);
       }
