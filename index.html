@@ -9,12 +9,12 @@
       margin: 0;
       padding: 0;
       background-color: black;
-      overflow: hidden;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
 
     #viewer {
@@ -22,69 +22,71 @@
       justify-content: center;
       align-items: center;
       position: relative;
-      width: 100%;
-      height: 100%;
+      gap: 0;
+      max-width: 100vw;
+      max-height: 100vh;
     }
 
     .spread {
       display: flex;
-      gap: 0;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      gap: 0;
     }
 
     .page-wrapper {
-      position: relative;
       background: white;
-      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.15), 0 5px 20px rgba(0,0,0,0.7);
-      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0,0,0,0.5);
       display: flex;
-      align-items: center;
       justify-content: center;
-      height: 720px;
-      max-height: 90vh;
+      align-items: center;
+      max-height: 720px;
+      max-width: 45vw;
+      overflow: hidden;
     }
 
     canvas {
-      display: block;
-      height: 720px !important;
+      height: 100%;
       width: auto;
     }
 
     #crease {
       position: absolute;
+      top: 50%;
+      left: 50%;
       width: 2px;
       height: 720px;
-      background: linear-gradient(to bottom, #00000033 0%, #ffffff11 50%, #00000033 100%);
-      z-index: 5;
-      left: 50%;
-      top: 50%;
-      transform: translate(-1px, -50%);
+      transform: translate(-50%, -50%);
+      background: linear-gradient(to bottom, #00000033, #ffffff11, #00000033);
+      z-index: 10;
       pointer-events: none;
     }
 
     @media (max-width: 768px) {
-      #viewer {
+      html, body {
         overflow-x: auto;
         overflow-y: hidden;
+        justify-content: flex-start;
+        align-items: flex-start;
+      }
+
+      #viewer {
         flex-direction: row;
         align-items: flex-start;
         justify-content: flex-start;
-      }
-
-      .spread {
-        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 10px;
         gap: 0;
       }
 
       .page-wrapper {
         max-width: 45vw;
         max-height: 80vh;
-        height: auto;
       }
 
       canvas {
-        max-height: 80vh !important;
+        max-height: 80vh;
         width: auto;
       }
 
@@ -140,7 +142,6 @@
     }
 
     async function updateViewer() {
-      // Clear
       viewer.querySelectorAll('.spread').forEach(el => el.remove());
 
       const spread = document.createElement('div');
@@ -149,12 +150,10 @@
       if (currentPage === 0) {
         const pdfData = await renderPDF(pdfs[0]);
         const canvas = await drawCanvas(pdfData);
-
         const wrapper = document.createElement('div');
         wrapper.className = 'page-wrapper';
         wrapper.appendChild(canvas);
         spread.appendChild(wrapper);
-
         crease.style.display = 'none';
       } else {
         const leftData = await renderPDF(pdfs[currentPage]);
@@ -162,21 +161,20 @@
         const rightData = rightExists ? await renderPDF(pdfs[currentPage + 1]) : null;
 
         const leftCanvas = await drawCanvas(leftData);
-        const rightCanvas = rightData ? await drawCanvas(rightData) : null;
-
         const leftWrapper = document.createElement('div');
         leftWrapper.className = 'page-wrapper';
         leftWrapper.appendChild(leftCanvas);
         spread.appendChild(leftWrapper);
 
-        if (rightCanvas) {
+        if (rightData) {
+          const rightCanvas = await drawCanvas(rightData);
           const rightWrapper = document.createElement('div');
           rightWrapper.className = 'page-wrapper';
           rightWrapper.appendChild(rightCanvas);
           spread.appendChild(rightWrapper);
         }
 
-        crease.style.display = rightCanvas ? 'block' : 'none';
+        crease.style.display = rightData ? 'block' : 'none';
       }
 
       viewer.appendChild(spread);
@@ -200,11 +198,6 @@
       updateViewer();
     }
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') nextPage();
-      if (e.key === 'ArrowLeft') prevPage();
-    });
-
     viewer.addEventListener('click', (e) => {
       const rect = viewer.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -215,10 +208,16 @@
       }
     });
 
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextPage();
+      if (e.key === 'ArrowLeft') prevPage();
+    });
+
     updateViewer();
   </script>
 </body>
 </html>
+
 
 
 
