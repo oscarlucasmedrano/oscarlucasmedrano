@@ -53,7 +53,6 @@
       width: 100% !important;
       height: auto !important;
       max-width: 80vw !important;
-      max-height: calc(80vw * (9/16)) !important; /* Adjust based on your PDF aspect ratio */
       object-fit: contain !important;
       border: none;
     }
@@ -130,7 +129,6 @@
         width: 100% !important;
         height: auto !important;
         max-width: 80vw !important;
-        max-height: calc(80vw * (9/16)) !important; /* Adjust based on your PDF aspect ratio */
         object-fit: contain !important;
       }
       .crease {
@@ -232,43 +230,33 @@
     Promise.all(pdfPromises).then(() => {
       setTimeout(() => {
         console.log('All PDFs attempted to render');
-        const canvases = [
-          document.getElementById('about-canvas'),
-          document.getElementById('toc-canvas'),
-          document.getElementById('page4-canvas'),
-          document.getElementById('page5-canvas'),
-          document.getElementById('page6-canvas'),
-          document.getElementById('page7-canvas'),
-          document.getElementById('page8-canvas'),
-          document.getElementById('page9-canvas')
-        ];
-        let hasContent = false;
-        for (let canvas of canvases) {
-          if (canvas && canvas.width > 0 && canvas.height > 0) {
-            hasContent = true;
-            break;
+        const aboutCanvas = document.getElementById('about-canvas');
+        if (aboutCanvas && aboutCanvas.width > 0) {
+          const pageWidth = aboutCanvas.width;
+          const pageHeight = aboutCanvas.height;
+          book.style.width = `${pageWidth * 2}px`;
+          book.style.height = `${pageHeight}px`;
+          document.querySelector('.book-content').style.height = `${pageHeight}px`;
+          document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
+          document.querySelector('.book-pages').style.height = `${pageHeight}px`;
+          const coverCanvas = document.getElementById('cover-canvas');
+          if (coverCanvas) {
+            coverCanvas.style.maxHeight = `${pageHeight}px`;
           }
-        }
-        if (hasContent) {
-          const aboutCanvas = document.getElementById('about-canvas');
-          if (aboutCanvas && aboutCanvas.width > 0) {
-            const pageWidth = aboutCanvas.width;
-            const pageHeight = aboutCanvas.height;
-            book.style.width = `${pageWidth * 2}px`;
-            book.style.height = `${pageHeight}px`;
-            document.querySelector('.book-content').style.height = `${pageHeight}px`;
-            document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
-            document.querySelector('.book-pages').style.height = `${pageHeight}px`;
-            console.log(`Book size set to ${pageWidth * 2}x${pageHeight}`);
-          }
+          console.log(`Book size set to ${pageWidth * 2}x${pageHeight}, cover max-height set to ${pageHeight}px`);
         } else {
           book.style.width = '600px';
           book.style.height = '400px';
           document.querySelector('.book-content').style.height = '400px';
           document.querySelector('.book-content').style.width = '600px';
           document.querySelector('.book-pages').style.height = '400px';
-          console.log('Fallback book size set to 600x400');
+          const coverCanvas = document.getElementById('cover-canvas');
+          if (coverCanvas) {
+            coverCanvas.style.maxHeight = '400px';
+          }
+          console.log('Fallback book size set to 600x400, cover max-height set to 400px');
         }
+        updatePageDisplay(); // Force page update after rendering
       }, 200);
     });
 
@@ -284,21 +272,22 @@
         page.style.display = 'none';
         console.log(`Page ${index} set to display: none`);
       });
-      if (currentPage === 1) {
-        document.querySelectorAll('.page')[0].style.display = 'flex';
-        document.querySelectorAll('.page')[1].style.display = 'flex';
+      const pages = document.querySelectorAll('.page');
+      if (currentPage === 1 && pages.length >= 2) {
+        pages[0].style.display = 'flex';
+        pages[1].style.display = 'flex';
         console.log('Displaying pages 0 and 1 (about, toc)');
-      } else if (currentPage === 2) {
-        document.querySelectorAll('.page')[2].style.display = 'flex';
-        document.querySelectorAll('.page')[3].style.display = 'flex';
+      } else if (currentPage === 2 && pages.length >= 4) {
+        pages[2].style.display = 'flex';
+        pages[3].style.display = 'flex';
         console.log('Displaying pages 2 and 3 (page4, page5)');
-      } else if (currentPage === 3) {
-        document.querySelectorAll('.page')[4].style.display = 'flex';
-        document.querySelectorAll('.page')[5].style.display = 'flex';
+      } else if (currentPage === 3 && pages.length >= 6) {
+        pages[4].style.display = 'flex';
+        pages[5].style.display = 'flex';
         console.log('Displaying pages 4 and 5 (page6, page7)');
-      } else if (currentPage === 4) {
-        document.querySelectorAll('.page')[6].style.display = 'flex';
-        document.querySelectorAll('.page')[7].style.display = 'flex';
+      } else if (currentPage === 4 && pages.length >= 8) {
+        pages[6].style.display = 'flex';
+        pages[7].style.display = 'flex';
         console.log('Displaying pages 6 and 7 (page8, page9)');
       }
     }
