@@ -5,36 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oscar-Lucas Medrano</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      background-color: black;
+      padding: 0;
+      background: black;
       overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
     }
 
     #viewer {
       display: flex;
       flex-direction: row;
-      gap: 2px;
-      align-items: center;
       justify-content: center;
-      height: 95vh;
-      max-width: 100vw;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+      gap: 4px;
     }
 
     canvas {
+      background: white;
       box-shadow: 0 0 20px rgba(0,0,0,0.7);
-      background-color: white;
       max-height: 95vh;
       height: auto;
+      width: auto;
     }
 
     @media (max-width: 768px) {
       #viewer {
-        flex-direction: column;
+        flex-direction: row; /* force horizontal like a book */
+        gap: 2px;
+        overflow-x: scroll;
+        padding: 10px;
+      }
+      canvas {
+        max-width: 48vw;
+        height: auto;
       }
     }
   </style>
@@ -45,54 +52,66 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     const pdfs = [
-      'page1.pdf',                  // Cover
-      'about.pdf',                 // Page 2
-      'table_of_contents.pdf',     // Page 3
-      'page4.pdf',                 // Page 4
-      'page5.pdf'                  // Page 5
+      'page1.pdf',
+      'about.pdf',
+      'table_of_contents.pdf',
+      'page4.pdf',
+      'page5.pdf'
     ];
 
     const viewer = document.getElementById('viewer');
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-
     let currentPage = 0;
+    let maxHeight = 0;
 
-    const renderPDF = async (url, canvas) => {
-      const loadingTask = pdfjsLib.getDocument(url);
-      const pdf = await loadingTask.promise;
+    const renderPDF = async (url) => {
+      const pdf = await pdfjsLib.getDocument(url).promise;
       const page = await pdf.getPage(1);
-
       const viewport = page.getViewport({ scale: 2.5 });
+      return { pdf, page, viewport };
+    };
+
+    const drawCanvas = async (pdfObj, forcedHeight = null) => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      let scale = 2.5;
+      if (forcedHeight) {
+        scale = forcedHeight / pdfObj.viewport.height;
+      }
+      const viewport = pdfObj.page.getViewport({ scale });
+
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
-      await page.render({
-        canvasContext: canvas.getContext('2d'),
+      await pdfObj.page.render({
+        canvasContext: context,
         viewport
       }).promise;
+
+      return canvas;
     };
 
-    const updateViewer = () => {
+    const updateViewer = async () => {
       viewer.innerHTML = '';
+
       const isCover = currentPage === 0;
-
       if (isCover) {
-        const canvas = document.createElement('canvas');
+        const pdfObj = await renderPDF(pdfs[0]);
+        const canvas = await drawCanvas(pdfObj);
         viewer.appendChild(canvas);
-        renderPDF(pdfs[currentPage], canvas);
+        maxHeight = canvas.height;
       } else {
-        const left = pdfs[currentPage];
-        const right = pdfs[currentPage + 1];
+        const leftPDF = await renderPDF(pdfs[currentPage]);
+        const rightPDF = pdfs[currentPage + 1] ? await renderPDF(pdfs[currentPage + 1]) : null;
 
-        const canvasLeft = document.createElement('canvas');
+        const targetHeight = Math.max(leftPDF.viewport.height, rightPDF?.viewport.height || 0);
+        const canvasLeft = await drawCanvas(leftPDF, targetHeight);
+        const canvasRight = rightPDF ? await drawCanvas(rightPDF, targetHeight) : null;
+
         viewer.appendChild(canvasLeft);
-        renderPDF(left, canvasLeft);
+        if (canvasRight) viewer.appendChild(canvasRight);
 
-        if (right) {
-          const canvasRight = document.createElement('canvas');
-          viewer.appendChild(canvasRight);
-          renderPDF(right, canvasRight);
-        }
+        maxHeight = targetHeight;
       }
     };
 
@@ -113,8 +132,10 @@
       if (e.key === 'ArrowLeft') prev();
     });
 
-    viewer.addEventListener('click', next); // click to flip
+    viewer.addEventListener('click', next);
+
     updateViewer();
   </script>
 </body>
 </html>
+
