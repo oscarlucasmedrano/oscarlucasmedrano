@@ -29,7 +29,7 @@
       overflow: hidden;
       border: none;
       max-width: 80vw;
-      width: 80vw;
+      width: 80vw; /* Strictly enforce width */
     }
     .book-content {
       width: 100%;
@@ -49,7 +49,7 @@
       display: block;
       width: 100%;
       height: auto;
-      background: #666; /* More visible fallback */
+      background: #666; /* Visible fallback */
       border: none;
     }
     .book-cover canvas {
@@ -69,9 +69,9 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 70; /* Further increased z-index */
+      z-index: 80; /* Further increased z-index */
       background: black;
-      overflow: visible; /* Ensure pages are not clipped */
+      overflow: visible;
       border: none;
     }
     .book.open .book-pages {
@@ -84,7 +84,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: visible; /* Ensure content is not clipped */
+      overflow: visible;
       border: none;
       position: relative;
     }
@@ -100,13 +100,13 @@
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 71;
+      z-index: 81;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 72;
+      z-index: 82;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -219,7 +219,7 @@
       context.fillRect(0, 0, 300, 400); // Initial fallback
       const testContent = canvas.nextElementSibling;
       if (testContent && testContent.className === 'test-content') {
-        testContent.style.display = 'block';
+        testContent.style.opacity = '1'; // Ensure fallback text is visible
       }
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -234,6 +234,7 @@
           console.log(`${canvasId} rendered successfully, native size: ${canvas.width}x${canvas.height}`);
           context.fillStyle = 'black'; // Reset to black if successful
           context.fillRect(0, 0, canvas.width, canvas.height); // Clear fallback
+          if (testContent) testContent.style.opacity = '0'; // Hide fallback if successful
           return;
         } catch (error) {
           console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
@@ -310,9 +311,10 @@
       const creases = document.querySelectorAll('.crease');
       document.querySelectorAll('.page, .crease').forEach(el => {
         el.style.display = 'none';
-        el.style.visibility = 'visible'; // Ensure visibility
+        el.style.visibility = 'visible';
+        el.style.opacity = '1'; // Force visibility
       });
-      console.log('All pages and creases set to display: none, visibility: visible');
+      console.log('All pages and creases set to display: none, visibility: visible, opacity: 1');
       if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex'; // About
         pages[1].style.display = 'flex'; // TOC
