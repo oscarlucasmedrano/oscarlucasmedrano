@@ -68,7 +68,7 @@
       width: 100%;
       height: 100%;
       z-index: 40;
-      background: black; /* Changed to black */
+      background: black;
       overflow: hidden;
       border: none;
     }
@@ -78,7 +78,7 @@
     .page {
       width: 50%;
       height: 100%;
-      background: black; /* Changed to black */
+      background: black;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -91,7 +91,7 @@
       max-height: 100%;
       object-fit: contain;
       border: none;
-      background: black; /* Changed to black */
+      background: black;
     }
     .page .test-content {
       position: absolute;
@@ -208,40 +208,37 @@
 
     async function renderPDF(pdfUrl, canvasId, maxRetries = 3) {
       const canvas = document.getElementById(canvasId);
-      if (canvas) {
-        const context = canvas.getContext('2d');
-        context.fillStyle = 'black'; // Changed to black
-        context.fillRect(0, 0, 300, 400); // Initial fallback
-        const testContent = canvas.nextElementSibling;
-        if (testContent && testContent.className === 'test-content') {
-          testContent.style.display = 'block';
-        }
+      if (!canvas) {
+        console.error(`Canvas ${canvasId} not found`);
+        return;
+      }
+      const context = canvas.getContext('2d');
+      context.fillStyle = 'black';
+      context.fillRect(0, 0, 300, 400); // Initial fallback
+      const testContent = canvas.nextElementSibling;
+      if (testContent && testContent.className === 'test-content') {
+        testContent.style.display = 'block';
       }
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
+          console.log(`Attempting to render ${canvasId} from ${pdfUrl}, attempt ${attempt}`);
           const loadingTask = pdfjsLib.getDocument(pdfUrl);
           const pdf = await loadingTask.promise;
           const page = await pdf.getPage(1);
-          const canvas = document.getElementById(canvasId);
-          const context = canvas.getContext('2d');
           const viewport = page.getViewport({ scale: 0.7 });
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           await page.render({ canvasContext: context, viewport: viewport });
-          console.log(`${canvasId} rendered successfully on attempt ${attempt}, width: ${canvas.width}, height: ${canvas.height}`);
+          console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
           return;
         } catch (error) {
           console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
           if (attempt === maxRetries) {
-            const canvas = document.getElementById(canvasId);
-            if (canvas) {
-              const context = canvas.getContext('2d');
-              context.fillStyle = 'black'; // Changed to black
-              context.fillRect(0, 0, 300, 400);
-              console.log(`Fallback filled ${canvasId} with black 300x400`);
-            }
+            context.fillStyle = 'black';
+            context.fillRect(0, 0, 300, 400);
+            console.log(`Fallback filled ${canvasId} with black 300x400 after ${maxRetries} attempts`);
           }
-          await new Promise(resolve => setTimeout(resolve, 500 * attempt)); // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 500 * attempt));
         }
       }
     }
@@ -291,7 +288,7 @@
             canvas.height = maxHeight;
             const context = canvas.getContext('2d');
             if (context) {
-              context.fillStyle = 'black'; // Changed to black
+              context.fillStyle = 'black';
               context.fillRect(0, 0, maxWidth, maxHeight);
             }
             const testContent = canvas.nextElementSibling;
@@ -311,9 +308,9 @@
           }
         }
         console.log(`Book size set to ${maxWidth * 2}x${maxHeight}`);
-        updatePageDisplay(); // Force page update after rendering
+        updatePageDisplay();
       }, 200);
-    });
+    }).catch(error => console.error('PDF rendering failed:', error));
 
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
@@ -322,7 +319,6 @@
       if (currentPage === 1) book.classList.add('page-pair-1');
       else if (currentPage === 2) book.classList.add('page-pair-2');
       else if (currentPage === 3) book.classList.add('page-pair-3');
-      // Show the current page pair
       document.querySelectorAll('.page').forEach((page, index) => {
         page.style.display = 'none';
         console.log(`Page ${index} set to display: none`);
@@ -344,6 +340,8 @@
         pages[6].style.display = 'flex';
         pages[7].style.display = 'flex';
         console.log('Displaying pages 6 and 7 (page8, page9)');
+      } else if (currentPage === 0) {
+        console.log('Displaying cover, no pages');
       }
     }
 
