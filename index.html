@@ -15,12 +15,15 @@
             overflow: hidden;
             height: 100vh;
             width: 100vw;
-            position: fixed; /* Pin the body to the screen */
+            position: fixed;
             top: 0;
             left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #flipbook-container {
-            position: fixed; /* Pin the container */
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -28,6 +31,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 1;
         }
         #canvas-container {
             position: relative;
@@ -161,7 +165,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.2; // Increase size by 20%
+            const fitScale = Math.min(scaleX, scaleY) * 1.35; // Increase size by 35%
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -185,7 +189,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.2; // Increase size by 20%
+            const fitScale = Math.min(scaleX, scaleY) * 1.35; // Increase size by 35%
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -211,6 +215,18 @@
                 ]);
             }
         }
+
+        canvasContainer.addEventListener('click', (e) => {
+            const rect = canvasContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
+                currentSpreadIndex--;
+                loadSpread(currentSpreadIndex);
+            } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
+                currentSpreadIndex++;
+                loadSpread(currentSpreadIndex);
+            }
+        });
 
         document.getElementById('prev-page').addEventListener('click', () => {
             if (currentSpreadIndex > 0) {
