@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oscar-Lucas Medrano Flipbook</title>
+  <title>Oscar-Lucas Medrano</title>
   <style>
     body {
       margin: 0;
@@ -16,85 +16,174 @@
       justify-content: center;
       align-items: center;
     }
-    #flipbook {
+    .book-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .book {
+      position: relative;
+      box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
+      background-color: black;
+      overflow: hidden;
+      border: none;
       width: 800px;
       height: 600px;
-      box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .book-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .book-cover-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+    .book-cover {
+      display: block;
+      background: #333;
+      border: none;
+    }
+    .book-cover canvas {
+      max-width: 400px;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border: none;
+      margin: 0 auto;
+    }
+    .book.open .book-cover-wrapper {
+      display: none;
+    }
+    .book-pages {
+      position: absolute;
+      display: none;
+      flex-direction: row;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      z-index: 60;
+      background: black;
+      overflow: hidden;
+      border: none;
+    }
+    .book.open .book-pages {
+      display: flex;
     }
     .page {
-      background: #333;
+      width: 50%;
+      height: 100%;
+      background: black;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
+      border: none;
+      position: relative;
     }
     .page canvas {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
       border: none;
+      background: black;
     }
     .page .test-content {
       position: absolute;
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 1;
-      opacity: 1;
+      z-index: 61;
+      opacity: 1; /* Always visible */
+    }
+    .crease {
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
+      z-index: 62;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      visibility: visible;
     }
     @media (max-width: 768px) {
-      #flipbook {
+      .book {
         width: 80vw;
         height: auto;
+        min-width: 0;
         min-height: 0;
+      }
+      .book-cover canvas {
+        max-width: 50vw;
+        margin: 0 auto;
+      }
+      .book-pages {
+        width: 80vw;
+        height: auto;
       }
     }
   </style>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://www.turnjs.com/lib/turn.min.js"></script>
 </head>
 <body>
-  <div id="flipbook">
-    <div class="page">
-      <canvas id="cover-canvas"></canvas>
-      <div class="test-content">Cover</div>
-    </div>
-    <div class="page">
-      <canvas id="about-canvas"></canvas>
-      <div class="test-content">About</div>
-    </div>
-    <div class="page">
-      <canvas id="toc-canvas"></canvas>
-      <div class="test-content">TOC</div>
-    </div>
-    <div class="page">
-      <canvas id="page4-canvas"></canvas>
-      <div class="test-content">Page 4</div>
-    </div>
-    <div class="page">
-      <canvas id="page5-canvas"></canvas>
-      <div class="test-content">Page 5</div>
-    </div>
-    <div class="page">
-      <canvas id="page6-canvas"></canvas>
-      <div class="test-content">Page 6</div>
-    </div>
-    <div class="page">
-      <canvas id="page7-canvas"></canvas>
-      <div class="test-content">Page 7</div>
-    </div>
-    <div class="page">
-      <canvas id="page8-canvas"></canvas>
-      <div class="test-content">Page 8</div>
-    </div>
-    <div class="page">
-      <canvas id="page9-canvas"></canvas>
-      <div class="test-content">Page 9</div>
+  <div class="book-container">
+    <div class="book">
+      <div class="book-content">
+        <div class="book-cover-wrapper">
+          <div class="book-cover">
+            <canvas id="cover-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="book-pages">
+        <div class="crease"></div> <!-- Between About and TOC -->
+        <div class="page">
+          <canvas id="about-canvas"></canvas>
+          <div class="test-content">About</div>
+        </div>
+        <div class="page">
+          <canvas id="toc-canvas"></canvas>
+          <div class="test-content">TOC</div>
+        </div>
+        <div class="crease"></div> <!-- Between 4-5 -->
+        <div class="page">
+          <canvas id="page4-canvas"></canvas>
+          <div class="test-content">Page 4</div>
+        </div>
+        <div class="page">
+          <canvas id="page5-canvas"></canvas>
+          <div class="test-content">Page 5</div>
+        </div>
+        <div class="crease"></div> <!-- Between 6-7 -->
+        <div class="page">
+          <canvas id="page6-canvas"></canvas>
+          <div class="test-content">Page 6</div>
+        </div>
+        <div class="page">
+          <canvas id="page7-canvas"></canvas>
+          <div class="test-content">Page 7</div>
+        </div>
+        <div class="crease"></div> <!-- Between 8-9 -->
+        <div class="page">
+          <canvas id="page8-canvas"></canvas>
+          <div class="test-content">Page 8</div>
+        </div>
+        <div class="page">
+          <canvas id="page9-canvas"></canvas>
+          <div class="test-content">Page 9</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
+    const book = document.querySelector('.book');
+    let currentPage = 0; // 0 = cover, 1 = About/TOC, 2 = 4-5, 3 = 6-7, 4 = 8-9
+
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     async function renderPDF(pdfUrl, canvasId, scale = 2) { // Higher scale for non-pixelated
@@ -129,7 +218,7 @@
       }
     }
 
-    // Render all PDFs with higher scale
+    // Render all PDFs
     const pdfPromises = [
       renderPDF('page1.pdf', 'cover-canvas', 2),
       renderPDF('about.pdf', 'about-canvas', 2),
@@ -145,30 +234,118 @@
     Promise.all(pdfPromises).then(() => {
       setTimeout(() => {
         console.log('All PDFs attempted to render');
-        $("#flipbook").turn({
-          width: 800,
-          height: 600,
-          autoCenter: true,
-          gradients: true,
-          acceleration: true
+        let maxHeight = 0;
+        const canvases = [
+          document.getElementById('cover-canvas'),
+          document.getElementById('about-canvas'),
+          document.getElementById('toc-canvas'),
+          document.getElementById('page4-canvas'),
+          document.getElementById('page5-canvas'),
+          document.getElementById('page6-canvas'),
+          document.getElementById('page7-canvas'),
+          document.getElementById('page8-canvas'),
+          document.getElementById('page9-canvas')
+        ];
+        canvases.forEach(canvas => {
+          if (canvas) {
+            maxHeight = Math.max(maxHeight, canvas.height || 600);
+            console.log(`${canvas.id} size: ${canvas.width || 400}x${canvas.height || 600}`);
+          }
         });
-        console.log('Flipbook initialized');
+        if (maxHeight === 0) {
+          maxHeight = 600;
+          console.warn('No valid canvas heights detected, using fallback 600');
+        }
+        book.style.height = `${maxHeight}px`;
+        document.querySelector('.book-content').style.height = `${maxHeight}px`;
+        document.querySelector('.book-pages').style.height = `${maxHeight}px`;
+        if (window.innerWidth <= 768) {
+          const coverCanvas = document.getElementById('cover-canvas');
+          if (coverCanvas) {
+            coverCanvas.style.maxWidth = `50vw !important`;
+            coverCanvas.style.maxHeight = `${maxHeight}px !important`;
+            coverCanvas.style.margin = '0 auto';
+            console.log(`Mobile cover centered to 50vw x ${maxHeight}px`);
+          }
+        }
+        console.log(`Book height set to ${maxHeight}px`);
+        updatePageDisplay();
       }, 200);
     }).catch(error => console.error('PDF rendering failed globally:', error));
 
-    // Handle window resize for mobile
-    window.addEventListener('resize', () => {
-      if (window.innerWidth <= 768) {
-        $("#flipbook").turn('size', 80 * window.innerWidth / 100, 600 * window.innerWidth / 800);
-        console.log('Resized for mobile');
-      } else {
-        $("#flipbook").turn('size', 800, 600);
-        console.log('Resized for desktop');
+    function updatePageDisplay() {
+      console.log('Updating page display, currentPage:', currentPage);
+      book.classList.toggle('open', currentPage > 0);
+      book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
+      const pages = document.querySelectorAll('.page');
+      const creases = document.querySelectorAll('.crease');
+      document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
+      console.log(`Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}`);
+      if (currentPage === 1 && pages.length >= 2) {
+        pages[0].style.display = 'flex'; // About
+        pages[1].style.display = 'flex'; // TOC
+        creases[0].style.display = 'block';
+        book.classList.add('page-pair-1');
+        console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
+      } else if (currentPage === 2 && pages.length >= 4) {
+        pages[2].style.display = 'flex'; // Page 4
+        pages[3].style.display = 'flex'; // Page 5
+        creases[1].style.display = 'block';
+        book.classList.add('page-pair-2');
+        console.log('Displaying pages 2 (Page 4) and 3 (Page 5) with crease 2');
+      } else if (currentPage === 3 && pages.length >= 6) {
+        pages[4].style.display = 'flex'; // Page 6
+        pages[5].style.display = 'flex'; // Page 7
+        creases[2].style.display = 'block';
+        book.classList.add('page-pair-3');
+        console.log('Displaying pages 4 and 5 (Page 6, Page 7) with crease 3');
+      } else if (currentPage === 4 && pages.length >= 8) {
+        pages[6].style.display = 'flex'; // Page 8
+        pages[7].style.display = 'flex'; // Page 9
+        creases[3].style.display = 'block';
+        book.classList.add('page-pair-3');
+        console.log('Displaying pages 6 and 7 (Page 8, Page 9) with crease 4');
+      } else if (currentPage === 0) {
+        console.log('Displaying cover, no pages or creases');
+      }
+    }
+
+    book.addEventListener('click', (e) => {
+      const rect = book.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
+
+      if (currentPage === 0 && clickX > rect.width * 0.3) { // Right click to show About/TOC
+        currentPage = 1;
+        console.log('Switched to page 1 (About, TOC)');
+      } else if (currentPage === 1 && clickX > rect.width * 0.7) { // Right click to show Page 4/5
+        currentPage = 2;
+        console.log('Switched to page 2 (Page 4, Page 5)');
+      } else if (currentPage > 0 && clickX < rect.width * 0.3) { // Left click to go back
+        currentPage = Math.max(0, currentPage - 1);
+        console.log('Switched back, currentPage:', currentPage);
+      } else if (currentPage < 4 && clickX > rect.width * 0.7) { // Right click to advance
+        currentPage = Math.min(4, currentPage + 1);
+        console.log('Advanced to page:', currentPage);
+      }
+      console.log('currentPage after:', currentPage);
+      updatePageDisplay();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && currentPage > 0) {
+        currentPage = Math.max(0, currentPage - 1);
+        updatePageDisplay();
+        console.log('ArrowLeft, currentPage:', currentPage);
+      } else if (e.key === 'ArrowRight' && currentPage < 4) {
+        currentPage = Math.min(4, currentPage + 1);
+        updatePageDisplay();
+        console.log('ArrowRight, currentPage:', currentPage);
       }
     });
 
-    // Initial resize
-    window.dispatchEvent(new Event('resize'));
+    // Initialize with cover
+    updatePageDisplay();
   </script>
 </body>
 </html>
