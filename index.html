@@ -45,12 +45,12 @@
       border: none;
     }
     .book-cover canvas {
-      max-width: 400px; /* Small centered cover */
+      max-width: 400px;
       width: 100%;
       height: auto;
       object-fit: contain;
       border: none;
-      margin: 0 auto; /* Center the cover */
+      margin: 0 auto;
     }
     .book.open .book-cover-wrapper {
       display: none;
@@ -60,8 +60,8 @@
       display: none;
       flex-direction: row;
       align-items: center;
-      width: 800px; /* Fixed book width */
-      height: 600px; /* Fixed book height */
+      width: 800px;
+      height: 600px;
       z-index: 60;
       background: black;
       overflow: hidden;
@@ -94,7 +94,7 @@
       font-size: 16px;
       text-align: center;
       z-index: 61;
-      opacity: 1; /* Always visible */
+      opacity: 1;
     }
     .crease {
       width: 4px;
@@ -104,9 +104,11 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      visibility: visible; /* Ensure crease is visible */
+      visibility: visible;
     }
-    .page-pair-1 .crease { visibility: visible; }
+    .page-pair-1 .crease:nth-child(2) { visibility: visible; }
+    .page-pair-2 .crease:nth-child(4) { visibility: visible; }
+    .page-pair-3 .crease:nth-child(6) { visibility: visible; }
     @media (max-width: 768px) {
       .book {
         width: 80vw;
@@ -116,7 +118,7 @@
       }
       .book-cover canvas {
         max-width: 50vw;
-        margin: 0 auto; /* Center mobile cover */
+        margin: 0 auto;
       }
       .book-pages {
         width: 80vw;
@@ -135,8 +137,8 @@
           </div>
         </div>
       </div>
-      <div class="book-pages page-pair-1">
-        <div class="crease"></div>
+      <div class="book-pages">
+        <div class="crease"></div> <!-- Between 2-3 -->
         <div class="page">
           <canvas id="about-canvas"></canvas>
           <div class="test-content">About</div>
@@ -145,6 +147,33 @@
           <canvas id="toc-canvas"></canvas>
           <div class="test-content">TOC</div>
         </div>
+        <div class="crease"></div> <!-- Between 4-5 -->
+        <div class="page">
+          <canvas id="page4-canvas"></canvas>
+          <div class="test-content">Page 4</div>
+        </div>
+        <div class="page">
+          <canvas id="page5-canvas"></canvas>
+          <div class="test-content">Page 5</div>
+        </div>
+        <div class="crease"></div> <!-- Between 6-7 -->
+        <div class="page">
+          <canvas id="page6-canvas"></canvas>
+          <div class="test-content">Page 6</div>
+        </div>
+        <div class="page">
+          <canvas id="page7-canvas"></canvas>
+          <div class="test-content">Page 7</div>
+        </div>
+        <div class="crease"></div> <!-- Between 8-9 -->
+        <div class="page">
+          <canvas id="page8-canvas"></canvas>
+          <div class="test-content">Page 8</div>
+        </div>
+        <div class="page">
+          <canvas id="page9-canvas"></canvas>
+          <div class="test-content">Page 9</div>
+        </div>
       </div>
     </div>
   </div>
@@ -152,11 +181,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     const book = document.querySelector('.book');
-    let currentPage = 0; // 0 = cover, 1 = 2-3
+    let currentPage = 0; // 0 = cover, 1 = 2-3, 2 = 4-5, 3 = 6-7, 4 = 8-9
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, maxRetries = 5) {
+    async function renderPDF(pdfUrl, canvasId, maxRetries = 10) { // Increased retries
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
         console.error(`Canvas ${canvasId} not found`);
@@ -194,11 +223,17 @@
       }
     }
 
-    // Render PDFs
+    // Render all PDFs
     const pdfPromises = [
       renderPDF('page1.pdf', 'cover-canvas'),
       renderPDF('about.pdf', 'about-canvas'),
-      renderPDF('table_of_contents.pdf', 'toc-canvas')
+      renderPDF('table_of_contents.pdf', 'toc-canvas'),
+      renderPDF('page4.pdf', 'page4-canvas'),
+      renderPDF('page5.pdf', 'page5-canvas'),
+      renderPDF('page6.pdf', 'page6-canvas'),
+      renderPDF('page7.pdf', 'page7-canvas'),
+      renderPDF('page8.pdf', 'page8-canvas'),
+      renderPDF('page9.pdf', 'page9-canvas')
     ];
 
     Promise.all(pdfPromises).then(() => {
@@ -207,7 +242,13 @@
         const canvases = [
           document.getElementById('cover-canvas'),
           document.getElementById('about-canvas'),
-          document.getElementById('toc-canvas')
+          document.getElementById('toc-canvas'),
+          document.getElementById('page4-canvas'),
+          document.getElementById('page5-canvas'),
+          document.getElementById('page6-canvas'),
+          document.getElementById('page7-canvas'),
+          document.getElementById('page8-canvas'),
+          document.getElementById('page9-canvas')
         ];
         let maxHeight = 0;
         canvases.forEach(canvas => {
@@ -240,12 +281,37 @@
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
-      if (currentPage === 1) {
-        document.querySelector('.book-pages').style.display = 'flex';
-        console.log('Displaying pages (About and TOC)');
-      } else {
-        document.querySelector('.book-pages').style.display = 'none';
-        console.log('Displaying cover');
+      book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
+      const pages = document.querySelectorAll('.page');
+      const creases = document.querySelectorAll('.crease');
+      document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
+      console.log('All pages and creases set to display: none');
+      if (currentPage === 1 && pages.length >= 2) {
+        pages[0].style.display = 'flex'; // About
+        pages[1].style.display = 'flex'; // TOC
+        creases[0].style.display = 'block';
+        book.classList.add('page-pair-1');
+        console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
+      } else if (currentPage === 2 && pages.length >= 4) {
+        pages[2].style.display = 'flex'; // Page 4
+        pages[3].style.display = 'flex'; // Page 5
+        creases[1].style.display = 'block';
+        book.classList.add('page-pair-2');
+        console.log('Displaying pages 2 and 3 (Page 4, Page 5) with crease 2');
+      } else if (currentPage === 3 && pages.length >= 6) {
+        pages[4].style.display = 'flex'; // Page 6
+        pages[5].style.display = 'flex'; // Page 7
+        creases[2].style.display = 'block';
+        book.classList.add('page-pair-3');
+        console.log('Displaying pages 4 and 5 (Page 6, Page 7) with crease 3');
+      } else if (currentPage === 4 && pages.length >= 8) {
+        pages[6].style.display = 'flex'; // Page 8
+        pages[7].style.display = 'flex'; // Page 9
+        creases[3].style.display = 'block';
+        book.classList.add('page-pair-3');
+        console.log('Displaying pages 6 and 7 (Page 8, Page 9) with crease 4');
+      } else if (currentPage === 0) {
+        console.log('Displaying cover, no pages or creases');
       }
     }
 
@@ -258,8 +324,11 @@
         currentPage = 1;
         console.log('Switched to page 1 (About, TOC)');
       } else if (currentPage > 0 && clickX < rect.width / 4) {
-        currentPage = 0;
-        console.log('Switched back to cover, currentPage:', currentPage);
+        currentPage = Math.max(0, currentPage - 1);
+        console.log('Switched back, currentPage:', currentPage);
+      } else if (currentPage < 4 && clickX > (3 * rect.width / 4)) {
+        currentPage = Math.min(4, currentPage + 1);
+        console.log('Advanced to page:', currentPage);
       }
       console.log('currentPage after:', currentPage);
       updatePageDisplay();
@@ -267,11 +336,11 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' && currentPage > 0) {
-        currentPage = 0;
+        currentPage = Math.max(0, currentPage - 1);
         updatePageDisplay();
         console.log('ArrowLeft, currentPage:', currentPage);
-      } else if (e.key === 'ArrowRight' && currentPage === 0) {
-        currentPage = 1;
+      } else if (e.key === 'ArrowRight' && currentPage < 4) {
+        currentPage = Math.min(4, currentPage + 1);
         updatePageDisplay();
         console.log('ArrowRight, currentPage:', currentPage);
       }
