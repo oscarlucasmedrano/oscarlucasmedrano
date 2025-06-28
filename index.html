@@ -49,7 +49,7 @@
       display: block;
       width: 100%;
       height: auto;
-      background: #666; /* Reverted to fallback color */
+      background: #333; /* Original fallback */
       border: none;
     }
     .book-cover canvas {
@@ -69,9 +69,9 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 100; /* Maximum z-index */
+      z-index: 60; /* Original z-index */
       background: black;
-      overflow: visible;
+      overflow: hidden;
       border: none;
     }
     .book.open .book-pages {
@@ -84,11 +84,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: visible;
+      overflow: hidden;
       border: none;
-      position: absolute;
-      top: 0;
-      left: 0;
+      position: relative;
     }
     .page canvas {
       max-width: 100%;
@@ -102,14 +100,13 @@
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 101;
-      opacity: 1; /* Always visible */
+      z-index: 61; /* Original z-index */
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 102;
+      z-index: 62; /* Original z-index */
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -146,6 +143,7 @@
         max-width: 50vw !important;
         max-height: 100% !important;
         object-fit: contain !important;
+        margin: 0 auto; /* Center mobile cover */
       }
       .crease {
         display: block;
@@ -218,11 +216,11 @@
         return;
       }
       const context = canvas.getContext('2d');
-      context.fillStyle = '#666'; // Reverted fallback color
+      context.fillStyle = '#333'; // Original fallback
       context.fillRect(0, 0, 300, 400); // Initial fallback
       const testContent = canvas.nextElementSibling;
       if (testContent && testContent.className === 'test-content') {
-        testContent.style.opacity = '1'; // Always visible
+        testContent.style.display = 'block';
       }
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -235,14 +233,15 @@
           canvas.height = viewport.height;
           await page.render({ canvasContext: context, viewport: viewport });
           console.log(`${canvasId} rendered successfully, native size: ${canvas.width}x${canvas.height}`);
-          if (testContent) testContent.style.opacity = '0'; // Hide if successful
+          context.fillStyle = 'black'; // Reset to black if successful
+          context.fillRect(0, 0, canvas.width, canvas.height); // Clear fallback
           return;
         } catch (error) {
           console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
           if (attempt === maxRetries) {
-            context.fillStyle = '#666';
+            context.fillStyle = '#333';
             context.fillRect(0, 0, 300, 400);
-            console.log(`Fallback filled ${canvasId} with #666 300x400 after ${maxRetries} attempts due to: ${error.message}`);
+            console.log(`Fallback filled ${canvasId} with #333 300x400 after ${maxRetries} attempts`);
           }
           await new Promise(resolve => setTimeout(resolve, 500 * attempt));
         }
@@ -279,8 +278,8 @@
         let maxHeight = 0;
         canvases.forEach(canvas => {
           if (canvas) {
-            maxHeight = Math.max(maxHeight, canvas.height || 400);
-            console.log(`${canvas.id} size: ${canvas.width || 300}x${canvas.height || 400}`);
+            maxHeight = Math.max(maxHeight, canvas.height);
+            console.log(`${canvas.id} size: ${canvas.width}x${canvas.height}`);
           }
         });
         if (maxHeight === 0) {
@@ -302,7 +301,7 @@
         console.log(`Book height set to ${maxHeight}px`);
         updatePageDisplay();
       }, 200);
-    }).catch(error => console.error('PDF rendering failed globally:', error));
+    }).catch(error => console.error('PDF rendering failed:', error));
 
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
@@ -310,12 +309,8 @@
       book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
       const pages = document.querySelectorAll('.page');
       const creases = document.querySelectorAll('.crease');
-      document.querySelectorAll('.page, .crease').forEach(el => {
-        el.style.display = 'none';
-        el.style.visibility = 'visible';
-        el.style.opacity = '1';
-      });
-      console.log('All pages and creases set to display: none, visibility: visible, opacity: 1');
+      document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
+      console.log('All pages and creases set to display: none');
       if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex'; // About
         pages[1].style.display = 'flex'; // TOC
