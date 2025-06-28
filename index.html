@@ -61,7 +61,7 @@
     }
     .book-pages {
       position: absolute;
-      display: flex;
+      display: none;
       flex-direction: row;
       align-items: center;
       width: 100%;
@@ -70,6 +70,9 @@
       background: black;
       overflow: hidden;
       border: none;
+    }
+    .book.open .book-pages {
+      display: flex;
     }
     .page {
       width: 50%;
@@ -87,6 +90,14 @@
       max-height: 100%;
       border: none;
       background: transparent;
+      display: block;
+    }
+    .page .fallback-content {
+      position: absolute;
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      z-index: 61;
     }
     .crease {
       width: 4px;
@@ -216,14 +227,14 @@
       const creases = document.querySelectorAll('.crease');
       const aboutPdf = document.getElementById('about-pdf');
       const tocPdf = document.getElementById('toc-pdf');
-      console.log(`Cover wrapper display: ${coverWrapper.style.display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF loaded: ${aboutPdf ? aboutPdf.data : 'null'}, TOC PDF loaded: ${tocPdf ? tocPdf.data : 'null'}`);
+      console.log(`Cover wrapper display: ${coverWrapper.style.display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF loaded: ${aboutPdf ? (aboutPdf.data ? 'yes' : 'no') : 'null'}, TOC PDF loaded: ${tocPdf ? (tocPdf.data ? 'yes' : 'no') : 'null'}`);
       if (currentPage === 0) {
         coverWrapper.style.display = 'flex';
-        pages.forEach(page => page.style.display = 'none');
-        creases.forEach(crease => crease.style.display = 'none');
-        console.log('Displaying cover, hiding all pages and creases');
+        document.querySelector('.book-pages').style.display = 'none';
+        console.log('Displaying cover, hiding pages');
       } else if (currentPage === 1 && pages.length >= 2) {
         coverWrapper.style.display = 'none';
+        document.querySelector('.book-pages').style.display = 'flex';
         pages.forEach((page, index) => page.style.display = index < 2 ? 'flex' : 'none');
         creases.forEach((crease, index) => crease.style.display = index === 0 ? 'block' : 'none');
         console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
