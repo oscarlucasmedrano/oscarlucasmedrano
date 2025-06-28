@@ -263,10 +263,18 @@
           const iframe = page.querySelector('iframe');
           const canvas = page.querySelector('canvas');
           if (iframe && canvas) {
-            iframe.style.display = 'block';
-            iframe.style.visibility = 'visible';
-            console.log(`Page ${index} iframe display: ${getComputedStyle(iframe).display}, visibility: ${getComputedStyle(iframe).visibility}, contentDocument: ${iframe.contentDocument ? 'exists' : 'null'}`);
-            renderPDF(index === 0 ? 'about.pdf' : 'table_of_contents.pdf', canvas.id, iframe.id, page.querySelector('.fallback-content'), 1.5);
+            iframe.style.display = 'none'; // Hide iframe on render attempt
+            iframe.style.visibility = 'hidden';
+            console.log(`Page ${index} iframe hidden, attempting canvas render`);
+            renderPDF(index === 0 ? 'about.pdf' : 'table_of_contents.pdf', canvas.id, iframe.id, page.querySelector('.fallback-content'), 1.5).then(() => {
+              canvas.style.display = 'block';
+              iframe.style.display = 'none';
+            }).catch(() => {
+              canvas.style.display = 'none';
+              iframe.style.display = 'block';
+              iframe.style.visibility = 'visible';
+              console.log(`Page ${index} canvas render failed, showing iframe`);
+            });
           }
           page.style.display = index < 2 ? 'flex' : 'none';
         });
