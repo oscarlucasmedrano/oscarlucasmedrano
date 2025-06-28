@@ -13,40 +13,86 @@
       width: 100vw;
       height: 100vh;
     }
+
+    #wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
     #book {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      position: relative;
+    }
+
+    canvas {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      height: 720px;
+      width: auto;
+      max-height: 90vh;
+    }
+
+    #crease {
       position: absolute;
+      width: 2px;
+      height: 720px;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      display: flex;
-      gap: 0;
-      align-items: center;
-      justify-content: center;
+      background: linear-gradient(to bottom, #00000033, #ffffff11, #00000033);
+      pointer-events: none;
+      z-index: 10;
     }
-    canvas {
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-      max-height: 90vh;
-      height: auto;
-      width: auto;
-    }
+
     @media (max-width: 768px) {
-      #book {
-        flex-direction: column;
+      html, body {
+        overflow-x: auto;
+        overflow-y: hidden;
       }
+
+      #wrapper {
+        align-items: flex-start;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 10px;
+      }
+
+      #book {
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: flex-start;
+        gap: 0;
+      }
+
       canvas {
-        max-width: 90vw;
         max-height: 80vh;
+        width: auto;
+        height: auto;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      }
+
+      #crease {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
-  <div id="book"></div>
+  <div id="wrapper">
+    <div id="crease"></div>
+    <div id="book"></div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     const pdfs = [
-      'page1.pdf',              // cover
+      'page1.pdf',
       'about.pdf',
       'table_of_contents.pdf',
       'page4.pdf',
@@ -54,10 +100,11 @@
     ];
 
     const book = document.getElementById('book');
+    const crease = document.getElementById('crease');
     const pdfjs = window['pdfjs-dist/build/pdf'];
     let current = 0;
 
-    async function renderPDF(url, scale = 2) {
+    async function loadPDF(url, scale = 2.5) {
       const pdf = await pdfjs.getDocument(url).promise;
       const page = await pdf.getPage(1);
       const viewport = page.getViewport({ scale });
@@ -73,14 +120,19 @@
       book.innerHTML = '';
 
       if (current === 0) {
-        const canvas = await renderPDF(pdfs[0], 2.5);
+        const canvas = await loadPDF(pdfs[0]);
         book.appendChild(canvas);
+        crease.style.display = 'none';
       } else {
-        const left = await renderPDF(pdfs[current], 2.5);
+        const left = await loadPDF(pdfs[current]);
         book.appendChild(left);
+
         if (pdfs[current + 1]) {
-          const right = await renderPDF(pdfs[current + 1], 2.5);
+          const right = await loadPDF(pdfs[current + 1]);
           book.appendChild(right);
+          crease.style.display = 'block';
+        } else {
+          crease.style.display = 'none';
         }
       }
     }
@@ -118,6 +170,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
