@@ -66,8 +66,8 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 30; /* Increased for visibility */
-      background: rgba(0, 0, 255, 0.7); /* Strong blue background */
+      z-index: 35; /* Increased for visibility */
+      background: rgba(0, 0, 255, 0.8); /* Stronger blue background */
       overflow: hidden;
       border: none;
     }
@@ -77,7 +77,7 @@
     .page {
       width: 50%;
       height: 100%;
-      background: rgba(0, 0, 255, 0.4); /* Blue tint for each page */
+      background: rgba(0, 0, 255, 0.5); /* Blue tint for each page */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -90,20 +90,20 @@
       max-height: 100%;
       object-fit: contain;
       border: none;
-      background: rgba(0, 255, 0, 0.4); /* Green tint as fallback */
+      background: rgba(0, 255, 0, 0.5); /* Green tint as fallback */
     }
     .page .test-content {
       position: absolute;
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 31;
+      z-index: 36;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 32;
+      z-index: 37;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -136,7 +136,8 @@
       .book-cover canvas {
         width: 100% !important;
         height: auto !important;
-        max-width: 60vw !important; /* Reduced to 60vw for smaller size */
+        max-width: 50vw !important; /* Match page width */
+        max-height: 100% !important; /* Match page height */
         object-fit: contain !important;
       }
       .crease {
@@ -207,7 +208,7 @@
       const canvas = document.getElementById(canvasId);
       if (canvas) {
         const context = canvas.getContext('2d');
-        context.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Green fallback
+        context.fillStyle = 'rgba(0, 255, 0, 0.5)'; // Green fallback
         context.fillRect(0, 0, 300, 400); // Initial fallback
         const testContent = canvas.nextElementSibling;
         if (testContent && testContent.className === 'test-content') {
@@ -288,7 +289,7 @@
             canvas.height = maxHeight;
             const context = canvas.getContext('2d');
             if (context) {
-              context.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Green fallback
+              context.fillStyle = 'rgba(0, 255, 0, 0.5)'; // Green fallback
               context.fillRect(0, 0, maxWidth, maxHeight);
             }
             const testContent = canvas.nextElementSibling;
@@ -298,6 +299,15 @@
             console.log(`Set ${canvas.id} to ${maxWidth}x${maxHeight}`);
           }
         });
+        // Apply mobile cover size
+        if (window.innerWidth <= 768) {
+          const coverCanvas = document.getElementById('cover-canvas');
+          if (coverCanvas) {
+            coverCanvas.style.maxWidth = `${maxWidth}px !important`;
+            coverCanvas.style.maxHeight = `${maxHeight}px !important`;
+            console.log(`Mobile cover set to ${maxWidth}x${maxHeight}`);
+          }
+        }
         console.log(`Book size set to ${maxWidth * 2}x${maxHeight}`);
         updatePageDisplay(); // Force page update after rendering
       }, 200);
