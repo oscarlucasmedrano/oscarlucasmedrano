@@ -216,8 +216,8 @@
       console.log('DOM fully loaded and parsed');
       const pdfPromises = [
         renderPDF('page1.pdf', 'cover-canvas', 'cover-fallback', 2),
-        renderPDF('about.pdf', 'about-canvas', null, 2),
-        renderPDF('table_of_contents.pdf', 'toc-canvas', null, 2)
+        renderPDF('about.pdf', 'about-canvas', 'cover-fallback', 2),
+        renderPDF('table_of_contents.pdf', 'toc-canvas', 'cover-fallback', 2)
       ];
 
       Promise.all(pdfPromises).then(() => {
