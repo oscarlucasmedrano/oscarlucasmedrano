@@ -74,7 +74,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 2.0 * window.devicePixelRatio; // Increased base scale for larger rendering
+        let scale = 1.5 * window.devicePixelRatio; // Adjusted back to a balanced scale
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -126,7 +126,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.max(scaleX, scaleY, scale); // Changed to Math.max to fill the screen
+            const fitScale = Math.min(scaleX, scaleY); // Reverted to Math.min to prevent overflow
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -150,7 +150,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.max(scaleX, scaleY, scale); // Changed to Math.max to fill the screen
+            const fitScale = Math.min(scaleX, scaleY); // Reverted to Math.min to prevent overflow
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
