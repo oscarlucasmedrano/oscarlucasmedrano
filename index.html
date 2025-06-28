@@ -1,149 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oscar-Lucas Medrano</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Oscar-Lucas Medrano Portfolio</title>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      height: 100vh;
-      width: 100vw;
       background: black;
       overflow: hidden;
+      height: 100vh;
+      width: 100vw;
       display: flex;
       justify-content: center;
       align-items: center;
     }
-    .book-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+
     .book {
       position: relative;
-      box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
-      background-color: black;
-      overflow: hidden;
       width: 800px;
-      height: 600px;
+      background: black;
+      box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6);
     }
+
     .book-content {
       width: 100%;
-      height: 100%;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
     }
+
     .book-cover-wrapper {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100%;
-      z-index: 10;
     }
-    .book-cover canvas, .book-cover img {
-      max-width: 400px;
+
+    .book-cover canvas {
       width: 100%;
       height: auto;
-      object-fit: contain;
-      border: none;
-      margin: 0 auto;
     }
+
+    .book-pages {
+      display: none;
+      flex-direction: row;
+      width: 100%;
+    }
+
     .book.open .book-cover-wrapper {
       display: none;
     }
-    .book-pages {
-      position: absolute;
-      display: none;
-      flex-direction: row;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      z-index: 20;
-      overflow: hidden;
-    }
+
     .book.open .book-pages {
       display: flex;
     }
+
     .page {
       width: 50%;
       height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: auto;
       position: relative;
-      background: #f0f0f0;
+      background: #fff;
     }
-    .page iframe {
+
+    canvas {
       max-width: 100%;
-      max-height: 100%;
-      border: none;
-      background: transparent;
-    }
-    .page canvas {
-      max-width: 100%;
-      max-height: 100%;
-      border: none;
+      height: auto;
       display: block;
     }
-    .page .fallback-content, .page .fallback-link {
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+
+    .fallback-content {
       position: absolute;
       color: red;
       font-size: 18px;
       text-align: center;
-      z-index: 5;
-      display: none;
     }
-    .crease {
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-    }
+
     @media (max-width: 768px) {
       .book {
-        width: 80vw;
-        height: auto;
+        width: 90vw;
       }
-      .book-cover canvas, .book-cover img {
-        max-width: 50vw;
-      }
+
       .book-pages {
-        width: 80vw;
-        height: auto;
+        flex-direction: column;
+      }
+
+      .page {
+        width: 100%;
+        height: 50vh;
       }
     }
   </style>
 </head>
 <body>
-  <div class="book-container">
-    <div class="book">
-      <div class="book-content">
-        <div class="book-cover-wrapper">
-          <div class="book-cover">
-            <canvas id="cover-canvas"></canvas>
-            <img id="cover-fallback" src="" alt="Cover Fallback" style="display:none;">
-          </div>
+  <div class="book" id="book">
+    <div class="book-content" id="book-content">
+      <div class="book-cover-wrapper">
+        <div class="book-cover">
+          <canvas id="cover-canvas"></canvas>
         </div>
       </div>
-      <div class="book-pages">
-        <div class="crease"></div>
+      <div class="book-pages" id="book-pages">
         <div class="page">
           <canvas id="about-pdf-canvas"></canvas>
           <iframe id="about-pdf-iframe" src="about.pdf"></iframe>
-          <div class="fallback-content">About PDF Failed</div>
-          <a class="fallback-link" href="about.pdf" target="_blank">Open About</a>
+          <div class="fallback-content">About PDF failed to load.</div>
         </div>
         <div class="page">
           <canvas id="toc-pdf-canvas"></canvas>
           <iframe id="toc-pdf-iframe" src="table_of_contents.pdf"></iframe>
-          <div class="fallback-content">TOC PDF Failed</div>
-          <a class="fallback-link" href="table_of_contents.pdf" target="_blank">Open TOC</a>
+          <div class="fallback-content">TOC PDF failed to load.</div>
         </div>
       </div>
     </div>
@@ -151,62 +127,60 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
+    const book = document.getElementById('book');
+    const bookPages = document.getElementById('book-pages');
+    const bookContent = document.getElementById('book-content');
+
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, iframeId, scale = 1.5) {
+    async function renderPDF(pdfUrl, canvasId, iframeId) {
       const canvas = document.getElementById(canvasId);
-      if (!canvas) {
-        console.error(`Canvas "${canvasId}" not found`);
-        return false;
-      }
-      const iframe = iframeId ? document.getElementById(iframeId) : null;
-      const fallbackText = canvas.nextElementSibling;
-      const fallbackLink = fallbackText ? fallbackText.nextElementSibling : null;
-
-      const context = canvas.getContext('2d');
-
+      const iframe = document.getElementById(iframeId);
       try {
-        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale });
+        const viewport = page.getViewport({ scale: 1.5 });
+        const context = canvas.getContext('2d');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        await page.render({ canvasContext: context, viewport });
-
+        await page.render({ canvasContext: context, viewport }).promise;
         canvas.style.display = 'block';
-        if (iframe) iframe.style.display = 'none';
-        if (fallbackText) fallbackText.style.display = 'none';
-        if (fallbackLink) fallbackLink.style.display = 'none';
-
-        return true;
-      } catch (error) {
-        console.warn(`Canvas render failed for ${pdfUrl}:`, error.message);
+        iframe.style.display = 'none';
+      } catch (err) {
+        console.warn(`Failed to render ${pdfUrl} on canvas:`, err.message);
         canvas.style.display = 'none';
-        if (iframe) iframe.style.display = 'block';
-        if (fallbackText) fallbackText.style.display = 'block';
-        if (fallbackLink) fallbackLink.style.display = 'block';
-        return false;
+        iframe.style.display = 'block';
       }
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const book = document.querySelector('.book');
-      let currentPage = 0;
+    async function initializeBook() {
+      try {
+        await renderPDF('page1.pdf', 'cover-canvas', null);
+        const coverCanvas = document.getElementById('cover-canvas');
+        const height = coverCanvas.height || 600;
+        book.style.height = `${height}px`;
+        bookPages.style.height = `${height}px`;
+        bookContent.style.height = `${height}px`;
+      } catch (e) {
+        console.error('Error rendering cover:', e);
+      }
+    }
 
-      await renderPDF('page1.pdf', 'cover-canvas', null, 2);
+    // Flip logic
+    let opened = false;
+    book.addEventListener('click', async () => {
+      opened = !opened;
+      book.classList.toggle('open', opened);
 
-      book.addEventListener('click', async () => {
-        if (currentPage === 0) {
-          currentPage = 1;
-          book.classList.add('open');
-          await renderPDF('about.pdf', 'about-pdf-canvas', 'about-pdf-iframe');
-          await renderPDF('table_of_contents.pdf', 'toc-pdf-canvas', 'toc-pdf-iframe');
-        } else {
-          currentPage = 0;
-          book.classList.remove('open');
-        }
-      });
+      if (opened) {
+        await renderPDF('about.pdf', 'about-pdf-canvas', 'about-pdf-iframe');
+        await renderPDF('table_of_contents.pdf', 'toc-pdf-canvas', 'toc-pdf-iframe');
+      }
     });
+
+    document.addEventListener('DOMContentLoaded', initializeBook);
   </script>
 </body>
 </html>
+
