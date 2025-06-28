@@ -87,8 +87,8 @@
       max-height: 100%;
       object-fit: contain;
       border: none;
-      background: black;
-      display: block; /* Force visibility */
+      background: transparent; /* Remove black background */
+      display: block;
     }
     .page .test-content {
       position: absolute;
@@ -104,6 +104,7 @@
       font-size: 24px;
       text-align: center;
       z-index: 61;
+      opacity: 0; /* Hidden until needed */
     }
     .crease {
       width: 4px;
@@ -208,7 +209,7 @@
         return;
       }
       const context = canvas.getContext('2d');
-      context.fillStyle = '#333';
+      context.fillStyle = 'transparent'; // Avoid black background
       context.fillRect(0, 0, 300, 400);
       const testContent = canvas.nextElementSibling;
       const fallbackContent = testContent.nextElementSibling;
@@ -227,6 +228,7 @@
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
         canvas.style.display = 'block';
+        canvas.style.opacity = '1';
         if (fallback) fallback.style.display = 'none';
         if (testContent && fallbackContent) {
           testContent.style.opacity = '0';
@@ -234,7 +236,8 @@
         }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.message, error.stack);
-        canvas.style.display = 'block'; // Force visibility
+        canvas.style.display = 'block';
+        canvas.style.opacity = '1'; // Ensure canvas is visible
         if (fallback) fallback.style.display = 'none';
         if (fallbackContent) fallbackContent.style.opacity = '1';
         console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
