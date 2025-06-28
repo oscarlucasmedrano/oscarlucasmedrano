@@ -188,28 +188,33 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId) {
-      try {
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-        const canvas = document.getElementById(canvasId);
-        const context = canvas.getContext('2d');
-        const viewport = page.getViewport({ scale: 0.7 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: context, viewport: viewport });
-        console.log(`${canvasId} rendered successfully, width: ${canvas.width}, height: ${canvas.height}`);
-      } catch (error) {
-        console.error(`${canvasId} render failed:`, error.message, error.stack);
-        if (canvasId === 'cover-canvas') {
-          const coverCanvas = document.getElementById('cover-canvas');
-          console.log('Cover canvas exists:', !!coverCanvas);
-          if (coverCanvas) {
-            coverCanvas.width = 300;
-            coverCanvas.height = 400;
-            console.log(`Default fallback size for cover-canvas: 300x400`);
+    async function renderPDF(pdfUrl, canvasId, maxRetries = 3) {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const loadingTask = pdfjsLib.getDocument(pdfUrl);
+          const pdf = await loadingTask.promise;
+          const page = await pdf.getPage(1);
+          const canvas = document.getElementById(canvasId);
+          const context = canvas.getContext('2d');
+          const viewport = page.getViewport({ scale: 0.7 });
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: context, viewport: viewport });
+          console.log(`${canvasId} rendered successfully on attempt ${attempt}, width: ${canvas.width}, height: ${canvas.height}`);
+          return;
+        } catch (error) {
+          console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
+          if (attempt === maxRetries) {
+            if (canvasId === 'cover-canvas') {
+              const coverCanvas = document.getElementById('cover-canvas');
+              if (coverCanvas) {
+                coverCanvas.width = 300;
+                coverCanvas.height = 400;
+                console.log(`Default fallback size for ${canvasId}: 300x400`);
+              }
+            }
           }
+          await new Promise(resolve => setTimeout(resolve, 500 * attempt)); // Exponential backoff
         }
       }
     }
@@ -230,31 +235,58 @@
     Promise.all(pdfPromises).then(() => {
       setTimeout(() => {
         console.log('All PDFs attempted to render');
-        const aboutCanvas = document.getElementById('about-canvas');
-        if (aboutCanvas && aboutCanvas.width > 0) {
-          const pageWidth = aboutCanvas.width;
-          const pageHeight = aboutCanvas.height;
+        const coverCanvas = document.getElementById('cover-canvas');
+        if (coverCanvas && coverCanvas.width > 0) {
+          const pageWidth = coverCanvas.width;
+          const pageHeight = coverCanvas.height;
           book.style.width = `${pageWidth * 2}px`;
           book.style.height = `${pageHeight}px`;
           document.querySelector('.book-content').style.height = `${pageHeight}px`;
           document.querySelector('.book-content').style.width = `${pageWidth * 2}px`;
           document.querySelector('.book-pages').style.height = `${pageHeight}px`;
-          const coverCanvas = document.getElementById('cover-canvas');
-          if (coverCanvas) {
-            coverCanvas.style.maxHeight = `${pageHeight}px`;
-          }
-          console.log(`Book size set to ${pageWidth * 2}x${pageHeight}, cover max-height set to ${pageHeight}px`);
+          // Sync all page canvases to cover size
+          const pageCanvases = [
+            document.getElementById('about-canvas'),
+            document.getElementById('toc-canvas'),
+            document.getElementById('page4-canvas'),
+            document.getElementById('page5-canvas'),
+            document.getElementById('page6-canvas'),
+            document.getElementById('page7-canvas'),
+            document.getElementById('page8-canvas'),
+            document.getElementById('page9-canvas')
+          ];
+          pageCanvases.forEach(canvas => {
+            if (canvas) {
+              canvas.width = pageWidth;
+              canvas.height = pageHeight;
+              console.log(`Set ${canvas.id} to ${pageWidth}x${pageHeight}`);
+            }
+          });
+          console.log(`Book size set to ${pageWidth * 2}x${pageHeight}`);
         } else {
           book.style.width = '600px';
           book.style.height = '400px';
           document.querySelector('.book-content').style.height = '400px';
           document.querySelector('.book-content').style.width = '600px';
           document.querySelector('.book-pages').style.height = '400px';
-          const coverCanvas = document.getElementById('cover-canvas');
-          if (coverCanvas) {
-            coverCanvas.style.maxHeight = '400px';
-          }
-          console.log('Fallback book size set to 600x400, cover max-height set to 400px');
+          const pageCanvases = [
+            document.getElementById('about-canvas'),
+            document.getElementById('toc-canvas'),
+            document.getElementById('page4-canvas'),
+            document.getElementById('page5-canvas'),
+            document.getElementById('page6-canvas'),
+            document.getElementById('page7-canvas'),
+            document.getElementById('page8-canvas'),
+            document.getElementById('page9-canvas')
+          ];
+          pageCanvases.forEach(canvas => {
+            if (canvas) {
+              canvas.width = 300;
+              canvas.height = 400;
+              console.log(`Fallback set ${canvas.id} to 300x400`);
+            }
+          });
+          console.log('Fallback book size set to 600x400');
         }
         updatePageDisplay(); // Force page update after rendering
       }, 200);
