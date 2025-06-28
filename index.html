@@ -174,12 +174,12 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.1/pdf.min.js"></script>
   <script>
     const book = document.querySelector('.book');
     let currentPage = 0; // 0 = cover, 1 = About/TOC
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.1/pdf.worker.min.js';
 
     async function renderPDF(pdfUrl, canvasId, iframeId, fallbackId, scale = 2) {
       const canvas = document.getElementById(canvasId);
@@ -297,7 +297,7 @@
     book.addEventListener('click', async (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage, 'event:', e);
+      console.log('Click detected at:', clickX, 'within rect:', JSON.stringify(rect), 'currentPage before:', currentPage);
 
       if (clickX > 0) { // Any click to advance
         currentPage = Math.min(1, currentPage + 1);
@@ -306,7 +306,7 @@
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
       }
-      console.log('currentPage after:', currentPage);
+      console.log('currentPage after:', currentPage, 'Calling updatePageDisplay');
       await updatePageDisplay(); // Ensure rendering completes
     });
 
