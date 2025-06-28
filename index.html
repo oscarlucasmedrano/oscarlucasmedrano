@@ -49,7 +49,7 @@
       display: block;
       width: 100%;
       height: auto;
-      background: #333; /* Original fallback */
+      background: #333; /* Fallback color */
       border: none;
     }
     .book-cover canvas {
@@ -69,7 +69,7 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 60; /* Original z-index */
+      z-index: 60;
       background: black;
       overflow: hidden;
       border: none;
@@ -100,13 +100,14 @@
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 61; /* Original z-index */
+      z-index: 61;
+      opacity: 1; /* Ensure visibility */
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 62; /* Original z-index */
+      z-index: 62;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -209,15 +210,15 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, maxRetries = 3) {
+    async function renderPDF(pdfUrl, canvasId, maxRetries = 5) { // Increased retries
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
         console.error(`Canvas ${canvasId} not found`);
         return;
       }
       const context = canvas.getContext('2d');
-      context.fillStyle = '#333'; // Original fallback
-      context.fillRect(0, 0, 300, 400); // Initial fallback
+      context.fillStyle = '#333';
+      context.fillRect(0, 0, 300, 400);
       const testContent = canvas.nextElementSibling;
       if (testContent && testContent.className === 'test-content') {
         testContent.style.display = 'block';
@@ -228,20 +229,21 @@
           const loadingTask = pdfjsLib.getDocument(pdfUrl);
           const pdf = await loadingTask.promise;
           const page = await pdf.getPage(1);
-          const viewport = page.getViewport({ scale: 1 }); // Native resolution
+          const viewport = page.getViewport({ scale: 1 });
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           await page.render({ canvasContext: context, viewport: viewport });
           console.log(`${canvasId} rendered successfully, native size: ${canvas.width}x${canvas.height}`);
-          context.fillStyle = 'black'; // Reset to black if successful
-          context.fillRect(0, 0, canvas.width, canvas.height); // Clear fallback
+          context.fillStyle = 'black';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          if (testContent) testContent.style.opacity = '0'; // Hide if successful
           return;
         } catch (error) {
           console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
           if (attempt === maxRetries) {
             context.fillStyle = '#333';
             context.fillRect(0, 0, 300, 400);
-            console.log(`Fallback filled ${canvasId} with #333 300x400 after ${maxRetries} attempts`);
+            console.log(`Fallback filled ${canvasId} with #333 300x400 after ${maxRetries} attempts due to: ${error.message}`);
           }
           await new Promise(resolve => setTimeout(resolve, 500 * attempt));
         }
@@ -301,7 +303,7 @@
         console.log(`Book height set to ${maxHeight}px`);
         updatePageDisplay();
       }, 200);
-    }).catch(error => console.error('PDF rendering failed:', error));
+    }).catch(error => console.error('PDF rendering failed globally:', error));
 
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
