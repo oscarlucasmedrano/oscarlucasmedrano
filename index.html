@@ -287,7 +287,7 @@
             console.log(`Mobile cover centered to 50vw x ${maxHeight}px`);
           }
         }
-        console.log(`Book height set to ${maxHeight}px`);
+        console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${document.querySelector('.book-cover-wrapper').style.display}`);
         updatePageDisplay();
       }, 200);
     }).catch(error => console.error('PDF rendering failed globally:', error));
@@ -300,7 +300,10 @@
       const creases = document.querySelectorAll('.crease');
       document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
       console.log(`Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}`);
-      if (currentPage === 1 && pages.length >= 2) {
+      if (currentPage === 0) {
+        document.querySelector('.book-cover-wrapper').style.display = 'flex'; // Ensure cover shows
+        console.log('Displaying cover');
+      } else if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex'; // About
         pages[1].style.display = 'flex'; // TOC
         creases[0].style.display = 'block';
@@ -324,8 +327,6 @@
         creases[3].style.display = 'block';
         book.classList.add('page-pair-3');
         console.log('Displaying pages 6 and 7 (Page 8, Page 9) with crease 4');
-      } else if (currentPage === 0) {
-        console.log('Displaying cover, no pages or creases');
       }
     }
 
