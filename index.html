@@ -29,7 +29,7 @@
       overflow: hidden;
       border: none;
       max-width: 80vw;
-      width: 80vw; /* Fixed width */
+      width: 80vw;
     }
     .book-content {
       width: 100%;
@@ -49,7 +49,7 @@
       display: block;
       width: 100%;
       height: auto;
-      background: black;
+      background: #333; /* Fallback color if PDF fails */
       border: none;
     }
     .book-cover canvas {
@@ -69,7 +69,7 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 50; /* Increased z-index */
+      z-index: 60; /* Increased z-index */
       background: black;
       overflow: hidden;
       border: none;
@@ -100,13 +100,13 @@
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 51;
+      z-index: 61;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 52;
+      z-index: 62;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -215,7 +215,7 @@
         return;
       }
       const context = canvas.getContext('2d');
-      context.fillStyle = 'black';
+      context.fillStyle = '#333'; // Fallback color
       context.fillRect(0, 0, 300, 400); // Initial fallback
       const testContent = canvas.nextElementSibling;
       if (testContent && testContent.className === 'test-content') {
@@ -232,13 +232,15 @@
           canvas.height = viewport.height;
           await page.render({ canvasContext: context, viewport: viewport });
           console.log(`${canvasId} rendered successfully, native size: ${canvas.width}x${canvas.height}`);
+          context.fillStyle = 'black'; // Reset to black if successful
+          context.fillRect(0, 0, canvas.width, canvas.height); // Clear fallback
           return;
         } catch (error) {
           console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
           if (attempt === maxRetries) {
-            context.fillStyle = 'black';
+            context.fillStyle = '#333';
             context.fillRect(0, 0, 300, 400);
-            console.log(`Fallback filled ${canvasId} with black 300x400 after ${maxRetries} attempts`);
+            console.log(`Fallback filled ${canvasId} with #333 300x400 after ${maxRetries} attempts`);
           }
           await new Promise(resolve => setTimeout(resolve, 500 * attempt));
         }
@@ -345,10 +347,10 @@
       if (currentPage === 0 && clickX > rect.width / 2) {
         currentPage = 1;
         console.log('Switched to page 1 (About, TOC)');
-      } else if (currentPage > 0 && clickX < rect.width / 4) { // Adjusted left click region
+      } else if (currentPage > 0 && clickX < rect.width / 4) {
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
-      } else if (currentPage < 4 && clickX > (3 * rect.width / 4)) { // Adjusted right click region
+      } else if (currentPage < 4 && clickX > (3 * rect.width / 4)) {
         currentPage = Math.min(4, currentPage + 1);
         console.log('Advanced to page:', currentPage);
       }
