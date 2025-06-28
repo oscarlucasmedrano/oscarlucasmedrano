@@ -98,7 +98,7 @@
       font-size: 16px;
       text-align: center;
       z-index: 61;
-      opacity: 1; /* Always visible */
+      opacity: 1;
     }
     .crease {
       width: 4px;
@@ -189,7 +189,7 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, maxRetries = 10) {
+    async function renderPDF(pdfUrl, canvasId, maxRetries = 15) { // Increased retries
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
         console.error(`Canvas ${canvasId} not found`);
