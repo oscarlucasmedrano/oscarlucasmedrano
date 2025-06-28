@@ -1,10 +1,10 @@
 <script type="module" src="./pdf.mjs" onload="console.log('PDF.js script loaded successfully')" onerror="console.error('Failed to load PDF.js script:', event)"></script>
 <script type="module">
-  import pdfjsLib from './pdf.mjs';
+  import * as pdfjsLib from './pdf.mjs';
   pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
   console.log('pdfjsLib initialized successfully');
 
-  // Move renderPDF and other logic here
+  // Rest of your logic (renderPDF, updatePageDisplay, etc.) goes here
   const book = document.querySelector('.book');
   let currentPage = 0;
 
