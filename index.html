@@ -287,7 +287,7 @@
             console.log(`Mobile cover centered to 50vw x ${maxHeight}px`);
           }
         }
-        console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${document.querySelector('.book-cover-wrapper').style.display}`);
+        console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${document.querySelector('.book-cover-wrapper').style.display}, book-pages display: ${document.querySelector('.book-pages').style.display}`);
         updatePageDisplay();
       }, 200);
     }).catch(error => console.error('PDF rendering failed globally:', error));
@@ -296,12 +296,13 @@
       console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
       book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
+      const coverWrapper = document.querySelector('.book-cover-wrapper');
       const pages = document.querySelectorAll('.page');
       const creases = document.querySelectorAll('.crease');
       document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
-      console.log(`Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}`);
+      console.log(`Cover wrapper display: ${coverWrapper.style.display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}`);
       if (currentPage === 0) {
-        document.querySelector('.book-cover-wrapper').style.display = 'flex'; // Ensure cover shows
+        coverWrapper.style.display = 'flex'; // Ensure cover shows
         console.log('Displaying cover');
       } else if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex'; // About
@@ -333,9 +334,9 @@
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
+      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage, 'event:', e);
 
-      if (currentPage === 0 && clickX > rect.width * 0.2) { // Right click to show About/TOC
+      if (currentPage === 0 && clickX > 0) { // Any right click to show About/TOC
         currentPage = 1;
         console.log('Switched to page 1 (About, TOC)');
       } else if (currentPage === 1 && clickX > rect.width * 0.7) { // Right click to show Page 4/5
