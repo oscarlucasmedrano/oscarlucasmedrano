@@ -19,14 +19,8 @@
 
     #viewer {
       display: flex;
-      flex-direction: row;
-      gap: 0;
       justify-content: center;
       align-items: center;
-      max-width: 90vw;
-      max-height: 90vh;
-      cursor: pointer;
-      user-select: none;
       position: relative;
     }
 
@@ -34,31 +28,29 @@
       position: relative;
       background: white;
       box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.15), 0 5px 20px rgba(0,0,0,0.7);
-      max-height: 720px;
-      max-width: 48vw;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      max-height: 720px;
+      width: auto;
     }
 
     canvas {
       display: block;
-      max-height: 720px;
+      height: 720px !important;
       width: auto;
-      height: auto;
     }
 
-    /* Crease */
     #crease {
       position: absolute;
       width: 2px;
       height: 720px;
-      background: linear-gradient(to bottom, #00000022 0%, #ffffff11 50%, #00000022 100%);
+      background: linear-gradient(to bottom, #00000033 0%, #ffffff11 50%, #00000033 100%);
+      z-index: 5;
       left: 50%;
       top: 50%;
       transform: translate(-1px, -50%);
-      z-index: 2;
       pointer-events: none;
     }
 
@@ -77,8 +69,8 @@
       }
 
       canvas {
-        max-width: 100%;
-        height: auto;
+        max-height: 80vh !important;
+        width: auto;
       }
 
       #crease {
@@ -107,7 +99,7 @@
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     let currentPage = 0;
 
-    const MAX_HEIGHT = 720; // 📏 Smaller height for desktop
+    const FIXED_HEIGHT = 720;
 
     async function renderPDF(url) {
       const pdf = await pdfjsLib.getDocument(url).promise;
@@ -116,8 +108,8 @@
       return { page, viewport };
     }
 
-    async function drawCanvas(pdfData, targetHeight = MAX_HEIGHT) {
-      const scale = targetHeight / pdfData.viewport.height;
+    async function drawCanvas(pdfData) {
+      const scale = FIXED_HEIGHT / pdfData.viewport.height;
       const scaledViewport = pdfData.page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
@@ -133,21 +125,28 @@
     }
 
     async function updateViewer() {
+      // Remove all old pages
       viewer.querySelectorAll('.page-wrapper').forEach(el => el.remove());
 
-      if (currentPage === 0) {
-        const coverPDF = await renderPDF(pdfs[0]);
-        const canvas = await drawCanvas(coverPDF);
+      const isCover = currentPage === 0;
+
+      if (isCover) {
+        const pdfData = await renderPDF(pdfs[0]);
+        const canvas = await drawCanvas(pdfData);
+
         const wrapper = document.createElement('div');
         wrapper.className = 'page-wrapper';
         wrapper.appendChild(canvas);
         viewer.appendChild(wrapper);
-      } else {
-        const leftPDF = await renderPDF(pdfs[currentPage]);
-        const rightPDF = pdfs[currentPage + 1] ? await renderPDF(pdfs[currentPage + 1]) : null;
 
-        const leftCanvas = await drawCanvas(leftPDF);
-        const rightCanvas = rightPDF ? await drawCanvas(rightPDF) : null;
+        crease.style.display = 'none'; // hide crease for cover
+      } else {
+        const leftData = await renderPDF(pdfs[currentPage]);
+        const rightExists = pdfs[currentPage + 1];
+        const rightData = rightExists ? await renderPDF(pdfs[currentPage + 1]) : null;
+
+        const leftCanvas = await drawCanvas(leftData);
+        const rightCanvas = rightData ? await drawCanvas(rightData) : null;
 
         const leftWrapper = document.createElement('div');
         leftWrapper.className = 'page-wrapper';
@@ -160,6 +159,8 @@
           rightWrapper.appendChild(rightCanvas);
           viewer.appendChild(rightWrapper);
         }
+
+        crease.style.display = rightCanvas ? 'block' : 'none';
       }
     }
 
@@ -200,6 +201,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
