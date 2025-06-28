@@ -1,144 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oscar-Lucas Medrano</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: black;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #book {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      gap: 0;
-    }
-
-    canvas {
-      height: auto;
-      max-height: 90vh;
-      width: auto;
-      max-width: 45vw;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    #crease {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 2px;
-      background: linear-gradient(to bottom, #00000055, #ffffff22, #00000055);
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    @media (max-width: 768px) {
-      #book {
-        flex-direction: row;
-        overflow-x: auto;
-        justify-content: flex-start;
-      }
-
-      canvas {
-        max-height: 80vh;
-        max-width: 90vw;
-      }
-
-      #crease {
-        display: none;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Oscar-Lucas Medrano</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            touch-action: pinch-zoom;
+        }
+        #flipbook-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #pdf-canvas {
+            max-width: 90vw;
+            max-height: 90vh;
+            width: auto;
+            height: auto;
+            display: block;
+            margin: auto;
+            transform-origin: center center;
+        }
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 48px;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .arrow:hover {
+            opacity: 1;
+        }
+        #prev-page {
+            left: 10px;
+        }
+        #next-page {
+            right: 10px;
+        }
+        @media (max-width: 600px) {
+            .arrow {
+                font-size: 36px;
+            }
+            #prev-page {
+                left: 5px;
+            }
+            #next-page {
+                right: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div id="crease"></div>
-  <div id="book"></div>
+    <div id="flipbook-container">
+        <canvas id="pdf-canvas"></canvas>
+        <div id="prev-page" class="arrow">&#8249;</div>
+        <div id="next-page" class="arrow">&#8250;</div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>
-    const pdfs = [
-      'page1.pdf',
-      'about.pdf',
-      'table_of_contents.pdf',
-      'page4.pdf',
-      'page5.pdf'
-    ];
+        const pdfFiles = ['page1.pdf', 'about.pdf', 'table_of_contents.pdf', 'page4.pdf', 'page5.pdf'];
+        let currentPdfIndex = 0;
+        let currentPage = null;
+        let scale = 1;
+        const canvas = document.getElementById('pdf-canvas');
+        const context = canvas.getContext('2d');
+        let pdfDoc = null;
 
-    const book = document.getElementById('book');
-    const crease = document.getElementById('crease');
-    const pdfjs = window['pdfjs-dist/build/pdf'];
-    let current = 0;
-
-    async function loadCanvas(url, scale = 2.5) {
-      const pdf = await pdfjs.getDocument(url).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const context = canvas.getContext('2d');
-      await page.render({ canvasContext: context, viewport }).promise;
-      return canvas;
-    }
-
-    async function render() {
-      book.innerHTML = '';
-
-      if (current === 0) {
-        const canvas = await loadCanvas(pdfs[0]);
-        book.appendChild(canvas);
-        crease.style.display = 'none';
-      } else {
-        const left = await loadCanvas(pdfs[current]);
-        book.appendChild(left);
-
-        if (pdfs[current + 1]) {
-          const right = await loadCanvas(pdfs[current + 1]);
-          book.appendChild(right);
-          crease.style.display = 'block';
-        } else {
-          crease.style.display = 'none';
+        async function loadPDF(index) {
+            try {
+                const url = pdfFiles[index];
+                pdfDoc = await pdfjsLib.getDocument(url).promise;
+                renderPage(1);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+            }
         }
-      }
-    }
 
-    function next() {
-      if (current === 0) current = 1;
-      else if (current + 2 < pdfs.length) current += 2;
-      render();
-    }
+        async function renderPage(pageNum) {
+            const page = await pdfDoc.getPage(pageNum);
+            currentPage = page;
+            const viewport = page.getViewport({ scale: scale });
+            
+            // Adjust scale to fit within 90% of viewport
+            const maxWidth = window.innerWidth * 0.9;
+            const maxHeight = window.innerHeight * 0.9;
+            const scaleX = maxWidth / viewport.width;
+            const scaleY = maxHeight / viewport.height;
+            const fitScale = Math.min(scaleX, scaleY, scale);
+            
+            const adjustedViewport = page.getViewport({ scale: fitScale });
+            canvas.height = adjustedViewport.height;
+            canvas.width = adjustedViewport.width;
 
-    function prev() {
-      if (current <= 1) current = 0;
-      else current -= 2;
-      render();
-    }
+            const renderContext = {
+                canvasContext: context,
+                viewport: adjustedViewport
+            };
+            await page.render(renderContext).promise;
+        }
 
-    window.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight') next();
-      if (e.key === 'ArrowLeft') prev();
-    });
+        function adjustCanvas() {
+            if (currentPage) {
+                renderPage(currentPage.pageNumber);
+            }
+        }
 
-    book.addEventListener('click', e => {
-      const rect = book.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      x < rect.width / 2 ? prev() : next();
-    });
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPdfIndex > 0) {
+                currentPdfIndex--;
+                loadPDF(currentPdfIndex);
+            }
+        });
 
-    render();
-  </script>
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (currentPdfIndex < pdfFiles.length - 1) {
+                currentPdfIndex++;
+                loadPDF(currentPdfIndex);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentPdfIndex > 0) {
+                currentPdfIndex--;
+                loadPDF(currentPdfIndex);
+            } else if (e.key === 'ArrowRight' && currentPdfIndex < pdfFiles.length - 1) {
+                currentPdfIndex++;
+                loadPDF(currentPdfIndex);
+            }
+        });
+
+        // Zoom handling
+        let lastTouchDistance = null;
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 1.1 : 0.9;
+            scale *= delta;
+            scale = Math.min(Math.max(0.5, scale), 5);
+            adjustCanvas();
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastTouchDistance = Math.hypot(
+                    touch1.pageX - touch2.pageX,
+                    touch1.pageY - touch2.pageY
+                );
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(
+                    touch1.pageX - touch2.pageX,
+                    touch1.pageY - touch2.pageY
+                );
+                if (lastTouchDistance) {
+                    const delta = currentDistance / lastTouchDistance;
+                    scale *= delta;
+                    scale = Math.min(Math.max(0.5, scale), 5);
+                    adjustCanvas();
+                    lastTouchDistance = currentDistance;
+                }
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            lastTouchDistance = null;
+        });
+
+        window.addEventListener('resize', adjustCanvas);
+
+        // Load the first PDF
+        loadPDF(currentPdfIndex);
+    </script>
 </body>
 </html>
 
