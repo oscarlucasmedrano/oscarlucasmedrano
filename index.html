@@ -66,8 +66,8 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 25; /* Further increased for visibility */
-      background: rgba(0, 0, 255, 0.6); /* Stronger blue background */
+      z-index: 30; /* Increased for visibility */
+      background: rgba(0, 0, 255, 0.7); /* Strong blue background */
       overflow: hidden;
       border: none;
     }
@@ -77,7 +77,7 @@
     .page {
       width: 50%;
       height: 100%;
-      background: rgba(0, 0, 255, 0.3); /* Blue tint for each page */
+      background: rgba(0, 0, 255, 0.4); /* Blue tint for each page */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -90,28 +90,25 @@
       max-height: 100%;
       object-fit: contain;
       border: none;
-      background: rgba(0, 255, 0, 0.3); /* Green tint as fallback */
+      background: rgba(0, 255, 0, 0.4); /* Green tint as fallback */
     }
     .page .test-content {
       position: absolute;
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 26;
+      z-index: 31;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 27;
+      z-index: 32;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      visibility: hidden;
     }
-    /* Show crease for the active pair */
-    .book-pages .crease:nth-child(2) { visibility: hidden; }
-    .book-pages .crease:nth-child(4) { visibility: hidden; }
-    .book-pages .crease:nth-child(6) { visibility: hidden; }
     .page-pair-1 .crease:nth-child(2) { visibility: visible; }
     .page-pair-2 .crease:nth-child(4) { visibility: visible; }
     .page-pair-3 .crease:nth-child(6) { visibility: visible; }
@@ -134,12 +131,12 @@
       .book-cover-wrapper {
         width: 100%;
         height: auto;
-        justify-content: center; /* Ensure centering */
+        justify-content: center;
       }
       .book-cover canvas {
         width: 100% !important;
         height: auto !important;
-        max-width: 100% !important; /* Reset to full width */
+        max-width: 60vw !important; /* Reduced to 60vw for smaller size */
         object-fit: contain !important;
       }
       .crease {
@@ -202,7 +199,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     const book = document.querySelector('.book');
-    let isOpen = false;
     let currentPage = 0; // 0 = cover, 1 = 2-3, 2 = 4-5, 3 = 6-7, 4 = 8-9
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -211,7 +207,7 @@
       const canvas = document.getElementById(canvasId);
       if (canvas) {
         const context = canvas.getContext('2d');
-        context.fillStyle = 'rgba(0, 255, 0, 0.3)'; // Green fallback
+        context.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Green fallback
         context.fillRect(0, 0, 300, 400); // Initial fallback
         const testContent = canvas.nextElementSibling;
         if (testContent && testContent.className === 'test-content') {
@@ -292,7 +288,7 @@
             canvas.height = maxHeight;
             const context = canvas.getContext('2d');
             if (context) {
-              context.fillStyle = 'rgba(0, 255, 0, 0.3)'; // Green fallback
+              context.fillStyle = 'rgba(0, 255, 0, 0.4)'; // Green fallback
               context.fillRect(0, 0, maxWidth, maxHeight);
             }
             const testContent = canvas.nextElementSibling;
@@ -311,33 +307,36 @@
       console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
       book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
-      if (currentPage === 1) book.classList.add('page-pair-1');
-      else if (currentPage === 2) book.classList.add('page-pair-2');
-      else if (currentPage === 3) book.classList.add('page-pair-3');
-      // Show the current page pair
-      document.querySelectorAll('.page').forEach((page, index) => {
-        page.style.display = 'none';
-        console.log(`Page ${index} set to display: none`);
-      });
       const pages = document.querySelectorAll('.page');
+      const creases = document.querySelectorAll('.crease');
+      document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
+      console.log(`All pages and creases set to display: none`);
       if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex';
         pages[1].style.display = 'flex';
-        console.log('Displaying pages 0 and 1 (about, toc)');
+        creases[0].style.display = 'block';
+        book.classList.add('page-pair-1');
+        console.log('Displaying pages 0 and 1 (about, toc) with crease 1');
       } else if (currentPage === 2 && pages.length >= 4) {
         pages[2].style.display = 'flex';
         pages[3].style.display = 'flex';
-        console.log('Displaying pages 2 and 3 (page4, page5)');
+        creases[1].style.display = 'block';
+        book.classList.add('page-pair-2');
+        console.log('Displaying pages 2 and 3 (page4, page5) with crease 2');
       } else if (currentPage === 3 && pages.length >= 6) {
         pages[4].style.display = 'flex';
         pages[5].style.display = 'flex';
-        console.log('Displaying pages 4 and 5 (page6, page7)');
+        creases[2].style.display = 'block';
+        book.classList.add('page-pair-3');
+        console.log('Displaying pages 4 and 5 (page6, page7) with crease 3');
       } else if (currentPage === 4 && pages.length >= 8) {
         pages[6].style.display = 'flex';
         pages[7].style.display = 'flex';
-        console.log('Displaying pages 6 and 7 (page8, page9)');
+        creases[3].style.display = 'block';
+        book.classList.add('page-pair-3');
+        console.log('Displaying pages 6 and 7 (page8, page9) with crease 4');
       } else if (currentPage === 0) {
-        console.log('Displaying cover, no pages');
+        console.log('Displaying cover, no pages or creases');
       }
     }
 
