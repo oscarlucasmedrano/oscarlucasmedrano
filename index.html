@@ -26,7 +26,7 @@
       box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.4);
       background-color: black;
       overflow: hidden;
-      border: 2px solid red; /* Highlight book boundary for debugging */
+      border: 2px solid red; /* Highlight book boundary */
       width: 800px;
       height: 600px;
     }
@@ -67,9 +67,9 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 20; /* Ensure above cover */
+      z-index: 20; /* Above cover */
       overflow: hidden;
-      border: 2px dashed yellow; /* Highlight pages for debugging */
+      border: 2px dashed yellow; /* Highlight pages */
     }
     .book.open .book-pages {
       display: flex;
@@ -90,15 +90,15 @@
       max-height: 100%;
       border: none;
       background: transparent;
-      display: block;
-      z-index: 21; /* Ensure above page */
+      display: block; /* Force display */
+      z-index: 21; /* Above page */
     }
     .page .fallback-content {
       position: absolute;
       color: red;
       font-size: 24px;
       text-align: center;
-      z-index: 22; /* Ensure above object */
+      z-index: 22; /* Above object */
     }
     .crease {
       width: 4px;
@@ -214,7 +214,7 @@
             if (coverFallback) coverFallback.style.maxWidth = `50vw !important`;
             console.log(`Mobile cover adjusted to 50vw x ${maxHeight}px`);
           }
-          console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${document.querySelector('.book-cover-wrapper').style.display}, book-pages display: ${document.querySelector('.book-pages').style.display}`);
+          console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${getComputedStyle(document.querySelector('.book-cover-wrapper')).display}, book-pages display: ${getComputedStyle(document.querySelector('.book-pages')).display}`);
           updatePageDisplay();
         }, 200);
       }).catch(error => console.error('Cover PDF rendering failed:', error));
@@ -228,17 +228,23 @@
       const creases = document.querySelectorAll('.crease');
       const aboutPdf = document.getElementById('about-pdf');
       const tocPdf = document.getElementById('toc-pdf');
-      console.log(`Cover wrapper display: ${coverWrapper.style.display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF display: ${aboutPdf ? getComputedStyle(aboutPdf).display : 'null'}, TOC PDF display: ${tocPdf ? getComputedStyle(tocPdf).display : 'null'}`);
+      console.log(`Cover wrapper display: ${getComputedStyle(coverWrapper).display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF display: ${aboutPdf ? getComputedStyle(aboutPdf).display : 'null'}, TOC PDF display: ${tocPdf ? getComputedStyle(tocPdf).display : 'null'}`);
       if (currentPage === 0) {
         coverWrapper.style.display = 'flex';
         document.querySelector('.book-pages').style.display = 'none';
         console.log('Displaying cover, hiding pages');
       } else if (currentPage === 1 && pages.length >= 2) {
         coverWrapper.style.display = 'none';
-        document.querySelector('.book-pages').style.display = 'flex';
+        const bookPages = document.querySelector('.book-pages');
+        bookPages.style.display = 'flex';
         pages.forEach((page, index) => {
+          page.style.display = 'flex';
+          const obj = page.querySelector('object');
+          if (obj) {
+            obj.style.display = 'block';
+            console.log(`Page ${index} object display set to: ${getComputedStyle(obj).display}`);
+          }
           page.style.display = index < 2 ? 'flex' : 'none';
-          console.log(`Page ${index} display set to: ${getComputedStyle(page).display}`);
         });
         creases.forEach((crease, index) => crease.style.display = index === 0 ? 'block' : 'none');
         console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
@@ -277,8 +283,8 @@
     setInterval(() => {
       const aboutPdf = document.getElementById('about-pdf');
       const tocPdf = document.getElementById('toc-pdf');
-      if (aboutPdf) console.log('About PDF status:', aboutPdf.getSVGDocument() ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdf).display);
-      if (tocPdf) console.log('TOC PDF status:', tocPdf.getSVGDocument() ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdf).display);
+      if (aboutPdf) console.log('About PDF status:', aboutPdf.getSVGDocument() ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdf).display, 'visibility:', getComputedStyle(aboutPdf).visibility);
+      if (tocPdf) console.log('TOC PDF status:', tocPdf.getSVGDocument() ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdf).display, 'visibility:', getComputedStyle(tocPdf).visibility);
     }, 1000);
 
     // Initialize with cover
