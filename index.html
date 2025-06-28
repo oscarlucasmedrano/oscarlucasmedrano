@@ -100,6 +100,13 @@
       z-index: 61;
       opacity: 1; /* Always visible */
     }
+    .page .fallback-content {
+      position: absolute;
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      z-index: 61;
+    }
     .crease {
       width: 4px;
       height: 100%;
@@ -143,37 +150,45 @@
         <div class="page">
           <canvas id="about-canvas"></canvas>
           <div class="test-content">About</div>
+          <div class="fallback-content">About (PDF Failed)</div>
         </div>
         <div class="page">
           <canvas id="toc-canvas"></canvas>
           <div class="test-content">TOC</div>
+          <div class="fallback-content">TOC (PDF Failed)</div>
         </div>
         <div class="crease"></div> <!-- Between 4-5 -->
         <div class="page">
           <canvas id="page4-canvas"></canvas>
           <div class="test-content">Page 4</div>
+          <div class="fallback-content">Page 4 (PDF Failed)</div>
         </div>
         <div class="page">
           <canvas id="page5-canvas"></canvas>
           <div class="test-content">Page 5</div>
+          <div class="fallback-content">Page 5 (PDF Failed)</div>
         </div>
         <div class="crease"></div> <!-- Between 6-7 -->
         <div class="page">
           <canvas id="page6-canvas"></canvas>
           <div class="test-content">Page 6</div>
+          <div class="fallback-content">Page 6 (PDF Failed)</div>
         </div>
         <div class="page">
           <canvas id="page7-canvas"></canvas>
           <div class="test-content">Page 7</div>
+          <div class="fallback-content">Page 7 (PDF Failed)</div>
         </div>
         <div class="crease"></div> <!-- Between 8-9 -->
         <div class="page">
           <canvas id="page8-canvas"></canvas>
           <div class="test-content">Page 8</div>
+          <div class="fallback-content">Page 8 (PDF Failed)</div>
         </div>
         <div class="page">
           <canvas id="page9-canvas"></canvas>
           <div class="test-content">Page 9</div>
+          <div class="fallback-content">Page 9 (PDF Failed)</div>
         </div>
       </div>
     </div>
@@ -196,8 +211,10 @@
       context.fillStyle = '#333';
       context.fillRect(0, 0, 300, 400);
       const testContent = canvas.nextElementSibling;
-      if (testContent && testContent.className === 'test-content') {
+      const fallbackContent = testContent.nextElementSibling;
+      if (testContent && testContent.className === 'test-content' && fallbackContent && fallbackContent.className === 'fallback-content') {
         testContent.style.opacity = '1';
+        fallbackContent.style.opacity = '0';
       }
       try {
         console.log(`Attempting to render ${canvasId} from ${pdfUrl}`);
@@ -209,12 +226,14 @@
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
-        if (testContent) testContent.style.opacity = '0';
+        if (testContent && fallbackContent) {
+          testContent.style.opacity = '0';
+          fallbackContent.style.opacity = '0';
+        }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.message, error.stack);
-        context.fillStyle = '#333';
-        context.fillRect(0, 0, 300, 400);
-        console.log(`Fallback filled ${canvasId} with #333 300x400 due to: ${error.message}`);
+        if (fallbackContent) fallbackContent.style.opacity = '1';
+        console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
       }
     }
 
@@ -315,7 +334,7 @@
       const clickX = e.clientX - rect.left;
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
 
-      if (currentPage === 0 && clickX > rect.width * 0.2) { // Looser right click threshold
+      if (currentPage === 0 && clickX > rect.width * 0.2) { // Right click to show About/TOC
         currentPage = 1;
         console.log('Switched to page 1 (About, TOC)');
       } else if (currentPage === 1 && clickX > rect.width * 0.7) { // Right click to show Page 4/5
