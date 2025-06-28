@@ -98,7 +98,7 @@
       font-size: 16px;
       text-align: center;
       z-index: 61;
-      opacity: 1;
+      opacity: 1; /* Always visible */
     }
     .crease {
       width: 4px;
@@ -189,7 +189,7 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, maxRetries = 15) { // Increased retries
+    async function renderPDF(pdfUrl, canvasId, maxRetries = 15) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
         console.error(`Canvas ${canvasId} not found`);
@@ -289,7 +289,7 @@
       const pages = document.querySelectorAll('.page');
       const creases = document.querySelectorAll('.crease');
       document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
-      console.log('All pages and creases set to display: none');
+      console.log(`Pages found: ${pages.length}, Creases found: ${creases.length}`);
       if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex'; // About
         pages[1].style.display = 'flex'; // TOC
@@ -322,7 +322,7 @@
     book.addEventListener('click', (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'currentPage before:', currentPage);
+      console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
 
       if (currentPage === 0 && clickX > rect.width / 2) {
         currentPage = 1;
@@ -330,7 +330,7 @@
       } else if (currentPage > 0 && clickX < rect.width / 4) {
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
-      } else if (currentPage < 4 && clickX > (3 * rect.width / 4)) {
+      } else if (currentPage < 4 && clickX > 3 * rect.width / 4) {
         currentPage = Math.min(4, currentPage + 1);
         console.log('Advanced to page:', currentPage);
       }
