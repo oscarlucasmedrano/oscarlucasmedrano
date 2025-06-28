@@ -134,8 +134,15 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     async function renderPDF(pdfUrl, canvasId, iframeId) {
-      const canvas = document.getElementById(canvasId);
-      const iframe = document.getElementById(iframeId);
+      const canvas = canvasId ? document.getElementById(canvasId) : null;
+      const iframe = iframeId ? document.getElementById(iframeId) : null;
+
+      if (!canvas) {
+        console.warn(`Canvas with ID "${canvasId}" not found.`);
+        if (iframe) iframe.style.display = 'block';
+        return;
+      }
+
       try {
         const loadingTask = pdfjsLib.getDocument(pdfUrl);
         const pdf = await loadingTask.promise;
@@ -146,11 +153,11 @@
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport }).promise;
         canvas.style.display = 'block';
-        iframe.style.display = 'none';
+        if (iframe) iframe.style.display = 'none';
       } catch (err) {
         console.warn(`Failed to render ${pdfUrl} on canvas:`, err.message);
         canvas.style.display = 'none';
-        iframe.style.display = 'block';
+        if (iframe) iframe.style.display = 'block';
       }
     }
 
@@ -158,10 +165,12 @@
       try {
         await renderPDF('page1.pdf', 'cover-canvas', null);
         const coverCanvas = document.getElementById('cover-canvas');
-        const height = coverCanvas.height || 600;
-        book.style.height = `${height}px`;
-        bookPages.style.height = `${height}px`;
-        bookContent.style.height = `${height}px`;
+        if (coverCanvas) {
+          const height = coverCanvas.height || 600;
+          book.style.height = `${height}px`;
+          bookPages.style.height = `${height}px`;
+          bookContent.style.height = `${height}px`;
+        }
       } catch (e) {
         console.error('Error rendering cover:', e);
       }
@@ -183,4 +192,3 @@
   </script>
 </body>
 </html>
-
