@@ -265,7 +265,7 @@
           const iframe = page.querySelector('iframe');
           const canvas = page.querySelector('canvas');
           if (iframe && canvas) {
-            console.log(`Processing page with iframe: ${iframe.id}, canvas: ${canvas.id}`);
+            console.log(`Processing page with iframe: ${iframe.id}, canvas: ${canvas.id}, currentPage: ${currentPage}`);
             iframe.style.display = 'none';
             iframe.style.visibility = 'hidden';
             const pdfUrl = iframe.id === 'about-pdf-iframe' ? 'about.pdf' : 'table_of_contents.pdf';
@@ -287,7 +287,7 @@
       }
     }
 
-    book.addEventListener('click', (e) => {
+    book.addEventListener('click', async (e) => {
       const rect = book.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage, 'event:', e);
@@ -300,18 +300,18 @@
         console.log('Switched back, currentPage:', currentPage);
       }
       console.log('currentPage after:', currentPage);
-      updatePageDisplay();
+      await updatePageDisplay(); // Ensure rendering completes
     });
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', async (e) => {
       if (e.key === 'ArrowLeft' && currentPage > 0) {
         currentPage = Math.max(0, currentPage - 1);
-        updatePageDisplay();
         console.log('ArrowLeft, currentPage:', currentPage);
+        await updatePageDisplay();
       } else if (e.key === 'ArrowRight' && currentPage < 1) {
         currentPage = Math.min(1, currentPage + 1);
-        updatePageDisplay();
         console.log('ArrowRight, currentPage:', currentPage);
+        await updatePageDisplay();
       }
     });
 
