@@ -289,7 +289,7 @@
       const pages = document.querySelectorAll('.page');
       const creases = document.querySelectorAll('.crease');
       document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
-      console.log(`Pages found: ${pages.length}, Creases found: ${creases.length}`);
+      console.log(`Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}`);
       if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex'; // About
         pages[1].style.display = 'flex'; // TOC
@@ -324,9 +324,9 @@
       const clickX = e.clientX - rect.left;
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
 
-      if (currentPage === 0 && clickX > rect.width * 0.3) { // Even looser threshold
+      if (currentPage === 0) { // Single click anywhere switches to About/TOC
         currentPage = 1;
-        console.log('Switched to page 1 (About, TOC)');
+        console.log('Switched to page 1 (About, TOC) on any click');
       } else if (currentPage > 0 && clickX < rect.width * 0.2) {
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
