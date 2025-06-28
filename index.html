@@ -174,7 +174,6 @@
     </div>
   </div>
 
-  <script type="module" src="./pdf.mjs" onload="console.log('PDF.js script loaded successfully')" onerror="console.error('Failed to load PDF.js script:', event)"></script>
   <script type="module">
     import * as pdfjsLib from './pdf.mjs';
     pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
@@ -270,6 +269,7 @@
             page.style.display = 'flex';
             const iframe = page.querySelector('iframe');
             const canvas = page.querySelector('canvas');
+            console.log(`Checking page: iframe=${iframe ? iframe.id : 'null'}, canvas=${canvas ? canvas.id : 'null'}`);
             if (iframe && canvas) {
               console.log(`Processing page with iframe: ${iframe.id}, canvas: ${canvas.id}, currentPage: ${currentPage}`);
               const pdfUrl = iframe.id === 'about-pdf-iframe' ? 'about.pdf' : 'table_of_contents.pdf';
@@ -337,167 +337,4 @@
     });
   </script>
 </body>
-</html><script type="module" src="./pdf.mjs" onload="console.log('PDF.js script loaded successfully')" onerror="console.error('Failed to load PDF.js script:', event)"></script>
-<script type="module">
-  import * as pdfjsLib from './pdf.mjs';
-  pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
-  console.log('pdfjsLib initialized successfully');
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const book = document.querySelector('.book');
-    let currentPage = 0;
-
-    if (!book) {
-      console.error('Book element not found');
-      return;
-    }
-
-    async function renderPDF(pdfUrl, canvasId, iframeId, fallbackId, scale = 2) {
-      console.log(`Starting renderPDF for ${canvasId} with url: ${pdfUrl}`);
-      const canvas = document.getElementById(canvasId);
-      const iframe = iframeId ? document.getElementById(iframeId) : null;
-      const fallback = fallbackId ? document.getElementById(fallbackId) : null;
-      if (!canvas) {
-        console.error(`Canvas ${canvasId} not found`);
-        if (fallback) fallback.style.display = 'block';
-        return false;
-      }
-      const context = canvas.getContext('2d');
-      context.fillStyle = 'transparent';
-      context.fillRect(0, 0, 300, 400);
-      try {
-        console.log(`Loading document for ${canvasId}`);
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        const pdf = await loadingTask.promise;
-        console.log(`Document loaded for ${canvasId}, getting page 1`);
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: scale });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        console.log(`Rendering ${canvasId} with size ${canvas.width}x${canvas.height}`);
-        await page.render({ canvasContext: context, viewport: viewport });
-        console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
-        canvas.style.display = 'block';
-        if (iframe) iframe.style.display = 'none';
-        if (fallback) fallback.style.display = 'none';
-        return true;
-      } catch (error) {
-        console.error(`${canvasId} render failed:`, error.name, error.message, error.stack);
-        canvas.style.display = 'none';
-        if (iframe) iframe.style.display = 'block';
-        if (fallback) fallback.style.display = 'block';
-        console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
-        return false;
-      }
-    }
-
-    renderPDF('page1.pdf', 'cover-canvas', null, 'cover-fallback', 2).then(() => {
-      let maxHeight = document.getElementById('cover-canvas')?.height || document.getElementById('cover-fallback')?.height || 600;
-      if (maxHeight === 0) {
-        maxHeight = 600;
-        console.warn('No valid canvas or fallback height detected, using fallback 600');
-      }
-      book.style.height = `${maxHeight}px`;
-      document.querySelector('.book-content').style.height = `${maxHeight}px`;
-      document.querySelector('.book-pages').style.height = `${maxHeight}px`;
-      if (window.innerWidth <= 768) {
-        const coverCanvas = document.getElementById('cover-canvas');
-        const coverFallback = document.getElementById('cover-fallback');
-        if (coverCanvas) coverCanvas.style.maxWidth = `50vw !important`;
-        if (coverFallback) coverFallback.style.maxWidth = `50vw !important`;
-        console.log(`Mobile cover adjusted to 50vw x ${maxHeight}px`);
-      }
-      console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${getComputedStyle(document.querySelector('.book-cover-wrapper')).display}, book-pages display: ${getComputedStyle(document.querySelector('.book-pages')).display}`);
-      currentPage = 1;
-      updatePageDisplay();
-    }).catch(error => console.error('Cover PDF rendering failed (outer):', error));
-
-    async function updatePageDisplay() {
-      console.log('Updating page display, currentPage:', currentPage);
-      book.classList.toggle('open', currentPage > 0);
-      const coverWrapper = document.querySelector('.book-cover-wrapper');
-      const pages = document.querySelectorAll('.page');
-      const creases = document.querySelectorAll('.crease');
-      const aboutPdfIframe = document.getElementById('about-pdf-iframe');
-      const tocPdfIframe = document.getElementById('toc-pdf-iframe');
-      console.log(`Cover wrapper display: ${getComputedStyle(coverWrapper).display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF display: ${aboutPdfIframe ? getComputedStyle(aboutPdfIframe).display : 'null'}, TOC PDF display: ${tocPdfIframe ? getComputedStyle(tocPdfIframe).display : 'null'}`);
-      if (currentPage === 0) {
-        coverWrapper.style.display = 'flex';
-        document.querySelector('.book-pages').style.display = 'none';
-        console.log('Displaying cover, hiding pages');
-      } else if (currentPage === 1 && pages.length >= 2) {
-        coverWrapper.style.display = 'none';
-        const bookPages = document.querySelector('.book-pages');
-        bookPages.style.display = 'flex';
-        for (const page of pages) {
-          page.style.display = 'flex';
-          const iframe = page.querySelector('iframe');
-          const canvas = page.querySelector('canvas');
-          console.log(`Checking page: iframe=${iframe ? iframe.id : 'null'}, canvas=${canvas ? canvas.id : 'null'}`);
-          if (iframe && canvas) {
-            console.log(`Processing page with iframe: ${iframe.id}, canvas: ${canvas.id}, currentPage: ${currentPage}`);
-            const pdfUrl = iframe.id === 'about-pdf-iframe' ? 'about.pdf' : 'table_of_contents.pdf';
-            try {
-              console.log(`Attempting to render ${canvas.id} with ${pdfUrl}`);
-              const success = await renderPDF(pdfUrl, canvas.id, iframe.id, page.querySelector('.fallback-content'), 1.5);
-              console.log(`Render for ${canvas.id} completed, success: ${success}`);
-              if (success) {
-                canvas.style.display = 'block';
-                iframe.style.display = 'none';
-              } else {
-                canvas.style.display = 'none';
-                iframe.style.display = 'block';
-              }
-            } catch (error) {
-              console.error(`Render failed for ${canvas.id}:`, error);
-              canvas.style.display = 'none';
-              iframe.style.display = 'block';
-            }
-          }
-          page.style.display = page === pages[0] || page === pages[1] ? 'flex' : 'none';
-        }
-        creases.forEach((crease, index) => crease.style.display = index === 0 ? 'block' : 'none');
-        console.log('Displaying pages 0 (About) and 1 (TOC) with crease 1');
-      }
-    }
-
-    book.addEventListener('click', async (e) => {
-      const rect = book.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      console.log('Click detected at:', clickX, 'within rect:', JSON.stringify(rect), 'currentPage before:', currentPage);
-
-      if (clickX > 0) {
-        currentPage = Math.min(1, currentPage + 1);
-        console.log('Advanced to page:', currentPage);
-      } else if (currentPage > 0 && clickX < rect.width * 0.3) {
-        currentPage = Math.max(0, currentPage - 1);
-        console.log('Switched back, currentPage:', currentPage);
-      }
-      console.log('currentPage after:', currentPage, 'Calling updatePageDisplay');
-      await updatePageDisplay();
-    });
-
-    document.addEventListener('keydown', async (e) => {
-      if (e.key === 'ArrowLeft' && currentPage > 0) {
-        currentPage = Math.max(0, currentPage - 1);
-        console.log('ArrowLeft, currentPage:', currentPage);
-        await updatePageDisplay();
-      } else if (e.key === 'ArrowRight' && currentPage < 1) {
-        currentPage = Math.min(1, currentPage + 1);
-        console.log('ArrowRight, currentPage:', currentPage);
-        await updatePageDisplay();
-      }
-    });
-
-    setInterval(() => {
-      const aboutPdfIframe = document.getElementById('about-pdf-iframe');
-      const tocPdfIframe = document.getElementById('toc-pdf-iframe');
-      if (aboutPdfIframe) {
-        console.log('About PDF status:', aboutPdfIframe.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(aboutPdfIframe).display, 'visibility:', getComputedStyle(aboutPdfIframe).visibility, 'onerror:', aboutPdfIframe.onerror ? 'error occurred' : 'no error', 'error:', aboutPdfIframe.error ? aboutPdfIframe.error : 'none');
-      }
-      if (tocPdfIframe) {
-        console.log('TOC PDF status:', tocPdfIframe.contentDocument ? 'loaded' : 'not loaded', 'display:', getComputedStyle(tocPdfIframe).display, 'visibility:', getComputedStyle(tocPdfIframe).visibility, 'onerror:', tocPdfIframe.onerror ? 'error occurred' : 'no error', 'error:', tocPdfIframe.error ? tocPdfIframe.error : 'none');
-      }
-    }, 1000);
-  });
-</script>
+</html>
