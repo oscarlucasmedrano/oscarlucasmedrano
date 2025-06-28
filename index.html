@@ -3,100 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oscar-Lucas Medrano</title>
+  <title>Oscar‑Lucas Medrano</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background-color: black;
+      background: black;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
     }
-
     #viewer {
-      display: flex;
-      justify-content: center;
-      align-items: center;
       position: relative;
       width: 100%;
       height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-
     .spread {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       gap: 0;
       position: relative;
     }
-
     .page-wrapper {
       background: white;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0,0,0,0.5);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.5);
       display: flex;
-      justify-content: center;
       align-items: center;
-      max-height: 720px;
-      width: auto;
+      justify-content: center;
+      height: 720px;
+      max-height: 90vh;
       overflow: hidden;
     }
-
     canvas {
-      height: 100%;
-      width: auto;
       display: block;
+      height: 720px;
+      width: auto;
     }
-
     #crease {
       position: absolute;
-      top: 50%;
-      left: 50%;
       width: 2px;
       height: 720px;
+      top: 50%;
+      left: 50%;
       transform: translate(-1px, -50%);
       background: linear-gradient(to bottom, #00000033, #ffffff11, #00000033);
-      z-index: 10;
       pointer-events: none;
+      z-index: 10;
     }
-
     @media (max-width: 768px) {
       html, body {
-        overflow: auto;
-        align-items: flex-start;
-        justify-content: flex-start;
-      }
-
-      #viewer {
-        flex-direction: row;
-        align-items: flex-start;
+        align-items: center;
         justify-content: center;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 10px;
-        gap: 0;
       }
-
+      #viewer {
+        overflow: hidden;
+        padding: 10px 0;
+      }
       .spread {
-        flex-direction: row;
+        flex-direction: column;
       }
-
       .page-wrapper {
         max-height: 80vh;
-        max-width: 90vw;
+        width: auto;
       }
-
       canvas {
         max-height: 80vh;
-        max-width: 100%;
         width: auto;
-        height: auto;
       }
-
       #crease {
         display: none;
       }
@@ -110,120 +90,88 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    const pdfs = [
-      'page1.pdf',
-      'about.pdf',
-      'table_of_contents.pdf',
-      'page4.pdf',
-      'page5.pdf'
-    ];
-
+    const pdfs = ['page1.pdf','about.pdf','table_of_contents.pdf','page4.pdf','page5.pdf'];
     const viewer = document.getElementById('viewer');
     const crease = document.getElementById('crease');
-    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    let currentPage = 0;
+    const pdfjs = window['pdfjs-dist/build/pdf'];
+    const HEIGHT = 720;
+    let current = 0;
 
-    const FIXED_HEIGHT = 720;
-
-    async function renderPDF(url) {
-      const pdf = await pdfjsLib.getDocument(url).promise;
+    async function getPDF(url) {
+      const pdf = await pdfjs.getDocument(url).promise;
       const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: 2 }); // render twice dpi
       return { page, viewport };
     }
 
-    async function drawCanvas(pdfData) {
-      const scale = FIXED_HEIGHT / pdfData.viewport.height;
-      const scaledViewport = pdfData.page.getViewport({ scale });
-
+    async function createCanvas(pdfData) {
+      const scale = HEIGHT / pdfData.viewport.height;
+      const vp = pdfData.page.getViewport({ scale: scale * 2 }); // double for sharpness
       const canvas = document.createElement('canvas');
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
-
-      await pdfData.page.render({
-        canvasContext: canvas.getContext('2d'),
-        viewport: scaledViewport
-      }).promise;
-
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      const ctx = canvas.getContext('2d');
+      await pdfData.page.render({ canvasContext: ctx, viewport: vp }).promise;
       return canvas;
     }
 
-    async function updateViewer() {
-      viewer.querySelectorAll('.spread').forEach(el => el.remove());
-
+    async function render() {
+      viewer.innerHTML = '';
       const spread = document.createElement('div');
       spread.className = 'spread';
 
-      if (currentPage === 0) {
-        const pdfData = await renderPDF(pdfs[0]);
-        const canvas = await drawCanvas(pdfData);
-        const wrapper = document.createElement('div');
-        wrapper.className = 'page-wrapper';
-        wrapper.appendChild(canvas);
-        spread.appendChild(wrapper);
+      if (current === 0) {
         crease.style.display = 'none';
+        const data = await getPDF(pdfs[0]);
+        const canvas = await createCanvas(data);
+        const wrap = document.createElement('div');
+        wrap.className = 'page-wrapper';
+        wrap.appendChild(canvas);
+        spread.appendChild(wrap);
       } else {
-        const leftData = await renderPDF(pdfs[currentPage]);
-        const rightExists = pdfs[currentPage + 1];
-        const rightData = rightExists ? await renderPDF(pdfs[currentPage + 1]) : null;
+        crease.style.display = 'block';
+        const left = await getPDF(pdfs[current]);
+        const lcan = await createCanvas(left);
+        const lwrap = document.createElement('div');
+        lwrap.className = 'page-wrapper';
+        lwrap.appendChild(lcan);
+        spread.appendChild(lwrap);
 
-        const leftCanvas = await drawCanvas(leftData);
-        const leftWrapper = document.createElement('div');
-        leftWrapper.className = 'page-wrapper';
-        leftWrapper.appendChild(leftCanvas);
-        spread.appendChild(leftWrapper);
-
-        if (rightData) {
-          const rightCanvas = await drawCanvas(rightData);
-          const rightWrapper = document.createElement('div');
-          rightWrapper.className = 'page-wrapper';
-          rightWrapper.appendChild(rightCanvas);
-          spread.appendChild(rightWrapper);
+        if (pdfs[current+1]) {
+          const right = await getPDF(pdfs[current+1]);
+          const rcan = await createCanvas(right);
+          const rwrap = document.createElement('div');
+          rwrap.className = 'page-wrapper';
+          rwrap.appendChild(rcan);
+          spread.appendChild(rwrap);
         }
-
-        crease.style.display = rightData ? 'block' : 'none';
       }
-
       viewer.appendChild(spread);
     }
 
-    function nextPage() {
-      if (currentPage === 0) {
-        currentPage = 1;
-      } else if (currentPage + 2 < pdfs.length) {
-        currentPage += 2;
-      }
-      updateViewer();
+    function next() {
+      current = (current === 0) ? 1 : Math.min(current + 2, pdfs.length-1);
+      render();
+    }
+    function back(){
+      current = (current <= 1) ? 0 : current - 2;
+      render();
     }
 
-    function prevPage() {
-      if (currentPage <= 1) {
-        currentPage = 0;
-      } else {
-        currentPage -= 2;
-      }
-      updateViewer();
-    }
-
-    viewer.addEventListener('click', (e) => {
-      const rect = viewer.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      if (x < rect.width / 2) {
-        prevPage();
-      } else {
-        nextPage();
-      }
+    viewer.addEventListener('click', e => {
+      const box = viewer.getBoundingClientRect();
+      (e.clientX < box.left + box.width/2)? back() : next();
+    });
+    window.addEventListener('keydown', e => {
+      if (e.key==='ArrowLeft') back();
+      if (e.key==='ArrowRight') next();
     });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') nextPage();
-      if (e.key === 'ArrowLeft') prevPage();
-    });
-
-    updateViewer();
+    render();
   </script>
 </body>
 </html>
+
 
 
 
