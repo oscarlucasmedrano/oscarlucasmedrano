@@ -3,174 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oscar‑Lucas Medrano</title>
+  <title>Oscar-Lucas Medrano</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       background: black;
+      overflow: hidden;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
-    #viewer {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .spread {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      position: relative;
-    }
-    .page-wrapper {
-      background: white;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 720px;
-      max-height: 90vh;
-      overflow: hidden;
-    }
-    canvas {
-      display: block;
-      height: 720px;
-      width: auto;
-    }
-    #crease {
+    #book {
       position: absolute;
-      width: 2px;
-      height: 720px;
       top: 50%;
       left: 50%;
-      transform: translate(-1px, -50%);
-      background: linear-gradient(to bottom, #00000033, #ffffff11, #00000033);
-      pointer-events: none;
-      z-index: 10;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 0;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      max-height: 90vh;
+      height: auto;
+      width: auto;
     }
     @media (max-width: 768px) {
-      html, body {
-        align-items: center;
-        justify-content: center;
-      }
-      #viewer {
-        overflow: hidden;
-        padding: 10px 0;
-      }
-      .spread {
+      #book {
         flex-direction: column;
       }
-      .page-wrapper {
-        max-height: 80vh;
-        width: auto;
-      }
       canvas {
+        max-width: 90vw;
         max-height: 80vh;
-        width: auto;
-      }
-      #crease {
-        display: none;
       }
     }
   </style>
 </head>
 <body>
-  <div id="viewer">
-    <div id="crease"></div>
-  </div>
+  <div id="book"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    const pdfs = ['page1.pdf','about.pdf','table_of_contents.pdf','page4.pdf','page5.pdf'];
-    const viewer = document.getElementById('viewer');
-    const crease = document.getElementById('crease');
+    const pdfs = [
+      'page1.pdf',              // cover
+      'about.pdf',
+      'table_of_contents.pdf',
+      'page4.pdf',
+      'page5.pdf'
+    ];
+
+    const book = document.getElementById('book');
     const pdfjs = window['pdfjs-dist/build/pdf'];
-    const HEIGHT = 720;
     let current = 0;
 
-    async function getPDF(url) {
+    async function renderPDF(url, scale = 2) {
       const pdf = await pdfjs.getDocument(url).promise;
       const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 2 }); // render twice dpi
-      return { page, viewport };
-    }
-
-    async function createCanvas(pdfData) {
-      const scale = HEIGHT / pdfData.viewport.height;
-      const vp = pdfData.page.getViewport({ scale: scale * 2 }); // double for sharpness
+      const viewport = page.getViewport({ scale });
       const canvas = document.createElement('canvas');
-      canvas.width = vp.width;
-      canvas.height = vp.height;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
       const ctx = canvas.getContext('2d');
-      await pdfData.page.render({ canvasContext: ctx, viewport: vp }).promise;
+      await page.render({ canvasContext: ctx, viewport }).promise;
       return canvas;
     }
 
-    async function render() {
-      viewer.innerHTML = '';
-      const spread = document.createElement('div');
-      spread.className = 'spread';
+    async function updateBook() {
+      book.innerHTML = '';
 
       if (current === 0) {
-        crease.style.display = 'none';
-        const data = await getPDF(pdfs[0]);
-        const canvas = await createCanvas(data);
-        const wrap = document.createElement('div');
-        wrap.className = 'page-wrapper';
-        wrap.appendChild(canvas);
-        spread.appendChild(wrap);
+        const canvas = await renderPDF(pdfs[0], 2.5);
+        book.appendChild(canvas);
       } else {
-        crease.style.display = 'block';
-        const left = await getPDF(pdfs[current]);
-        const lcan = await createCanvas(left);
-        const lwrap = document.createElement('div');
-        lwrap.className = 'page-wrapper';
-        lwrap.appendChild(lcan);
-        spread.appendChild(lwrap);
-
-        if (pdfs[current+1]) {
-          const right = await getPDF(pdfs[current+1]);
-          const rcan = await createCanvas(right);
-          const rwrap = document.createElement('div');
-          rwrap.className = 'page-wrapper';
-          rwrap.appendChild(rcan);
-          spread.appendChild(rwrap);
+        const left = await renderPDF(pdfs[current], 2.5);
+        book.appendChild(left);
+        if (pdfs[current + 1]) {
+          const right = await renderPDF(pdfs[current + 1], 2.5);
+          book.appendChild(right);
         }
       }
-      viewer.appendChild(spread);
     }
 
-    function next() {
-      current = (current === 0) ? 1 : Math.min(current + 2, pdfs.length-1);
-      render();
-    }
-    function back(){
-      current = (current <= 1) ? 0 : current - 2;
-      render();
+    function nextPage() {
+      if (current === 0) {
+        current = 1;
+      } else if (current + 2 < pdfs.length) {
+        current += 2;
+      }
+      updateBook();
     }
 
-    viewer.addEventListener('click', e => {
-      const box = viewer.getBoundingClientRect();
-      (e.clientX < box.left + box.width/2)? back() : next();
-    });
+    function prevPage() {
+      if (current <= 1) {
+        current = 0;
+      } else {
+        current -= 2;
+      }
+      updateBook();
+    }
+
     window.addEventListener('keydown', e => {
-      if (e.key==='ArrowLeft') back();
-      if (e.key==='ArrowRight') next();
+      if (e.key === 'ArrowRight') nextPage();
+      if (e.key === 'ArrowLeft') prevPage();
     });
 
-    render();
+    book.addEventListener('click', e => {
+      const rect = book.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      x < rect.width / 2 ? prevPage() : nextPage();
+    });
+
+    updateBook();
   </script>
 </body>
 </html>
+
 
 
 
