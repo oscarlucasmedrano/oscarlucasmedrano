@@ -48,7 +48,7 @@
       background: #333;
       border: none;
     }
-    .book-cover canvas {
+    .book-cover canvas, .book-cover img {
       max-width: 400px;
       width: 100%;
       height: auto;
@@ -124,7 +124,7 @@
         min-width: 0;
         min-height: 0;
       }
-      .book-cover canvas {
+      .book-cover canvas, .book-cover img {
         max-width: 50vw;
         margin: 0 auto;
       }
@@ -142,6 +142,7 @@
         <div class="book-cover-wrapper">
           <div class="book-cover">
             <canvas id="cover-canvas"></canvas>
+            <img id="cover-fallback" src="https://via.placeholder.com/400x600?text=Cover" style="display: none;">
           </div>
         </div>
       </div>
@@ -201,10 +202,11 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, scale = 2) { // Higher scale for non-pixelated
+    async function renderPDF(pdfUrl, canvasId, fallbackId, scale = 2) {
       const canvas = document.getElementById(canvasId);
-      if (!canvas) {
-        console.error(`Canvas ${canvasId} not found`);
+      const fallback = document.getElementById(fallbackId);
+      if (!canvas || !fallback) {
+        console.error(`Canvas ${canvasId} or fallback ${fallbackId} not found`);
         return;
       }
       const context = canvas.getContext('2d');
@@ -226,71 +228,76 @@
         canvas.height = viewport.height;
         await page.render({ canvasContext: context, viewport: viewport });
         console.log(`${canvasId} rendered successfully, size: ${canvas.width}x${canvas.height}`);
+        canvas.style.display = 'block';
+        fallback.style.display = 'none';
         if (testContent && fallbackContent) {
           testContent.style.opacity = '0';
           fallbackContent.style.opacity = '0';
         }
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.message, error.stack);
+        canvas.style.display = 'none';
+        fallback.style.display = 'block';
         if (fallbackContent) fallbackContent.style.opacity = '1';
         console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
       }
     }
 
-    // Render all PDFs
-    const pdfPromises = [
-      renderPDF('page1.pdf', 'cover-canvas', 2),
-      renderPDF('about.pdf', 'about-canvas', 2),
-      renderPDF('table_of_contents.pdf', 'toc-canvas', 2),
-      renderPDF('page4.pdf', 'page4-canvas', 2),
-      renderPDF('page5.pdf', 'page5-canvas', 2),
-      renderPDF('page6.pdf', 'page6-canvas', 2),
-      renderPDF('page7.pdf', 'page7-canvas', 2),
-      renderPDF('page8.pdf', 'page8-canvas', 2),
-      renderPDF('page9.pdf', 'page9-canvas', 2)
-    ];
+    // Render all PDFs with fallbacks
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded and parsed');
+      const pdfPromises = [
+        renderPDF('page1.pdf', 'cover-canvas', 'cover-fallback', 2),
+        renderPDF('about.pdf', 'about-canvas', null, 2),
+        renderPDF('table_of_contents.pdf', 'toc-canvas', null, 2),
+        renderPDF('page4.pdf', 'page4-canvas', null, 2),
+        renderPDF('page5.pdf', 'page5-canvas', null, 2),
+        renderPDF('page6.pdf', 'page6-canvas', null, 2),
+        renderPDF('page7.pdf', 'page7-canvas', null, 2),
+        renderPDF('page8.pdf', 'page8-canvas', null, 2),
+        renderPDF('page9.pdf', 'page9-canvas', null, 2)
+      ];
 
-    Promise.all(pdfPromises).then(() => {
-      setTimeout(() => {
-        console.log('All PDFs attempted to render');
-        let maxHeight = 0;
-        const canvases = [
-          document.getElementById('cover-canvas'),
-          document.getElementById('about-canvas'),
-          document.getElementById('toc-canvas'),
-          document.getElementById('page4-canvas'),
-          document.getElementById('page5-canvas'),
-          document.getElementById('page6-canvas'),
-          document.getElementById('page7-canvas'),
-          document.getElementById('page8-canvas'),
-          document.getElementById('page9-canvas')
-        ];
-        canvases.forEach(canvas => {
-          if (canvas) {
-            maxHeight = Math.max(maxHeight, canvas.height || 600);
-            console.log(`${canvas.id} size: ${canvas.width || 400}x${canvas.height || 600}`);
+      Promise.all(pdfPromises).then(() => {
+        setTimeout(() => {
+          console.log('All PDFs attempted to render');
+          let maxHeight = 0;
+          const canvases = [
+            document.getElementById('cover-canvas'),
+            document.getElementById('about-canvas'),
+            document.getElementById('toc-canvas'),
+            document.getElementById('page4-canvas'),
+            document.getElementById('page5-canvas'),
+            document.getElementById('page6-canvas'),
+            document.getElementById('page7-canvas'),
+            document.getElementById('page8-canvas'),
+            document.getElementById('page9-canvas')
+          ];
+          canvases.forEach(canvas => {
+            if (canvas) {
+              maxHeight = Math.max(maxHeight, canvas.height || 600);
+              console.log(`${canvas.id} size: ${canvas.width || 400}x${canvas.height || 600}, display: ${canvas.style.display}`);
+            }
+          });
+          if (maxHeight === 0) {
+            maxHeight = 600;
+            console.warn('No valid canvas heights detected, using fallback 600');
           }
-        });
-        if (maxHeight === 0) {
-          maxHeight = 600;
-          console.warn('No valid canvas heights detected, using fallback 600');
-        }
-        book.style.height = `${maxHeight}px`;
-        document.querySelector('.book-content').style.height = `${maxHeight}px`;
-        document.querySelector('.book-pages').style.height = `${maxHeight}px`;
-        if (window.innerWidth <= 768) {
-          const coverCanvas = document.getElementById('cover-canvas');
-          if (coverCanvas) {
-            coverCanvas.style.maxWidth = `50vw !important`;
-            coverCanvas.style.maxHeight = `${maxHeight}px !important`;
-            coverCanvas.style.margin = '0 auto';
-            console.log(`Mobile cover centered to 50vw x ${maxHeight}px`);
+          book.style.height = `${maxHeight}px`;
+          document.querySelector('.book-content').style.height = `${maxHeight}px`;
+          document.querySelector('.book-pages').style.height = `${maxHeight}px`;
+          if (window.innerWidth <= 768) {
+            const coverCanvas = document.getElementById('cover-canvas');
+            const coverFallback = document.getElementById('cover-fallback');
+            if (coverCanvas) coverCanvas.style.maxWidth = `50vw !important`;
+            if (coverFallback) coverFallback.style.maxWidth = `50vw !important`;
+            console.log(`Mobile cover adjusted to 50vw x ${maxHeight}px`);
           }
-        }
-        console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${document.querySelector('.book-cover-wrapper').style.display}, book-pages display: ${document.querySelector('.book-pages').style.display}`);
-        updatePageDisplay();
-      }, 200);
-    }).catch(error => console.error('PDF rendering failed globally:', error));
+          console.log(`Book height set to ${maxHeight}px, cover-wrapper display: ${document.querySelector('.book-cover-wrapper').style.display}, book-pages display: ${document.querySelector('.book-pages').style.display}`);
+          updatePageDisplay();
+        }, 200);
+      }).catch(error => console.error('PDF rendering failed globally:', error));
+    });
 
     function updatePageDisplay() {
       console.log('Updating page display, currentPage:', currentPage);
