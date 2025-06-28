@@ -189,7 +189,7 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function renderPDF(pdfUrl, canvasId, maxRetries = 15) {
+    async function renderPDF(pdfUrl, canvasId, maxRetries = 20) { // Increased retries for page4 and page5
       const canvas = document.getElementById(canvasId);
       if (!canvas) {
         console.error(`Canvas ${canvasId} not found`);
@@ -301,7 +301,7 @@
         pages[3].style.display = 'flex'; // Page 5
         creases[1].style.display = 'block';
         book.classList.add('page-pair-2');
-        console.log('Displaying pages 2 and 3 (Page 4, Page 5) with crease 2');
+        console.log('Displaying pages 2 (Page 4) and 3 (Page 5) with crease 2');
       } else if (currentPage === 3 && pages.length >= 6) {
         pages[4].style.display = 'flex'; // Page 6
         pages[5].style.display = 'flex'; // Page 7
@@ -324,9 +324,12 @@
       const clickX = e.clientX - rect.left;
       console.log('Click detected, rect:', JSON.stringify(rect), 'clickX:', clickX, 'width:', rect.width, 'currentPage before:', currentPage);
 
-      if (currentPage === 0) { // Single click anywhere switches to About/TOC
+      if (currentPage === 0) { // First click switches to About/TOC
         currentPage = 1;
-        console.log('Switched to page 1 (About, TOC) on any click');
+        console.log('Switched to page 1 (About, TOC)');
+      } else if (currentPage === 1) { // Second click switches to Page 4/5
+        currentPage = 2;
+        console.log('Switched to page 2 (Page 4, Page 5)');
       } else if (currentPage > 0 && clickX < rect.width * 0.2) {
         currentPage = Math.max(0, currentPage - 1);
         console.log('Switched back, currentPage:', currentPage);
