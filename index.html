@@ -206,12 +206,14 @@
         canvas.style.display = 'block';
         if (iframe) iframe.style.display = 'none';
         if (fallback) fallback.style.display = 'none';
+        return true;
       } catch (error) {
         console.error(`${canvasId} render failed:`, error.name, error.message, error.stack);
         canvas.style.display = 'none';
         if (iframe) iframe.style.display = 'block';
         if (fallback) fallback.style.display = 'block';
         console.log(`Showing fallback for ${canvasId} due to: ${error.message}`);
+        return false;
       }
     }
 
@@ -263,17 +265,20 @@
           const iframe = page.querySelector('iframe');
           const canvas = page.querySelector('canvas');
           if (iframe && canvas) {
-            iframe.style.display = 'none'; // Hide iframe on render attempt
+            console.log(`Processing page ${index}, iframe: ${iframe.id}, canvas: ${canvas.id}`);
+            iframe.style.display = 'none';
             iframe.style.visibility = 'hidden';
-            console.log(`Page ${index} iframe hidden, attempting canvas render`);
-            renderPDF(index === 0 ? 'about.pdf' : 'table_of_contents.pdf', canvas.id, iframe.id, page.querySelector('.fallback-content'), 1.5).then(() => {
-              canvas.style.display = 'block';
-              iframe.style.display = 'none';
-            }).catch(() => {
-              canvas.style.display = 'none';
-              iframe.style.display = 'block';
-              iframe.style.visibility = 'visible';
-              console.log(`Page ${index} canvas render failed, showing iframe`);
+            const pdfUrl = index === 0 ? 'about.pdf' : 'table_of_contents.pdf';
+            renderPDF(pdfUrl, canvas.id, iframe.id, page.querySelector('.fallback-content'), 1.5).then(success => {
+              console.log(`Render for ${canvas.id} completed, success: ${success}`);
+              if (success) {
+                canvas.style.display = 'block';
+                iframe.style.display = 'none';
+              } else {
+                canvas.style.display = 'none';
+                iframe.style.display = 'block';
+                iframe.style.visibility = 'visible';
+              }
             });
           }
           page.style.display = index < 2 ? 'flex' : 'none';
