@@ -13,15 +13,16 @@
         body {
             background-color: black;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
             width: 100vw;
-            touch-action: pinch-zoom;
+            position: fixed; /* Pin the body to the screen */
+            top: 0;
+            left: 0;
         }
         #flipbook-container {
-            position: relative;
+            position: fixed; /* Pin the container */
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             display: flex;
@@ -53,6 +54,38 @@
             background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(255,255,255,0.1));
             z-index: 1;
         }
+        .arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 48px;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            z-index: 2;
+        }
+        .arrow:hover {
+            opacity: 1;
+        }
+        #prev-page {
+            left: 10px;
+        }
+        #next-page {
+            right: 10px;
+        }
+        @media (max-width: 600px) {
+            .arrow {
+                font-size: 36px;
+            }
+            #prev-page {
+                left: 5px;
+            }
+            #next-page {
+                right: 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -63,6 +96,8 @@
             <canvas id="pdf-canvas-single"></canvas>
             <div id="crease"></div>
         </div>
+        <div id="prev-page" class="arrow">‹</div>
+        <div id="next-page" class="arrow">›</div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
@@ -74,7 +109,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.5 * window.devicePixelRatio; // Adjusted back to a balanced scale
+        let scale = 1.5 * window.devicePixelRatio;
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -126,7 +161,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY); // Reverted to Math.min to prevent overflow
+            const fitScale = Math.min(scaleX, scaleY) * 1.2; // Increase size by 20%
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -150,7 +185,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY); // Reverted to Math.min to prevent overflow
+            const fitScale = Math.min(scaleX, scaleY) * 1.2; // Increase size by 20%
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -177,13 +212,15 @@
             }
         }
 
-        canvasContainer.addEventListener('click', (e) => {
-            const rect = canvasContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentSpreadIndex > 0) {
                 currentSpreadIndex--;
                 loadSpread(currentSpreadIndex);
-            } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (currentSpreadIndex < pdfFiles.length - 1) {
                 currentSpreadIndex++;
                 loadSpread(currentSpreadIndex);
             }
@@ -219,11 +256,6 @@
                     touch1.pageX - touch2.pageX,
                     touch1.pageY - touch2.pageY
                 );
-            } else if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                const rect = canvasContainer.getBoundingClientRect();
-                const touchX = touch.clientX - rect.left;
-                startX = touchX;
             }
         });
 
@@ -246,24 +278,9 @@
             }
         });
 
-        canvasContainer.addEventListener('touchend', (e) => {
-            if (e.touches.length === 0 && startX !== null) {
-                const rect = canvasContainer.getBoundingClientRect();
-                const endX = e.changedTouches[0].clientX - rect.left;
-                const threshold = rect.width / 4;
-                if (startX - endX > threshold && currentSpreadIndex < pdfFiles.length - 1) {
-                    currentSpreadIndex++;
-                    loadSpread(currentSpreadIndex);
-                } else if (endX - startX > threshold && currentSpreadIndex > 0) {
-                    currentSpreadIndex--;
-                    loadSpread(currentSpreadIndex);
-                }
-                startX = null;
-            }
+        canvasContainer.addEventListener('touchend', () => {
             lastTouchDistance = null;
         });
-
-        let startX = null;
 
         window.addEventListener('resize', adjustCanvases);
 
