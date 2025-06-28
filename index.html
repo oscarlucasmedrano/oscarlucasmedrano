@@ -67,7 +67,6 @@
       width: 100%;
       height: 100%;
       z-index: 60;
-      background: black;
       overflow: hidden;
       border: none;
     }
@@ -77,13 +76,13 @@
     .page {
       width: 50%;
       height: 100%;
-      background: black;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: auto;
       border: none;
       position: relative;
+      background: #f0f0f0; /* Light background instead of black on 404 */
     }
     .page object {
       max-width: 100%;
@@ -94,7 +93,7 @@
     }
     .page .fallback-content {
       position: absolute;
-      color: white;
+      color: red;
       font-size: 24px;
       text-align: center;
       z-index: 61;
@@ -142,12 +141,12 @@
         <div class="crease"></div> <!-- Between About and TOC -->
         <div class="page">
           <object id="about-pdf" data="about.pdf" type="application/pdf" width="100%" height="100%">
-            <div class="fallback-content">About (PDF Failed)</div>
+            <div class="fallback-content">About (PDF Failed to Load)</div>
           </object>
         </div>
         <div class="page">
           <object id="toc-pdf" data="table_of_contents.pdf" type="application/pdf" width="100%" height="100%">
-            <div class="fallback-content">TOC (PDF Failed)</div>
+            <div class="fallback-content">TOC (PDF Failed to Load)</div>
           </object>
         </div>
       </div>
@@ -227,7 +226,7 @@
       const creases = document.querySelectorAll('.crease');
       const aboutPdf = document.getElementById('about-pdf');
       const tocPdf = document.getElementById('toc-pdf');
-      console.log(`Cover wrapper display: ${coverWrapper.style.display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF loaded: ${aboutPdf ? (aboutPdf.data ? 'yes' : 'no') : 'null'}, TOC PDF loaded: ${tocPdf ? (tocPdf.data ? 'yes' : 'no') : 'null'}`);
+      console.log(`Cover wrapper display: ${coverWrapper.style.display}, Pages found: ${pages.length}, Creases found: ${creases.length}, Open class: ${book.classList.contains('open')}, About PDF loaded: ${aboutPdf ? (aboutPdf.data && aboutPdf.getSVGDocument() ? 'yes' : 'no') : 'null'}, TOC PDF loaded: ${tocPdf ? (tocPdf.data && tocPdf.getSVGDocument() ? 'yes' : 'no') : 'null'}`);
       if (currentPage === 0) {
         coverWrapper.style.display = 'flex';
         document.querySelector('.book-pages').style.display = 'none';
@@ -268,6 +267,14 @@
         console.log('ArrowRight, currentPage:', currentPage);
       }
     });
+
+    // Check PDF load status
+    setInterval(() => {
+      const aboutPdf = document.getElementById('about-pdf');
+      const tocPdf = document.getElementById('toc-pdf');
+      if (aboutPdf && aboutPdf.data) console.log('About PDF status:', aboutPdf.getSVGDocument() ? 'loaded' : 'not loaded');
+      if (tocPdf && tocPdf.data) console.log('TOC PDF status:', tocPdf.getSVGDocument() ? 'loaded' : 'not loaded');
+    }, 1000);
 
     // Initialize with cover
     updatePageDisplay();
