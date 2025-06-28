@@ -39,8 +39,9 @@
       width: 100%;
       height: auto;
       display: flex;
-      justify-content: center;
+      justify-content: center; /* Ensure centering */
       align-items: center;
+      max-width: 80vw; /* Constrain to book container */
     }
     .book-cover {
       display: block;
@@ -66,8 +67,8 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 35; /* Increased for visibility */
-      background: rgba(0, 0, 255, 0.8); /* Stronger blue background */
+      z-index: 40; /* Increased for visibility */
+      background: rgba(0, 0, 255, 0.8); /* Strong blue background */
       overflow: hidden;
       border: none;
     }
@@ -97,13 +98,13 @@
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 36;
+      z-index: 41;
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 37;
+      z-index: 42;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -131,7 +132,8 @@
       .book-cover-wrapper {
         width: 100%;
         height: auto;
-        justify-content: center;
+        justify-content: center; /* Ensure centering */
+        max-width: 50vw; /* Match page width */
       }
       .book-cover canvas {
         width: 100% !important;
@@ -299,13 +301,14 @@
             console.log(`Set ${canvas.id} to ${maxWidth}x${maxHeight}`);
           }
         });
-        // Apply mobile cover size
+        // Apply mobile cover size and centering
         if (window.innerWidth <= 768) {
           const coverCanvas = document.getElementById('cover-canvas');
           if (coverCanvas) {
             coverCanvas.style.maxWidth = `${maxWidth}px !important`;
             coverCanvas.style.maxHeight = `${maxHeight}px !important`;
-            console.log(`Mobile cover set to ${maxWidth}x${maxHeight}`);
+            coverCanvas.style.margin = '0 auto'; // Center the canvas
+            console.log(`Mobile cover centered to ${maxWidth}x${maxHeight}`);
           }
         }
         console.log(`Book size set to ${maxWidth * 2}x${maxHeight}`);
@@ -317,10 +320,11 @@
       console.log('Updating page display, currentPage:', currentPage);
       book.classList.toggle('open', currentPage > 0);
       book.classList.remove('page-pair-1', 'page-pair-2', 'page-pair-3');
+      document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+      document.querySelectorAll('.crease').forEach(crease => crease.style.display = 'none');
+      console.log('All pages and creases set to display: none');
       const pages = document.querySelectorAll('.page');
       const creases = document.querySelectorAll('.crease');
-      document.querySelectorAll('.page, .crease').forEach(el => el.style.display = 'none');
-      console.log(`All pages and creases set to display: none`);
       if (currentPage === 1 && pages.length >= 2) {
         pages[0].style.display = 'flex';
         pages[1].style.display = 'flex';
