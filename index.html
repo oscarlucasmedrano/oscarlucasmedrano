@@ -198,6 +198,10 @@
           if (fallback) fallback.style.display = 'block';
           return false;
         }
+        if (canvas.getContext('2d').canvas === canvas && canvas.style.display === 'block') {
+          console.warn(`Canvas ${canvasId} is already in use, skipping render`);
+          return false;
+        }
         const context = canvas.getContext('2d');
         context.fillStyle = 'transparent';
         context.fillRect(0, 0, 300, 400);
