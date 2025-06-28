@@ -61,7 +61,7 @@
     }
     .book-pages {
       position: absolute;
-      display: flex; /* Force visibility initially */
+      display: flex;
       flex-direction: row;
       align-items: center;
       width: 100%;
@@ -75,7 +75,7 @@
       width: 50%;
       height: 100%;
       background: black;
-      display: flex; /* Force visibility initially */
+      display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
@@ -88,6 +88,7 @@
       object-fit: contain;
       border: none;
       background: black;
+      display: block; /* Force visibility */
     }
     .page .test-content {
       position: absolute;
@@ -95,7 +96,7 @@
       font-size: 16px;
       text-align: center;
       z-index: 61;
-      opacity: 1; /* Always visible */
+      opacity: 1;
     }
     .page .fallback-content {
       position: absolute;
@@ -273,7 +274,7 @@
           canvases.forEach(canvas => {
             if (canvas) {
               maxHeight = Math.max(maxHeight, canvas.height || 600);
-              console.log(`${canvas.id} size: ${canvas.width || 400}x${canvas.height || 600}, display: ${canvas.style.display}`);
+              console.log(`${canvas.id} size: ${canvas.width || 400}x${canvas.height || 600}, display: ${canvas.style.display}, opacity: ${canvas.style.opacity}`);
             }
           });
           if (maxHeight === 0) {
