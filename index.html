@@ -155,6 +155,9 @@
                     console.error('Error loading spread PDFs:', error);
                 }
             }
+            // Ensure canvas container remains centered after load
+            canvasContainer.style.left = '50%';
+            canvasContainer.style.transform = 'translateX(-50%)';
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
@@ -214,6 +217,9 @@
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
                 ]);
             }
+            // Re-center after any adjustment
+            canvasContainer.style.left = '50%';
+            canvasContainer.style.transform = 'translateX(-50%)';
         }
 
         canvasContainer.addEventListener('click', (e) => {
