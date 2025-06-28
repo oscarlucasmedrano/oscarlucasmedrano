@@ -49,7 +49,7 @@
       display: block;
       width: 100%;
       height: auto;
-      background: url('fallback-cover.jpg') no-repeat center / contain; /* Fallback image */
+      background: #666; /* Reverted to fallback color */
       border: none;
     }
     .book-cover canvas {
@@ -69,7 +69,7 @@
       align-items: center;
       width: 100%;
       height: 100%;
-      z-index: 90; /* Maximum z-index */
+      z-index: 100; /* Maximum z-index */
       background: black;
       overflow: visible;
       border: none;
@@ -88,7 +88,7 @@
       border: none;
       position: absolute;
       top: 0;
-      left: 0; /* Ensure absolute positioning */
+      left: 0;
     }
     .page canvas {
       max-width: 100%;
@@ -102,14 +102,14 @@
       color: white;
       font-size: 16px;
       text-align: center;
-      z-index: 91;
-      opacity: 1; /* Ensure visibility */
+      z-index: 101;
+      opacity: 1; /* Always visible */
     }
     .crease {
       width: 4px;
       height: 100%;
       background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1));
-      z-index: 92;
+      z-index: 102;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -218,11 +218,11 @@
         return;
       }
       const context = canvas.getContext('2d');
-      context.fillStyle = 'transparent'; // Allow fallback image to show
-      context.fillRect(0, 0, 300, 400); // Initial clear
+      context.fillStyle = '#666'; // Reverted fallback color
+      context.fillRect(0, 0, 300, 400); // Initial fallback
       const testContent = canvas.nextElementSibling;
       if (testContent && testContent.className === 'test-content') {
-        testContent.style.opacity = '1'; // Ensure fallback text is visible
+        testContent.style.opacity = '1'; // Always visible
       }
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -235,12 +235,14 @@
           canvas.height = viewport.height;
           await page.render({ canvasContext: context, viewport: viewport });
           console.log(`${canvasId} rendered successfully, native size: ${canvas.width}x${canvas.height}`);
-          if (testContent) testContent.style.opacity = '0'; // Hide fallback if successful
+          if (testContent) testContent.style.opacity = '0'; // Hide if successful
           return;
         } catch (error) {
           console.error(`${canvasId} render failed on attempt ${attempt}:`, error.message, error.stack);
           if (attempt === maxRetries) {
-            console.log(`Using fallback for ${canvasId} due to: ${error.message}`);
+            context.fillStyle = '#666';
+            context.fillRect(0, 0, 300, 400);
+            console.log(`Fallback filled ${canvasId} with #666 300x400 after ${maxRetries} attempts due to: ${error.message}`);
           }
           await new Promise(resolve => setTimeout(resolve, 500 * attempt));
         }
@@ -277,7 +279,7 @@
         let maxHeight = 0;
         canvases.forEach(canvas => {
           if (canvas) {
-            maxHeight = Math.max(maxHeight, canvas.height || 400); // Fallback height
+            maxHeight = Math.max(maxHeight, canvas.height || 400);
             console.log(`${canvas.id} size: ${canvas.width || 300}x${canvas.height || 400}`);
           }
         });
