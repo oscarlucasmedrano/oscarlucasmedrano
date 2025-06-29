@@ -58,38 +58,6 @@
             background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(255,255,255,0.1));
             z-index: 1;
         }
-        .arrow {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 48px;
-            color: white;
-            cursor: pointer;
-            user-select: none;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-            z-index: 2;
-        }
-        .arrow:hover {
-            opacity: 1;
-        }
-        #prev-page {
-            left: 10px;
-        }
-        #next-page {
-            right: 10px;
-        }
-        @media (max-width: 600px) {
-            .arrow {
-                font-size: 36px;
-            }
-            #prev-page {
-                left: 5px;
-            }
-            #next-page {
-                right: 5px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -100,8 +68,6 @@
             <canvas id="pdf-canvas-single"></canvas>
             <div id="crease"></div>
         </div>
-        <div id="prev-page" class="arrow">‹</div>
-        <div id="next-page" class="arrow">›</div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
@@ -168,7 +134,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80%
+            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80% for all pages
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -192,7 +158,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80%
+            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80% for all pages
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -229,20 +195,6 @@
                 currentSpreadIndex--;
                 loadSpread(currentSpreadIndex);
             } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
-                currentSpreadIndex++;
-                loadSpread(currentSpreadIndex);
-            }
-        });
-
-        document.getElementById('prev-page').addEventListener('click', () => {
-            if (currentSpreadIndex > 0) {
-                currentSpreadIndex--;
-                loadSpread(currentSpreadIndex);
-            }
-        });
-
-        document.getElementById('next-page').addEventListener('click', () => {
-            if (currentSpreadIndex < pdfFiles.length - 1) {
                 currentSpreadIndex++;
                 loadSpread(currentSpreadIndex);
             }
