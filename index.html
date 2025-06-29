@@ -78,7 +78,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.0 * window.devicePixelRatio; // Reset to original on refresh
+        let scale = 1.0; // Base scale, zoom applied on top
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -129,13 +129,12 @@
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position, no scaling
-            adjustCanvases(); // Ensure initial render with reset scale
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1 }); // Base viewport without initial scale
+            const viewport = page.getViewport({ scale: 1 });
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -143,29 +142,28 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // Current desktop scale
+                fitScale *= 1.265; // Restored perfect desktop scale
             } else {
-                fitScale *= 1.76; // Current mobile scale
+                fitScale *= 1.76; // Restored perfect mobile scale
             }
             fitScale *= scale; // Apply zoom scale
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            canvas.height = adjustedViewport.height * window.devicePixelRatio;
-            canvas.width = adjustedViewport.width * window.devicePixelRatio;
+            canvas.height = adjustedViewport.height;
+            canvas.width = adjustedViewport.width;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
 
             const renderContext = {
                 canvasContext: context,
-                viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                viewport: adjustedViewport
             };
             await page.render(renderContext).promise;
         }
 
         async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1 }); // Base viewport without initial scale
+            const viewport = page.getViewport({ scale: 1 });
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -173,22 +171,21 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // Current desktop scale
+                fitScale *= 1.265; // Restored perfect desktop scale
             } else {
-                fitScale *= 1.76; // Current mobile scale
+                fitScale *= 1.76; // Restored perfect mobile scale
             }
             fitScale *= scale; // Apply zoom scale
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            canvas.height = adjustedViewport.height * window.devicePixelRatio;
-            canvas.width = adjustedViewport.width * window.devicePixelRatio;
+            canvas.height = adjustedViewport.height;
+            canvas.width = adjustedViewport.width;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
 
             const renderContext = {
                 canvasContext: context,
-                viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                viewport: adjustedViewport
             };
             await page.render(renderContext).promise;
         }
@@ -203,7 +200,7 @@
                 ]);
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // No scaling
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         canvasContainer.addEventListener('click', (e) => {
@@ -231,9 +228,6 @@
         [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
                 const now = performance.now();
 
                 if (now - lastMoveTime > debounceDelay) {
