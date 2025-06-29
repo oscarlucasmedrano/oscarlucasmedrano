@@ -152,7 +152,7 @@
             if (window.innerWidth > 600) {
                 fitScale *= 1.15; // Slight adjustment for desktop
             } else {
-                fitScale /= 2.5; // 150% decrease (1/2.5x base scale)
+                fitScale *= 1.6; // 60% increase (1.6x base scale)
             }
             fitScale *= scale;
 
@@ -182,7 +182,7 @@
             if (window.innerWidth > 600) {
                 fitScale *= 1.15; // Slight adjustment for desktop
             } else {
-                fitScale /= 2.5; // 150% decrease (1/2.5x base scale)
+                fitScale *= 1.6; // 60% increase (1.6x base scale)
             }
             fitScale *= scale;
 
@@ -260,7 +260,7 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // 5% zoom per scroll, like background
+                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // 5% zoom per scroll
                 const oldScale = scale;
                 scale *= delta;
                 scale = Math.min(Math.max(scale, minScale), maxScale);
@@ -332,6 +332,7 @@
         canvasContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 e.preventDefault();
+                isDragging = false; // Disable dragging during two-finger zoom
                 const touch1 = e.touches[0];
                 const touch2 = e.touches[1];
                 lastTouchX1 = touch1.pageX;
@@ -358,7 +359,7 @@
             e.preventDefault();
             const now = performance.now();
             if (now - lastMoveTime > debounceDelay) {
-                if (e.touches.length === 2) {
+                if (e.touches.length === 2 && !isDragging) {
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
                     const currentX1 = touch1.pageX;
@@ -368,7 +369,7 @@
                     const deltaDistance = currentDistance - initialDistance;
 
                     if (Math.abs(deltaDistance) > 1) {
-                        const delta = 1 + (deltaDistance * 0.005); // Smoother zoom like background
+                        const delta = 1 + (deltaDistance * 0.005); // Smoother zoom
                         const oldScale = scale;
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
