@@ -96,18 +96,12 @@
         let lastTouchY = 0;
         let isPanning = false;
         let lastMoveTime = 0;
-        const minScale = 0.1;
-        const maxScale = 10;
-        const debounceDelay = 250; // Increased for smoother rendering
+        const minScale = 0.5;
+        const maxScale = 4.0; // Limited range for detailed drawing
+        const debounceDelay = 300; // Increased for smoother rendering
 
-        // Return to cover page on refresh with fixed orientation and centering
-        window.addEventListener('load', async () => {
-            currentSpreadIndex = 0; // Reset to cover page
-            scale = 1.0; // Reset scale on refresh
-            panOffsetX = 0;
-            panOffsetY = 0;
-            await loadSpread(currentSpreadIndex);
-        });
+        // Load homepage by default
+        loadSpread(currentSpreadIndex);
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -116,7 +110,7 @@
             crease.style.display = 'none';
 
             const spread = pdfFiles[index];
-            if (spread.type === 'single' && index === 0) { // Special handling for cover page
+            if (spread.type === 'single' && index === 0) { // Homepage (cover page)
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
@@ -166,7 +160,7 @@
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px) scale(${scale})`;
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
@@ -271,11 +265,10 @@
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     const oldScale = scale;
-                    const delta = e.deltaY > 0 ? 1 / 1.05 : 1.05; // Down to zoom in, up to zoom out
+                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Scroll up to zoom in, scroll down to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases().then(() => {
-                        // Keep pinned during zoom
                         panOffsetX = 0;
                         panOffsetY = 0;
                     });
@@ -355,11 +348,10 @@
 
                         if (Math.abs(deltaDistance) > 1) {
                             const oldScale = scale;
-                            const delta = 1 + (deltaDistance * 0.005); // Pinch together to zoom in, pinch apart to zoom out
+                            const delta = 1 + (deltaDistance * 0.001); // Smaller factor for smooth zoom
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
                             adjustCanvases().then(() => {
-                                // Keep pinned during zoom
                                 panOffsetX = 0;
                                 panOffsetY = 0;
                             });
@@ -384,21 +376,6 @@
         canvasContainer.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: false });
 
         window.addEventListener('resize', adjustCanvases);
-
-        loadSpread(currentSpreadIndex);
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
