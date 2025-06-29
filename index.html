@@ -170,8 +170,8 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.20 * window.innerWidth; // 30% larger on desktop, 20% smaller on mobile
-            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.80 * window.innerHeight; // 30% larger on desktop, 20% smaller on mobile
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.10 * window.innerWidth; // 30% larger on desktop, 60% smaller on mobile
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.40 * window.innerHeight; // 30% larger on desktop, 60% smaller on mobile
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY) * scale;
@@ -198,8 +198,8 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.20 * window.innerWidth; // 30% larger on desktop, 20% smaller on mobile
-            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.80 * window.innerHeight; // 30% larger on desktop, 20% smaller on mobile
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.10 * window.innerWidth; // 30% larger on desktop, 60% smaller on mobile
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.40 * window.innerHeight; // 30% larger on desktop, 60% smaller on mobile
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY) * scale;
@@ -265,7 +265,7 @@
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     const oldScale = scale;
-                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Scroll up to zoom in, scroll down to zoom out
+                    const delta = e.deltaY > 0 ? 1.02 : 1 / 1.02; // Scroll down to zoom in, scroll up to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases().then(() => {
