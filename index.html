@@ -96,7 +96,7 @@
         const minScale = 0.1;
         const maxScale = 10;
         let lastMoveTime = 0;
-        const debounceDelay = 60; // Increased for smoother rendering
+        const debounceDelay = 75; // Increased for smoother rendering
 
         // Restore last spread on refresh with orientation fix
         window.addEventListener('load', async () => {
@@ -268,7 +268,7 @@
                 e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Up to zoom in, down to zoom out (match mobile)
+                    const delta = e.deltaY > 0 ? 1.05 : 1 / 1.05; // Down to zoom in, up to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
 
