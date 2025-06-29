@@ -40,6 +40,7 @@
             height: 100%;
             margin: 0 auto; /* Center the container */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center; /* Help center single pages */
         }
         #canvas-container.spread {
             position: relative;
@@ -56,9 +57,9 @@
             height: auto;
             display: none;
             position: absolute;
-            top: 0;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%); /* Center single pages */
         }
         #crease {
             position: absolute;
@@ -152,8 +153,10 @@
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasLeft.style.left = '0';
+                // Dynamically set canvasRight position based on canvasLeft width
+                const leftWidth = canvasLeft.getBoundingClientRect().width;
+                canvasRight.style.left = `${leftWidth}px`;
                 canvasRight.style.display = 'block';
-                canvasRight.style.left = '50%';
                 crease.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
@@ -243,8 +246,9 @@
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasLeft.style.left = '0';
+                const leftWidth = canvasLeft.getBoundingClientRect().width;
+                canvasRight.style.left = `${leftWidth}px`;
                 canvasRight.style.display = 'block';
-                canvasRight.style.left = '50%';
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
                 console.log('Adjusted to spread:', pdfFiles[currentSpreadIndex].left, pdfFiles[currentSpreadIndex].right);
