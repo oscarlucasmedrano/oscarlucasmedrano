@@ -96,7 +96,7 @@
         const minScale = 0.1;
         const maxScale = 10;
         let lastMoveTime = 0;
-        const debounceDelay = 75; // Increased for smoother rendering
+        const debounceDelay = 100; // Increased for smoother rendering
 
         // Return to cover page on refresh
         window.addEventListener('load', async () => {
@@ -119,8 +119,8 @@
                     const page = await pdfDocLeft.getPage(1);
                     let viewport = page.getViewport({ scale: 1 });
                     let rotation = viewport.rotation;
-                    if (rotation === 180 || rotation === -180) { // Fix upside-down cover on refresh
-                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+                    if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) { // Fix any rotation issue
+                        viewport = page.getViewport({ scale: 1, rotation: (rotation + 180) % 360 });
                     }
                     renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
                 } catch (error) {
@@ -133,8 +133,8 @@
                     const page = await pdfDocLeft.getPage(1);
                     let viewport = page.getViewport({ scale: 1 });
                     let rotation = viewport.rotation;
-                    if (rotation === 180 || rotation === -180) {
-                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+                    if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) {
+                        viewport = page.getViewport({ scale: 1, rotation: (rotation + 180) % 360 });
                     }
                     renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
                 } catch (error) {
@@ -151,8 +151,8 @@
                     const pageRight = await pdfDocRight.getPage(1);
                     let rotationLeft = pageLeft.getViewport({ scale: 1 }).rotation;
                     let rotationRight = pageRight.getViewport({ scale: 1 }).rotation;
-                    if (rotationLeft === 180 || rotationLeft === -180) rotationLeft += 180;
-                    if (rotationRight === 180 || rotationRight === -180) rotationRight += 180;
+                    if (rotationLeft === 90 || rotationLeft === -90 || rotationLeft === 180 || rotationLeft === -180) rotationLeft = (rotationLeft + 180) % 360;
+                    if (rotationRight === 90 || rotationRight === -90 || rotationRight === 180 || rotationRight === -180) rotationRight = (rotationRight + 180) % 360;
                     await Promise.all([
                         renderPage(pdfDocLeft, 1, canvasLeft, contextLeft, rotationLeft),
                         renderPage(pdfDocRight, 1, canvasRight, contextRight, rotationRight)
@@ -168,7 +168,7 @@
         async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
             const page = await pdfDoc.getPage(pageNum);
             let viewport = page.getViewport({ scale: 1 });
-            if (rotation === 180 || rotation === -180) { // Additional rotation fix
+            if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) { // Additional rotation fix
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
@@ -203,7 +203,7 @@
         async function renderSinglePage(pdfDoc, pageNum, canvas, context, rotation = 0) {
             const page = await pdfDoc.getPage(pageNum);
             let viewport = page.getViewport({ scale: 1 });
-            if (rotation === 180 || rotation === -180) { // Additional rotation fix
+            if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) { // Additional rotation fix
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
@@ -236,18 +236,20 @@
         }
 
         function adjustCanvases() {
-            if (pdfFiles[currentSpreadIndex].type === 'single') {
-                renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
-            } else {
-                Promise.all([
-                    renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                    renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]).then(() => {
-                    // Ensure rendering completes
-                });
-            }
-            canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
+            requestAnimationFrame(() => {
+                if (pdfFiles[currentSpreadIndex].type === 'single') {
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+                } else {
+                    Promise.all([
+                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                    ]).then(() => {
+                        // Ensure rendering completes
+                    });
+                }
+                canvasContainer.style.left = '50%';
+                canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
+            });
         }
 
         canvasContainer.addEventListener('click', (e) => {
@@ -278,7 +280,7 @@
                 e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY > 0 ? 1 / 1.05 : 1.05; // Up to zoom in, down to zoom out (matches trackpad)
+                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Up to zoom in, down to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases();
