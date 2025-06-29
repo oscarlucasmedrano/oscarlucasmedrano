@@ -147,12 +147,15 @@
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.15; // Another 15% increase
                 fitScale *= 1.15; // Another 15% increase
+                fitScale *= 1.15; // Another 15% increase
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
                 fitScale *= 1.1; // Another 10% increase
                 fitScale *= 1.1; // Another 10% increase
+                fitScale *= 1.1; // Another 10% increase
             }
+            fitScale /= 1.6667; // 40% decrease for both
             fitScale *= scale; // Apply dynamic zoom scale
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
@@ -183,12 +186,15 @@
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.15; // Another 15% increase
                 fitScale *= 1.15; // Another 15% increase
+                fitScale *= 1.15; // Another 15% increase
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
                 fitScale *= 1.1; // Another 10% increase
                 fitScale *= 1.1; // Another 10% increase
+                fitScale *= 1.1; // Another 10% increase
             }
+            fitScale /= 1.6667; // 40% decrease for both
             fitScale *= scale; // Apply dynamic zoom scale
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
@@ -267,12 +273,10 @@
         });
 
         canvasContainer.addEventListener('mousedown', (e) => {
-            if (scale > 1.0) { // Enable dragging only after zooming
-                isDragging = true;
-                startX = e.clientX - panOffsetX;
-                startY = e.clientY - panOffsetY;
-                e.preventDefault();
-            }
+            isDragging = true;
+            startX = e.clientX - panOffsetX;
+            startY = e.clientY - panOffsetY;
+            e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -300,7 +304,7 @@
                     touch1.pageX - touch2.pageX,
                     touch1.pageY - touch2.pageY
                 );
-            } else if (e.touches.length === 1 && scale > 1.0) {
+            } else if (e.touches.length === 1) {
                 isDragging = true;
                 const touch = e.touches[0];
                 startX = touch.clientX - panOffsetX;
