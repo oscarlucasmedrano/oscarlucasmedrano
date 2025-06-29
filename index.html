@@ -98,10 +98,13 @@
         let lastMoveTime = 0;
         let velocityX = 0;
         let velocityY = 0;
+        let lastVelocitiesX = [];
+        let lastVelocitiesY = [];
         const minScale = 0.5;
         const maxScale = 10;
-        const debounceDelay = 32; // Increased for smoother panning
+        const debounceDelay = 50; // Increased for smoother interaction
         const momentumDecay = 0.95;
+        const dampeningFactor = 0.8; // For zoom smoothing
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -165,6 +168,7 @@
                 fitScale /= 1.6667; // 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
+                fitScale /= 1.42857; // 30% decrease
             }
             fitScale *= scale; // Apply dynamic zoom scale
 
@@ -209,6 +213,7 @@
                 fitScale /= 1.6667; // 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
+                fitScale /= 1.42857; // 30% decrease
             }
             fitScale *= scale; // Apply dynamic zoom scale
 
@@ -267,6 +272,7 @@
         let lastPanX = 0;
         let lastPanY = 0;
         let momentumFrame = null;
+        let scaleMomentum = 0;
 
         function applyMomentum() {
             if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
@@ -281,6 +287,17 @@
             }
         }
 
+        function applyScaleMomentum() {
+            if (Math.abs(scaleMomentum) > 0.01) {
+                const delta = scaleMomentum * dampeningFactor;
+                scale += delta;
+                scale = Math.min(Math.max(scale, minScale), maxScale);
+                adjustCanvases();
+                scaleMomentum *= momentumDecay;
+                requestAnimationFrame(applyScaleMomentum);
+            }
+        }
+
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasContainer.getBoundingClientRect();
@@ -289,7 +306,8 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.1 : 1 / 1.1; // Finer zoom factor (1.1x/0.909x)
+                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Finer zoom factor (1.05x/0.952x)
+                scaleMomentum = (delta - 1) * dampeningFactor;
                 const oldScale = scale;
                 scale *= delta;
                 scale = Math.min(Math.max(scale, minScale), maxScale);
@@ -302,6 +320,7 @@
 
                 adjustCanvases();
                 lastMoveTime = now;
+                requestAnimationFrame(applyScaleMomentum);
             }
         });
 
@@ -311,6 +330,8 @@
             startY = e.clientY - panOffsetY;
             velocityX = 0;
             velocityY = 0;
+            lastVelocitiesX = [];
+            lastVelocitiesY = [];
             if (momentumFrame) cancelAnimationFrame(momentumFrame);
             e.preventDefault();
         });
@@ -323,8 +344,19 @@
                     const deltaY = e.clientY - startY - panOffsetY;
                     panOffsetX += deltaX;
                     panOffsetY += deltaY;
-                    velocityX = deltaX / (now - lastMoveTime);
-                    velocityY = deltaY / (now - lastMoveTime);
+                    const timeDelta = (now - lastMoveTime) / 1000;
+                    if (timeDelta > 0) {
+                        const velX = deltaX / timeDelta;
+                        const velY = deltaY / timeDelta;
+                        lastVelocitiesX.push(velX);
+                        lastVelocitiesY.push(velY);
+                        if (lastVelocitiesX.length > 3) {
+                            lastVelocitiesX.shift();
+                            lastVelocitiesY.shift();
+                        }
+                        velocityX = lastVelocitiesX.reduce((a, b) => a + b, 0) / lastVelocitiesX.length || 0;
+                        velocityY = lastVelocitiesY.reduce((a, b) => a + b, 0) / lastVelocitiesY.length || 0;
+                    }
                     adjustCanvases();
                     lastMoveTime = now;
                     lastPanX = e.clientX;
@@ -358,6 +390,8 @@
                 );
                 velocityX = 0;
                 velocityY = 0;
+                lastVelocitiesX = [];
+                lastVelocitiesY = [];
                 if (momentumFrame) cancelAnimationFrame(momentumFrame);
             } else if (e.touches.length === 1) {
                 isDragging = true;
@@ -366,6 +400,8 @@
                 startY = touch.clientY - panOffsetY;
                 velocityX = 0;
                 velocityY = 0;
+                lastVelocitiesX = [];
+                lastVelocitiesY = [];
                 if (momentumFrame) cancelAnimationFrame(momentumFrame);
             }
         });
@@ -383,22 +419,23 @@
                     );
                     if (lastTouchDistance) {
                         const delta = currentDistance / lastTouchDistance;
-                        const rect = canvasContainer.getBoundingClientRect();
-                        const centerX = rect.width / 2;
-                        const centerY = rect.height / 2;
-                        const touchCenterX = (touch1.pageX + touch2.pageX) / 2 - rect.left;
-                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-
+                        scaleMomentum = (delta - 1) * dampeningFactor;
                         const oldScale = scale;
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
 
                         const scaleFactor = scale / oldScale;
+                        const rect = canvasContainer.getBoundingClientRect();
+                        const centerX = rect.width / 2;
+                        const centerY = rect.height / 2;
+                        const touchCenterX = (touch1.pageX + touch2.pageX) / 2 - rect.left;
+                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
                         panOffsetX += (touchCenterX - centerX) * (1 - scaleFactor);
                         panOffsetY += (touchCenterY - centerY) * (1 - scaleFactor);
 
                         adjustCanvases();
                         lastTouchDistance = currentDistance;
+                        requestAnimationFrame(applyScaleMomentum);
                     }
                 } else if (e.touches.length === 1 && isDragging) {
                     const touch = e.touches[0];
@@ -406,8 +443,19 @@
                     const deltaY = touch.clientY - startY - panOffsetY;
                     panOffsetX += deltaX;
                     panOffsetY += deltaY;
-                    velocityX = deltaX / (now - lastMoveTime);
-                    velocityY = deltaY / (now - lastMoveTime);
+                    const timeDelta = (now - lastMoveTime) / 1000;
+                    if (timeDelta > 0) {
+                        const velX = deltaX / timeDelta;
+                        const velY = deltaY / timeDelta;
+                        lastVelocitiesX.push(velX);
+                        lastVelocitiesY.push(velY);
+                        if (lastVelocitiesX.length > 3) {
+                            lastVelocitiesX.shift();
+                            lastVelocitiesY.shift();
+                        }
+                        velocityX = lastVelocitiesX.reduce((a, b) => a + b, 0) / lastVelocitiesX.length || 0;
+                        velocityY = lastVelocitiesY.reduce((a, b) => a + b, 0) / lastVelocitiesY.length || 0;
+                    }
                     adjustCanvases();
                     lastMoveTime = now;
                     lastPanX = touch.clientX;
