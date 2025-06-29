@@ -39,6 +39,7 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transform-origin: center center;
         }
         #pdf-canvas-left, #pdf-canvas-right {
             width: auto;
@@ -97,9 +98,9 @@
         let lastMoveTime = 0;
         const minScale = 0.1;
         const maxScale = 10;
-        const debounceDelay = 200; // Increased for smoother rendering
+        const debounceDelay = 250; // Increased for smoother rendering
 
-        // Return to cover page on refresh with fixed orientation
+        // Return to cover page on refresh with fixed orientation and centering
         window.addEventListener('load', async () => {
             currentSpreadIndex = 0; // Reset to cover page
             scale = 1.0; // Reset scale on refresh
@@ -171,7 +172,7 @@
         async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
             const page = await pdfDoc.getPage(pageNum);
             let viewport = page.getViewport({ scale: 1 });
-            if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) { // Additional rotation fix
+            if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) {
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
@@ -179,21 +180,14 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY);
-            if (window.innerWidth > 600) {
-                fitScale *= 1.265;
-            } else {
-                fitScale *= 1.76;
-            }
-            fitScale *= scale;
-
+            const fitScale = Math.min(scaleX, scaleY) * scale; // Apply scale directly
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
             const dpr = window.devicePixelRatio || 1;
             canvas.height = adjustedViewport.height * dpr;
             canvas.width = adjustedViewport.width * dpr;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
-            canvas.style.transform = 'none'; // Ensure no movement
+            canvas.style.transform = 'none';
 
             const renderContext = {
                 canvasContext: context,
@@ -206,7 +200,7 @@
         async function renderSinglePage(pdfDoc, pageNum, canvas, context, rotation = 0) {
             const page = await pdfDoc.getPage(pageNum);
             let viewport = page.getViewport({ scale: 1 });
-            if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) { // Additional rotation fix
+            if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) {
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
@@ -214,21 +208,14 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY);
-            if (window.innerWidth > 600) {
-                fitScale *= 1.265;
-            } else {
-                fitScale *= 1.76;
-            }
-            fitScale *= scale;
-
+            const fitScale = Math.min(scaleX, scaleY) * scale; // Apply scale directly
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
             const dpr = window.devicePixelRatio || 1;
             canvas.height = adjustedViewport.height * dpr;
             canvas.width = adjustedViewport.width * dpr;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
-            canvas.style.transform = 'none'; // Ensure no movement
+            canvas.style.transform = 'none';
 
             const renderContext = {
                 canvasContext: context,
@@ -250,7 +237,7 @@
                         ]).then(resolve);
                     }
                     canvasContainer.style.left = '50%';
-                    canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+                    canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px) scale(${scale})`;
                 });
             });
         }
@@ -314,7 +301,6 @@
                     if (now - lastMoveTime > debounceDelay) {
                         panOffsetX = e.clientX - lastTouchX;
                         panOffsetY = e.clientY - lastTouchY;
-                        // Limit panning within bounds
                         panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
                         panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
                         adjustCanvases();
