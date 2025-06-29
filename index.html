@@ -79,7 +79,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.8 * window.devicePixelRatio; // Reverted to original base scale
+        let scale = 1.8 * window.devicePixelRatio;
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -139,7 +139,12 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 6; // 500% increase
+            let fitScale = Math.min(scaleX, scaleY) * 6; // 500% increase
+            if (window.innerWidth > 600) {
+                fitScale /= 3; // 200% decrease on desktop
+            } else {
+                fitScale *= 2; // 100% increase on mobile
+            }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -163,7 +168,12 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 6; // 500% increase
+            let fitScale = Math.min(scaleX, scaleY) * 6; // 500% increase
+            if (window.innerWidth > 600) {
+                fitScale /= 3; // 200% decrease on desktop
+            } else {
+                fitScale *= 2; // 100% increase on mobile
+            }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
