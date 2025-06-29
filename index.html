@@ -95,6 +95,8 @@
         let isDragging = false;
         let startX = 0;
         let startY = 0;
+        const minScale = 0.5;
+        const maxScale = 10;
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -144,13 +146,16 @@
                 fitScale /= 1.6667; // 40% decrease
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.15; // Another 15% increase
+                fitScale *= 1.15; // Another 15% increase
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
                 fitScale *= 1.1; // Another 10% increase
+                fitScale *= 1.1; // Another 10% increase
             }
+            fitScale *= scale; // Apply dynamic zoom scale
 
-            const adjustedViewport = page.getViewport({ scale: fitScale });
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
             canvas.width = adjustedViewport.width * window.devicePixelRatio;
             canvas.style.width = `${adjustedViewport.width}px`;
@@ -177,13 +182,16 @@
                 fitScale /= 1.6667; // 40% decrease
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.15; // Another 15% increase
+                fitScale *= 1.15; // Another 15% increase
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
                 fitScale *= 1.1; // Another 10% increase
+                fitScale *= 1.1; // Another 10% increase
             }
+            fitScale *= scale; // Apply dynamic zoom scale
 
-            const adjustedViewport = page.getViewport({ scale: fitScale });
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
             canvas.width = adjustedViewport.width * window.devicePixelRatio;
             canvas.style.width = `${adjustedViewport.width}px`;
@@ -239,19 +247,21 @@
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left - (rect.width / 2); // Center-relative X
-            const mouseY = e.clientY - rect.top - (rect.height / 2); // Center-relative Y
+            const mouseX = e.clientX - rect.left; // Absolute X in container
+            const mouseY = e.clientY - rect.top; // Absolute Y in container
 
             // Consistent zoom: up zooms in, down zooms out
-            const delta = e.deltaY < 0 ? 1.1 : 0.9;
+            const delta = e.deltaY < 0 ? 1.2 : 1 / 1.2; // Smoother zoom factor (1.2x/0.83x)
             const oldScale = scale;
             scale *= delta;
-            scale = Math.min(Math.max(1.0, scale), 5); // Start panning at scale 1.0
+            scale = Math.min(Math.max(scale, minScale), maxScale); // Clamp zoom
 
-            // Pin zoom to center, adjust pan to maintain stability
+            // Pin zoom to cursor position
             const scaleFactor = scale / oldScale;
-            panOffsetX = (panOffsetX - mouseX) * scaleFactor + mouseX;
-            panOffsetY = (panOffsetY - mouseY) * scaleFactor + mouseY;
+            const containerCenterX = rect.width / 2;
+            const containerCenterY = rect.height / 2;
+            panOffsetX += (mouseX - containerCenterX) * (1 - scaleFactor);
+            panOffsetY += (mouseY - containerCenterY) * (1 - scaleFactor);
 
             adjustCanvases();
         });
@@ -309,8 +319,20 @@
                 );
                 if (lastTouchDistance) {
                     const delta = currentDistance / lastTouchDistance;
+                    const rect = canvasContainer.getBoundingClientRect();
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const touchCenterX = (touch1.pageX + touch2.pageX) / 2 - rect.left;
+                    const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
+
+                    const oldScale = scale;
                     scale *= delta;
-                    scale = Math.min(Math.max(1.0, scale), 5);
+                    scale = Math.min(Math.max(scale, minScale), maxScale);
+
+                    const scaleFactor = scale / oldScale;
+                    panOffsetX += (touchCenterX - centerX) * (1 - scaleFactor);
+                    panOffsetY += (touchCenterY - centerY) * (1 - scaleFactor);
+
                     adjustCanvases();
                     lastTouchDistance = currentDistance;
                 }
