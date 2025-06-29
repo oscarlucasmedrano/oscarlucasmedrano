@@ -215,9 +215,10 @@
 
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const delta = e.deltaY < 0 ? 1.1 : 0.9;
+            // Normalize zoom: upward scroll (negative deltaY) zooms in, downward zooms out
+            const delta = e.deltaY < 0 ? 1.1 : 0.9; // Consistent zoom direction
             scale *= delta;
-            scale = Math.min(Math.max(0.5, scale), 5);
+            scale = Math.min(Math.max(0.5, scale), 5); // Clamp scale to prevent extreme values
             adjustCanvases();
         });
 
