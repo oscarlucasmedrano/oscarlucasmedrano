@@ -96,7 +96,7 @@
         const minScale = 0.1;
         const maxScale = 10;
         let lastMoveTime = 0;
-        const debounceDelay = 75; // Increased for smoother rendering
+        const debounceDelay = 75;
 
         // Restore last spread on refresh with orientation fix
         window.addEventListener('load', async () => {
@@ -115,14 +115,28 @@
             crease.style.display = 'none';
 
             const spread = pdfFiles[index];
-            if (spread.type === 'single') {
+            if (spread.type === 'single' && index === 0) { // Special handling for cover page
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
                     const page = await pdfDocLeft.getPage(1);
                     let viewport = page.getViewport({ scale: 1 });
                     let rotation = viewport.rotation;
-                    if (rotation === 180 || rotation === -180) { // Fix upside-down on initial load
+                    if (rotation === 180 || rotation === -180) { // Fix upside-down cover on refresh
+                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+                    }
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
+                } catch (error) {
+                    console.error('Error loading single PDF:', error);
+                }
+            } else if (spread.type === 'single') {
+                canvasSingle.style.display = 'block';
+                try {
+                    pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
+                    const page = await pdfDocLeft.getPage(1);
+                    let viewport = page.getViewport({ scale: 1 });
+                    let rotation = viewport.rotation;
+                    if (rotation === 180 || rotation === -180) {
                         viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
                     }
                     renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
