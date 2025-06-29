@@ -227,6 +227,26 @@
             }
         });
 
+        canvasContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = canvasContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const now = performance.now();
+
+            if (now - lastMoveTime > debounceDelay) {
+                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Scroll forward to zoom in, backward to zoom out
+                const oldScale = scale;
+                scale *= delta;
+                scale = Math.min(Math.max(scale, minScale), maxScale);
+
+                const scaleFactor = scale / oldScale;
+                // No panning, just scale adjustment
+                adjustCanvases();
+                lastMoveTime = now;
+            }
+        });
+
         canvasContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 e.preventDefault();
