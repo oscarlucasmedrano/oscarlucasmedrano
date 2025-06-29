@@ -82,9 +82,9 @@
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
-        const contextLeft = canvasLeft.getContext('2d');
-        const contextRight = canvasRight.getContext('2d');
-        const contextSingle = canvasSingle.getContext('2d');
+        const contextLeft = canvasLeft.getContext('2d', { alpha: false });
+        const contextRight = canvasRight.getContext('2d', { alpha: false });
+        const contextSingle = canvasSingle.getContext('2d', { alpha: false });
         const canvasContainer = document.getElementById('canvas-container');
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
@@ -149,14 +149,16 @@
             fitScale *= scale;
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            canvas.height = adjustedViewport.height;
-            canvas.width = adjustedViewport.width;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.height = adjustedViewport.height * dpr;
+            canvas.width = adjustedViewport.width * dpr;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
 
             const renderContext = {
                 canvasContext: context,
-                viewport: adjustedViewport
+                viewport: adjustedViewport,
+                transform: [dpr, 0, 0, dpr, 0, 0]
             };
             await page.render(renderContext).promise;
         }
@@ -178,14 +180,16 @@
             fitScale *= scale;
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            canvas.height = adjustedViewport.height;
-            canvas.width = adjustedViewport.width;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.height = adjustedViewport.height * dpr;
+            canvas.width = adjustedViewport.width * dpr;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
 
             const renderContext = {
                 canvasContext: context,
-                viewport: adjustedViewport
+                viewport: adjustedViewport,
+                transform: [dpr, 0, 0, dpr, 0, 0]
             };
             await page.render(renderContext).promise;
         }
@@ -228,12 +232,24 @@
         [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent background zoom
                 const now = performance.now();
-
                 if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY < 0 ? 1.1 : 1 / 1.1; // Scroll up to zoom in, down to zoom out
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    const delta = e.deltaY < 0 ? 1.1 : 1 / 1.1; // Up to zoom in, down to zoom out
+                    const oldScale = scale;
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
+
+                    // Adjust position to zoom at cursor
+                    const scaleChange = scale / oldScale;
+                    const offsetX = (mouseX / rect.width) * (1 - scaleChange);
+                    const offsetY = (mouseY / rect.height) * (1 - scaleChange);
+                    // Apply offset to canvas style (though pinned, this ensures visual centering)
+                    canvas.style.transformOrigin = `${mouseX}px ${mouseY}px`;
+                    canvas.style.transform = `scale(${scale})`;
 
                     adjustCanvases();
                     lastMoveTime = now;
@@ -243,6 +259,7 @@
             canvas.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
+                    e.stopPropagation(); // Prevent background zoom
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
                     lastTouchX1 = touch1.pageX;
@@ -252,6 +269,7 @@
 
             canvas.addEventListener('touchmove', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent background zoom
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     if (e.touches.length === 2) {
