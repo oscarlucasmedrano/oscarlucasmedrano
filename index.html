@@ -34,12 +34,11 @@
             z-index: 1;
         }
         #canvas-container {
-            position: absolute;
-            display: block;
+            position: relative;
             width: 90%;
             max-width: 1200px;
             height: 100%;
-            transform-origin: center center;
+            margin: 0 auto; /* Center the container */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         #canvas-container.spread {
@@ -103,20 +102,7 @@
             { type: 'spread', left: 'page18.pdf', right: 'page19.pdf' },
             { type: 'spread', left: 'page20.pdf', right: 'page21.pdf' },
             { type: 'spread', left: 'page22.pdf', right: 'page23.pdf' },
-            { type: 'spread', left: 'page24.pdf', right: 'page25.pdf' },
-            { type: 'spread', left: 'page26.pdf', right: 'page27.pdf' },
-            { type: 'spread', left: 'page28.pdf', right: 'page29.pdf' },
-            { type: 'spread', left: 'page30.pdf', right: 'page31.pdf' },
-            { type: 'spread', left: 'page32.pdf', right: 'page33.pdf' },
-            { type: 'spread', left: 'page34.pdf', right: 'page35.pdf' },
-            { type: 'spread', left: 'page36.pdf', right: 'page37.pdf' },
-            { type: 'spread', left: 'page38.pdf', right: 'page39.pdf' },
-            { type: 'spread', left: 'page40.pdf', right: 'page41.pdf' },
-            { type: 'spread', left: 'page42.pdf', right: 'page43.pdf' },
-            { type: 'spread', left: 'page44.pdf', right: 'page45.pdf' },
-            { type: 'spread', left: 'page46.pdf', right: 'page47.pdf' },
-            { type: 'spread', left: 'page48.pdf', right: 'page49.pdf' },
-            { type: 'single', file: 'page50.pdf' } // Last page, single page
+            { type: 'single', file: 'page24.pdf' } // Last page, single page
         ];
         let currentSpreadIndex = 0;
         let scale = 1.0 * window.devicePixelRatio;
@@ -180,15 +166,13 @@
                     console.error('Error loading spread PDFs:', error);
                 }
             }
-            canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.25;
+            const maxWidth = window.innerWidth * 0.45; // Adjusted for two canvases
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
@@ -265,8 +249,6 @@
                 crease.style.display = 'block';
                 console.log('Adjusted to spread:', pdfFiles[currentSpreadIndex].left, pdfFiles[currentSpreadIndex].right);
             }
-            canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         canvasContainer.addEventListener('click', (e) => {
