@@ -161,17 +161,7 @@
                 fitScale /= 1.6667;
                 fitScale /= 1.6667;
             } else {
-                fitScale *= 1.15;
-                fitScale *= 1.1;
-                fitScale *= 1.1;
-                fitScale *= 1.1;
-                fitScale *= 1.1;
-                fitScale /= 1.6667;
-                fitScale /= 1.6667;
-                fitScale /= 1.6667;
-                fitScale /= 1.42857;
-                fitScale /= 1.6667;
-                fitScale /= 3.33333;
+                fitScale = Math.min(scaleX, scaleY); // Reset to 1x scale (100% decrease)
             }
             fitScale *= Math.abs(scale);
 
@@ -208,17 +198,7 @@
                 fitScale /= 1.6667;
                 fitScale /= 1.6667;
             } else {
-                fitScale *= 1.15;
-                fitScale *= 1.1;
-                fitScale *= 1.1;
-                fitScale *= 1.1;
-                fitScale *= 1.1;
-                fitScale /= 1.6667;
-                fitScale /= 1.6667;
-                fitScale /= 1.6667;
-                fitScale /= 1.42857;
-                fitScale /= 1.6667;
-                fitScale /= 3.33333;
+                fitScale = Math.min(scaleX, scaleY); // Reset to 1x scale (100% decrease)
             }
             fitScale *= Math.abs(scale);
 
@@ -308,15 +288,15 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02;
+                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Scroll forward to zoom in, backward to zoom out
                 scaleMomentum = (delta - 1) * dampeningFactor;
                 const oldScale = scale;
                 scale *= delta;
                 scale = Math.min(Math.max(scale, minScale), maxScale);
 
                 const scaleFactor = scale / oldScale;
-                const containerCenterX = rect.width / 2;
-                const containerCenterY = rect.height / 2;
+                const containerCenterX = mouseX; // Pin to cursor X
+                const containerCenterY = mouseY; // Pin to cursor Y
                 panOffsetX += (mouseX - containerCenterX) * (1 - scaleFactor);
                 panOffsetY += (mouseY - containerCenterY) * (1 - scaleFactor);
 
@@ -415,10 +395,12 @@
                     const touch2 = e.touches[1];
                     const currentX1 = touch1.pageX;
                     const currentX2 = touch2.pageX;
-                    const deltaX = Math.abs(currentX2 - currentX1) - Math.abs(lastTouchX2 - lastTouchX1);
+                    const initialDistance = Math.abs(lastTouchX2 - lastTouchX1);
+                    const currentDistance = Math.abs(currentX2 - currentX1);
+                    const deltaX = currentDistance - initialDistance;
 
                     if (Math.abs(deltaX) > 10) {
-                        const delta = 1 + (deltaX / 100);
+                        const delta = 1 + (deltaX / 200); // Slower zoom rate for better control
                         scaleMomentum = (delta - 1) * dampeningFactor;
                         const oldScale = scale;
                         scale *= delta;
@@ -426,12 +408,10 @@
 
                         const scaleFactor = scale / oldScale;
                         const rect = canvasContainer.getBoundingClientRect();
-                        const centerX = rect.width / 2;
-                        const centerY = rect.height / 2;
-                        const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
-                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-                        panOffsetX += (touchCenterX - centerX) * (1 - scaleFactor);
-                        panOffsetY += (touchCenterY - centerY) * (1 - scaleFactor);
+                        const centerX = (currentX1 + currentX2) / 2 - rect.left;
+                        const centerY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
+                        panOffsetX += (centerX - centerX) * (1 - scaleFactor); // Adjust based on center
+                        panOffsetY += (centerY - centerY) * (1 - scaleFactor);
 
                         adjustCanvases();
                         lastTouchX1 = currentX1;
