@@ -82,9 +82,9 @@
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
-        const contextLeft = canvasLeft.getContext('2d', { alpha: false });
-        const contextRight = canvasRight.getContext('2d', { alpha: false });
-        const contextSingle = canvasSingle.getContext('2d', { alpha: false });
+        const contextLeft = canvasLeft.getContext('2d');
+        const contextRight = canvasRight.getContext('2d');
+        const contextSingle = canvasSingle.getContext('2d');
         const canvasContainer = document.getElementById('canvas-container');
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
@@ -149,16 +149,14 @@
             fitScale *= scale;
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            const dpr = window.devicePixelRatio || 1;
-            canvas.height = adjustedViewport.height * dpr;
-            canvas.width = adjustedViewport.width * dpr;
+            canvas.height = adjustedViewport.height;
+            canvas.width = adjustedViewport.width;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
 
             const renderContext = {
                 canvasContext: context,
-                viewport: adjustedViewport,
-                transform: [dpr, 0, 0, dpr, 0, 0]
+                viewport: adjustedViewport
             };
             await page.render(renderContext).promise;
         }
@@ -180,16 +178,14 @@
             fitScale *= scale;
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            const dpr = window.devicePixelRatio || 1;
-            canvas.height = adjustedViewport.height * dpr;
-            canvas.width = adjustedViewport.width * dpr;
+            canvas.height = adjustedViewport.height;
+            canvas.width = adjustedViewport.width;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
 
             const renderContext = {
                 canvasContext: context,
-                viewport: adjustedViewport,
-                transform: [dpr, 0, 0, dpr, 0, 0]
+                viewport: adjustedViewport
             };
             await page.render(renderContext).promise;
         }
@@ -201,9 +197,7 @@
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]).then(() => {
-                    // Ensure all renders complete before next update
-                });
+                ]);
             }
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
@@ -237,8 +231,7 @@
                 const now = performance.now();
 
                 if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05;
-                    const oldScale = scale;
+                    const delta = e.deltaY < 0 ? 1.1 : 1 / 1.1; // Scroll up to zoom in, down to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
 
@@ -266,22 +259,18 @@
                         const touch2 = e.touches[1];
                         const currentX1 = touch1.pageX;
                         const currentX2 = touch2.pageX;
-                        const initialDistance = Math.hypot(lastTouchX2 - lastTouchX1, touch1.pageY - touch2.pageY);
-                        const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
-                        const deltaDistance = currentDistance - initialDistance;
+                        const initialDistance = Math.abs(lastTouchX2 - lastTouchX1);
+                        const currentDistance = Math.abs(currentX2 - currentX1);
+                        const delta = currentDistance / initialDistance;
 
-                        if (Math.abs(deltaDistance) > 1) {
-                            const delta = 1 + (deltaDistance * 0.005);
-                            const oldScale = scale;
-                            scale *= delta;
-                            scale = Math.min(Math.max(scale, minScale), maxScale);
+                        scale *= delta;
+                        scale = Math.min(Math.max(scale, minScale), maxScale);
 
-                            adjustCanvases();
-                            lastTouchX1 = currentX1;
-                            lastTouchX2 = currentX2;
-                        }
+                        adjustCanvases();
+                        lastTouchX1 = currentX1;
+                        lastTouchX2 = currentX2;
+                        lastMoveTime = now;
                     }
-                    lastMoveTime = now;
                 }
             });
 
