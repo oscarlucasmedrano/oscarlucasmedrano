@@ -265,7 +265,7 @@
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     const oldScale = scale;
-                    const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Scroll up to zoom in, scroll down to zoom out
+                    const delta = e.deltaY < 0 ? 1.01 : 1 / 1.01; // Scroll up to zoom in, scroll down to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases().then(() => {
@@ -276,14 +276,14 @@
                 }
             });
 
-            // Simulate trackpad with wheel event for consistency
+            // Trackpad zoom with ctrlKey
             container.addEventListener('wheel', (e) => {
-                if (e.ctrlKey) { // Trackpad pinch often triggers ctrl+wheel
+                if (e.ctrlKey) {
                     e.preventDefault();
                     e.stopPropagation();
                     const now = performance.now();
                     if (now - lastMoveTime > debounceDelay) {
-                        const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Match wheel direction
+                        const delta = e.deltaY < 0 ? 1.01 : 1 / 1.01; // Match wheel direction
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
                         adjustCanvases().then(() => {
@@ -367,7 +367,7 @@
 
                         if (Math.abs(deltaDistance) > 1) {
                             const oldScale = scale;
-                            const delta = 1 + (deltaDistance * 0.001); // Smaller factor for smooth zoom
+                            const delta = 1 + (deltaDistance * 0.0005); // Smaller factor for less aggressive zoom
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
                             adjustCanvases().then(() => {
