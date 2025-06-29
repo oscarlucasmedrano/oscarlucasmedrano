@@ -161,7 +161,7 @@
                 fitScale /= 1.6667;
                 fitScale /= 1.6667;
             } else {
-                fitScale = Math.min(scaleX, scaleY) * 4; // 300% increase (4x base scale)
+                fitScale = Math.min(scaleX, scaleY) / 4; // 300% decrease (1/4th base scale)
             }
             fitScale *= Math.abs(scale);
 
@@ -198,7 +198,7 @@
                 fitScale /= 1.6667;
                 fitScale /= 1.6667;
             } else {
-                fitScale = Math.min(scaleX, scaleY) * 4; // 300% increase (4x base scale)
+                fitScale = Math.min(scaleX, scaleY) / 4; // 300% decrease (1/4th base scale)
             }
             fitScale *= Math.abs(scale);
 
@@ -295,8 +295,8 @@
                 scale = Math.min(Math.max(scale, minScale), maxScale);
 
                 const scaleFactor = scale / oldScale;
-                panOffsetX -= (mouseX - panOffsetX) * (scaleFactor - 1); // Adjust pan to pin zoom
-                panOffsetY -= (mouseY - panOffsetY) * (scaleFactor - 1);
+                panOffsetX -= (mouseX - panOffsetX) * (scaleFactor - 1); // Pin to cursor X
+                panOffsetY -= (mouseY - panOffsetY) * (scaleFactor - 1); // Pin to cursor Y
 
                 adjustCanvases();
                 lastMoveTime = now;
@@ -398,7 +398,7 @@
                     const deltaDistance = currentDistance - initialDistance;
 
                     if (Math.abs(deltaDistance) > 10) {
-                        const delta = 1 + (deltaDistance / 200); // Slower zoom rate for control
+                        const delta = 1 + (deltaDistance / 100); // Adjusted zoom rate for responsiveness
                         scaleMomentum = (delta - 1) * dampeningFactor;
                         const oldScale = scale;
                         scale *= delta;
