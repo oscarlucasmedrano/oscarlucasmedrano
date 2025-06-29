@@ -227,24 +227,26 @@
             }
         });
 
-        canvasContainer.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const rect = canvasContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const now = performance.now();
+        [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const now = performance.now();
 
-            if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Scroll forward to zoom in, backward to zoom out
-                const oldScale = scale;
-                scale *= delta;
-                scale = Math.min(Math.max(scale, minScale), maxScale);
+                if (now - lastMoveTime > debounceDelay) {
+                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Scroll forward to zoom in, backward to zoom out
+                    const oldScale = scale;
+                    scale *= delta;
+                    scale = Math.min(Math.max(scale, minScale), maxScale);
 
-                const scaleFactor = scale / oldScale;
-                // No panning, just scale adjustment
-                adjustCanvases();
-                lastMoveTime = now;
-            }
+                    const scaleFactor = scale / oldScale;
+                    // No panning, just scale adjustment
+                    adjustCanvases();
+                    lastMoveTime = now;
+                }
+            });
         });
 
         canvasContainer.addEventListener('touchstart', (e) => {
@@ -277,9 +279,6 @@
                         scale = Math.min(Math.max(scale, minScale), maxScale);
 
                         const scaleFactor = scale / oldScale;
-                        const rect = canvasContainer.getBoundingClientRect();
-                        const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
-                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
                         // No panning, just scale adjustment
                         adjustCanvases();
                         lastTouchX1 = currentX1;
