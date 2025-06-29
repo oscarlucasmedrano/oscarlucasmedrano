@@ -98,7 +98,7 @@
         let lastMoveTime = 0;
         const minScale = 0.5;
         const maxScale = 4.0;
-        const debounceDelay = 500; // Increased for mobile stability
+        const debounceDelay = 500;
 
         // Load homepage by default
         loadSpread(currentSpreadIndex);
@@ -170,8 +170,8 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.0125 * window.innerWidth; // 30% larger on desktop, 300% smaller on mobile
-            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.05 * window.innerHeight; // 30% larger on desktop, 300% smaller on mobile
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.0125 * window.innerWidth;
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.05 * window.innerHeight;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY) * scale;
@@ -198,8 +198,8 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.0125 * window.innerWidth; // 30% larger on desktop, 300% smaller on mobile
-            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.05 * window.innerHeight; // 30% larger on desktop, 300% smaller on mobile
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.0125 * window.innerWidth;
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.05 * window.innerHeight;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY) * scale;
@@ -231,7 +231,7 @@
                         ]).then(resolve);
                     }
                     canvasContainer.style.left = '50%';
-                    canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px) scale(${scale})`;
+                    canvasContainer.style.transform = `translateX(-50%) translate(0px, 0px) scale(${scale})`; // Pin layout
                 });
             });
         }
@@ -264,19 +264,15 @@
                 e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    const oldScale = scale;
                     const delta = e.deltaY > 0 ? 1.01 : 1 / 1.01; // Scroll down to zoom in, scroll up to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
-                    adjustCanvases().then(() => {
-                        panOffsetX = 0;
-                        panOffsetY = 0;
-                    });
+                    adjustCanvases();
                     lastMoveTime = now;
                 }
             });
 
-            // Trackpad zoom with ctrlKey, corrected to match mouse wheel
+            // Trackpad zoom with ctrlKey, matching mouse wheel
             container.addEventListener('wheel', (e) => {
                 if (e.ctrlKey) {
                     e.preventDefault();
@@ -286,10 +282,7 @@
                         const delta = e.deltaY > 0 ? 1.01 : 1 / 1.01; // Scroll down to zoom in, scroll up to zoom out
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
-                        adjustCanvases().then(() => {
-                            panOffsetX = 0;
-                            panOffsetY = 0;
-                        });
+                        adjustCanvases();
                         lastMoveTime = now;
                     }
                 }
@@ -357,7 +350,7 @@
                         panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
                         panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
                         adjustCanvases();
-                    } else if (e.touches.length === 2 && now - lastMoveTime > 200) { // Stricter rate limit
+                    } else if (e.touches.length === 2 && now - lastMoveTime > 200) {
                         const touch1 = e.touches[0];
                         const touch2 = e.touches[1];
                         const currentX1 = touch1.pageX;
@@ -367,14 +360,10 @@
                         const deltaDistance = currentDistance - initialDistance;
 
                         if (Math.abs(deltaDistance) > 1) {
-                            const oldScale = scale;
-                            const delta = 1 + (deltaDistance * 0.0002);
+                            const delta = 1 + (deltaDistance * 0.0002); // Match black background zoom rate
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
-                            adjustCanvases().then(() => {
-                                panOffsetX = 0;
-                                panOffsetY = 0;
-                            });
+                            adjustCanvases();
                             lastTouchX1 = currentX1;
                             lastTouchX2 = currentX2;
                             canUpdate = false;
