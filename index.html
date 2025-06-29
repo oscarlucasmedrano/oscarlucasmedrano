@@ -79,7 +79,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.5 * window.devicePixelRatio;
+        let scale = 1.8 * window.devicePixelRatio; // Increased base scale for larger mobile layout
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -90,6 +90,11 @@
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
         let pdfDocRight = null;
+        let panOffsetX = 0;
+        let panOffsetY = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -123,14 +128,14 @@
             }
             // Ensure canvas container remains centered after load
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%)';
+            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * (pdfFiles[currentSpreadIndex].type === 'single' ? 1 : 0.5);
+            const maxWidth = window.innerWidth * (pdfFiles[currentSpreadIndex].type === 'single' ? 0.5 : 0.25); // Half width for single, quarter for each spread page
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
@@ -154,7 +159,7 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 1;
+            const maxWidth = window.innerWidth * 0.5; // Half width for cover to match spread page width
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
@@ -183,9 +188,9 @@
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
                 ]);
             }
-            // Re-center after any adjustment
+            // Re-center and apply pan offset after any adjustment
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%)';
+            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
 
         canvasContainer.addEventListener('click', (e) => {
@@ -210,16 +215,50 @@
             }
         });
 
-        // Zoom handling
+        // Zoom and Pan handling
         let lastTouchDistance = null;
 
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
-            // Normalize zoom: upward scroll (negative deltaY) zooms in, downward zooms out
-            const delta = e.deltaY < 0 ? 1.1 : 0.9; // Consistent zoom direction
+            const rect = canvasContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Zoom toward cursor position
+            const delta = e.deltaY < 0 ? 1.1 : 0.9; // Up zooms in, down zooms out
+            const oldScale = scale;
             scale *= delta;
-            scale = Math.min(Math.max(0.5, scale), 5); // Clamp scale to prevent extreme values
+            scale = Math.min(Math.max(0.5, scale), 5);
+
+            // Adjust pan offset to keep cursor over the same point
+            const scaleFactor = scale / oldScale;
+            panOffsetX = (panOffsetX + mouseX) * scaleFactor - mouseX;
+            panOffsetY = (panOffsetY + mouseY) * scaleFactor - mouseY;
+
             adjustCanvases();
+        });
+
+        canvasContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - panOffsetX;
+            startY = e.clientY - panOffsetY;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                panOffsetX = e.clientX - startX;
+                panOffsetY = e.clientY - startY;
+                adjustCanvases();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        document.addEventListener('mouseleave', () => {
+            isDragging = false;
         });
 
         canvasContainer.addEventListener('touchstart', (e) => {
@@ -231,6 +270,11 @@
                     touch1.pageX - touch2.pageX,
                     touch1.pageY - touch2.pageY
                 );
+            } else if (e.touches.length === 1) {
+                isDragging = true;
+                const touch = e.touches[0];
+                startX = touch.clientX - panOffsetX;
+                startY = touch.clientY - panOffsetY;
             }
         });
 
@@ -250,10 +294,16 @@
                     adjustCanvases();
                     lastTouchDistance = currentDistance;
                 }
+            } else if (e.touches.length === 1 && isDragging) {
+                const touch = e.touches[0];
+                panOffsetX = touch.clientX - startX;
+                panOffsetY = touch.clientY - startY;
+                adjustCanvases();
             }
         });
 
         canvasContainer.addEventListener('touchend', () => {
+            isDragging = false;
             lastTouchDistance = null;
         });
 
