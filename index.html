@@ -38,7 +38,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transform-origin: center center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         #pdf-canvas-left, #pdf-canvas-right {
@@ -79,7 +78,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.0 * window.devicePixelRatio;
+        let scale = 1.0 * window.devicePixelRatio; // Reset to original on refresh
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -130,12 +129,13 @@
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position, no scaling
+            adjustCanvases(); // Ensure initial render with reset scale
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: scale });
+            const viewport = page.getViewport({ scale: 1 }); // Base viewport without initial scale
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -147,7 +147,7 @@
             } else {
                 fitScale *= 1.76; // Current mobile scale
             }
-            fitScale *= scale;
+            fitScale *= scale; // Apply zoom scale
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -165,7 +165,7 @@
 
         async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: scale });
+            const viewport = page.getViewport({ scale: 1 }); // Base viewport without initial scale
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -177,7 +177,7 @@
             } else {
                 fitScale *= 1.76; // Current mobile scale
             }
-            fitScale *= scale;
+            fitScale *= scale; // Apply zoom scale
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -203,7 +203,7 @@
                 ]);
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // No scaling
         }
 
         canvasContainer.addEventListener('click', (e) => {
