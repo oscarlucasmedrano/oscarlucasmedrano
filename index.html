@@ -152,7 +152,7 @@
             if (window.innerWidth > 600) {
                 fitScale *= 1.15; // Slight adjustment for desktop
             } else {
-                fitScale *= 3.75; // 275% increase (3.75x base scale)
+                fitScale /= 2.5; // 150% decrease (1/2.5x base scale)
             }
             fitScale *= scale;
 
@@ -182,7 +182,7 @@
             if (window.innerWidth > 600) {
                 fitScale *= 1.15; // Slight adjustment for desktop
             } else {
-                fitScale *= 3.75; // 275% increase (3.75x base scale)
+                fitScale /= 2.5; // 150% decrease (1/2.5x base scale)
             }
             fitScale *= scale;
 
@@ -260,16 +260,14 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // 5% zoom per scroll
+                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // 5% zoom per scroll, like background
                 const oldScale = scale;
                 scale *= delta;
                 scale = Math.min(Math.max(scale, minScale), maxScale);
 
                 const scaleFactor = scale / oldScale;
-                const newPanOffsetX = panOffsetX - (mouseX - panOffsetX) * (scaleFactor - 1);
-                const newPanOffsetY = panOffsetY - (mouseY - panOffsetY) * (scaleFactor - 1);
-                panOffsetX = newPanOffsetX;
-                panOffsetY = newPanOffsetY;
+                panOffsetX -= (mouseX - panOffsetX) * (scaleFactor - 1); // Pin to cursor
+                panOffsetY -= (mouseY - panOffsetY) * (scaleFactor - 1);
 
                 adjustCanvases();
                 lastMoveTime = now;
@@ -370,7 +368,7 @@
                     const deltaDistance = currentDistance - initialDistance;
 
                     if (Math.abs(deltaDistance) > 1) {
-                        const delta = 1 + (deltaDistance * 0.01); // 1% zoom per pixel
+                        const delta = 1 + (deltaDistance * 0.005); // Smoother zoom like background
                         const oldScale = scale;
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
@@ -379,10 +377,8 @@
                         const rect = canvasContainer.getBoundingClientRect();
                         const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
                         const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-                        const newPanOffsetX = panOffsetX - (touchCenterX - panOffsetX) * (scaleFactor - 1); // Prevent shift
-                        const newPanOffsetY = panOffsetY - (touchCenterY - panOffsetY) * (scaleFactor - 1);
-                        panOffsetX = newPanOffsetX;
-                        panOffsetY = newPanOffsetY;
+                        panOffsetX -= (touchCenterX - panOffsetX) * (scaleFactor - 1); // Pin to touch center
+                        panOffsetY -= (touchCenterY - panOffsetY) * (scaleFactor - 1);
 
                         adjustCanvases();
                         lastTouchX1 = currentX1;
