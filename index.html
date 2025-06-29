@@ -161,7 +161,7 @@
                 fitScale /= 1.6667;
                 fitScale /= 1.6667;
             } else {
-                fitScale = Math.min(scaleX, scaleY); // Reset to 1x scale (100% decrease)
+                fitScale = Math.min(scaleX, scaleY) * 4; // 300% increase (4x base scale)
             }
             fitScale *= Math.abs(scale);
 
@@ -198,7 +198,7 @@
                 fitScale /= 1.6667;
                 fitScale /= 1.6667;
             } else {
-                fitScale = Math.min(scaleX, scaleY); // Reset to 1x scale (100% decrease)
+                fitScale = Math.min(scaleX, scaleY) * 4; // 300% increase (4x base scale)
             }
             fitScale *= Math.abs(scale);
 
@@ -295,10 +295,8 @@
                 scale = Math.min(Math.max(scale, minScale), maxScale);
 
                 const scaleFactor = scale / oldScale;
-                const containerCenterX = mouseX; // Pin to cursor X
-                const containerCenterY = mouseY; // Pin to cursor Y
-                panOffsetX += (mouseX - containerCenterX) * (1 - scaleFactor);
-                panOffsetY += (mouseY - containerCenterY) * (1 - scaleFactor);
+                panOffsetX -= (mouseX - panOffsetX) * (scaleFactor - 1); // Adjust pan to pin zoom
+                panOffsetY -= (mouseY - panOffsetY) * (scaleFactor - 1);
 
                 adjustCanvases();
                 lastMoveTime = now;
@@ -397,10 +395,10 @@
                     const currentX2 = touch2.pageX;
                     const initialDistance = Math.abs(lastTouchX2 - lastTouchX1);
                     const currentDistance = Math.abs(currentX2 - currentX1);
-                    const deltaX = currentDistance - initialDistance;
+                    const deltaDistance = currentDistance - initialDistance;
 
-                    if (Math.abs(deltaX) > 10) {
-                        const delta = 1 + (deltaX / 200); // Slower zoom rate for better control
+                    if (Math.abs(deltaDistance) > 10) {
+                        const delta = 1 + (deltaDistance / 200); // Slower zoom rate for control
                         scaleMomentum = (delta - 1) * dampeningFactor;
                         const oldScale = scale;
                         scale *= delta;
@@ -408,10 +406,10 @@
 
                         const scaleFactor = scale / oldScale;
                         const rect = canvasContainer.getBoundingClientRect();
-                        const centerX = (currentX1 + currentX2) / 2 - rect.left;
-                        const centerY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-                        panOffsetX += (centerX - centerX) * (1 - scaleFactor); // Adjust based on center
-                        panOffsetY += (centerY - centerY) * (1 - scaleFactor);
+                        const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
+                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
+                        panOffsetX -= (touchCenterX - panOffsetX) * (scaleFactor - 1); // Pin to touch center
+                        panOffsetY -= (touchCenterY - panOffsetY) * (scaleFactor - 1);
 
                         adjustCanvases();
                         lastTouchX1 = currentX1;
