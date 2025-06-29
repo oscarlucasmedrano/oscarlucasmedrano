@@ -96,9 +96,9 @@
         const minScale = 0.1;
         const maxScale = 10;
         let lastMoveTime = 0;
-        const debounceDelay = 100; // Increased for smoother rendering
+        const debounceDelay = 120; // Increased for smoother rendering
 
-        // Return to cover page on refresh
+        // Return to cover page on refresh with fixed orientation
         window.addEventListener('load', async () => {
             currentSpreadIndex = 0; // Reset to cover page
             scale = 1.0; // Reset scale on refresh
@@ -119,8 +119,8 @@
                     const page = await pdfDocLeft.getPage(1);
                     let viewport = page.getViewport({ scale: 1 });
                     let rotation = viewport.rotation;
-                    if (rotation === 90 || rotation === -90 || rotation === 180 || rotation === -180) { // Fix any rotation issue
-                        viewport = page.getViewport({ scale: 1, rotation: (rotation + 180) % 360 });
+                    if (rotation !== 0) { // Force upright if rotated
+                        viewport = page.getViewport({ scale: 1, rotation: 0 });
                     }
                     renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
                 } catch (error) {
