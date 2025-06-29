@@ -75,8 +75,55 @@
 
         const pdfFiles = [
             { type: 'single', file: 'page1.pdf' },
-            { type: 'spread', left: 'about.pdf', right: 'table_of_contents.pdf' },
-            { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
+            { type: 'single', file: 'page2.pdf' },
+            { type: 'single', file: 'page3.pdf' },
+            { type: 'single', file: 'page4.pdf' },
+            { type: 'single', file: 'page5.pdf' },
+            { type: 'single', file: 'page6.pdf' },
+            { type: 'single', file: 'page7.pdf' },
+            { type: 'single', file: 'page8.pdf' },
+            { type: 'single', file: 'page9.pdf' },
+            { type: 'single', file: 'page10.pdf' },
+            { type: 'single', file: 'page11.pdf' },
+            { type: 'single', file: 'page12.pdf' },
+            { type: 'single', file: 'page13.pdf' },
+            { type: 'single', file: 'page14.pdf' },
+            { type: 'single', file: 'page15.pdf' },
+            { type: 'single', file: 'page16.pdf' },
+            { type: 'single', file: 'page17.pdf' },
+            { type: 'single', file: 'page18.pdf' },
+            { type: 'single', file: 'page19.pdf' },
+            { type: 'single', file: 'page20.pdf' },
+            { type: 'single', file: 'page21.pdf' },
+            { type: 'single', file: 'page22.pdf' },
+            { type: 'single', file: 'page23.pdf' },
+            { type: 'single', file: 'page24.pdf' },
+            { type: 'single', file: 'page25.pdf' },
+            { type: 'single', file: 'page26.pdf' },
+            { type: 'single', file: 'page27.pdf' },
+            { type: 'single', file: 'page28.pdf' },
+            { type: 'single', file: 'page29.pdf' },
+            { type: 'single', file: 'page30.pdf' },
+            { type: 'single', file: 'page31.pdf' },
+            { type: 'single', file: 'page32.pdf' },
+            { type: 'single', file: 'page33.pdf' },
+            { type: 'single', file: 'page34.pdf' },
+            { type: 'single', file: 'page35.pdf' },
+            { type: 'single', file: 'page36.pdf' },
+            { type: 'single', file: 'page37.pdf' },
+            { type: 'single', file: 'page38.pdf' },
+            { type: 'single', file: 'page39.pdf' },
+            { type: 'single', file: 'page40.pdf' },
+            { type: 'single', file: 'page41.pdf' },
+            { type: 'single', file: 'page42.pdf' },
+            { type: 'single', file: 'page43.pdf' },
+            { type: 'single', file: 'page44.pdf' },
+            { type: 'single', file: 'page45.pdf' },
+            { type: 'single', file: 'page46.pdf' },
+            { type: 'single', file: 'page47.pdf' },
+            { type: 'single', file: 'page48.pdf' },
+            { type: 'single', file: 'page49.pdf' },
+            { type: 'single', file: 'page50.pdf' }
         ];
         let currentSpreadIndex = 0;
         let scale = 1.0 * window.devicePixelRatio;
@@ -256,11 +303,6 @@
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
 
-                        const scaleFactor = scale / oldScale;
-                        const rect = canvasContainer.getBoundingClientRect();
-                        const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
-                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-                        // No panning, just scale adjustment
                         adjustCanvases();
                         lastTouchX1 = currentX1;
                         lastTouchX2 = currentX2;
