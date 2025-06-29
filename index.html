@@ -95,8 +95,13 @@
         let isDragging = false;
         let startX = 0;
         let startY = 0;
+        let lastMoveTime = 0;
+        let velocityX = 0;
+        let velocityY = 0;
         const minScale = 0.5;
         const maxScale = 10;
+        const debounceDelay = 32; // Increased for smoother panning
+        const momentumDecay = 0.95;
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -150,6 +155,7 @@
                 fitScale *= 1.15; // Another 15% increase
                 fitScale /= 1.6667; // 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
+                fitScale /= 1.6667; // Another 40% decrease
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
@@ -157,6 +163,7 @@
                 fitScale *= 1.1; // Another 10% increase
                 fitScale *= 1.1; // Another 10% increase
                 fitScale /= 1.6667; // 40% decrease
+                fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
             }
             fitScale *= scale; // Apply dynamic zoom scale
@@ -192,6 +199,7 @@
                 fitScale *= 1.15; // Another 15% increase
                 fitScale /= 1.6667; // 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
+                fitScale /= 1.6667; // Another 40% decrease
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
@@ -199,6 +207,7 @@
                 fitScale *= 1.1; // Another 10% increase
                 fitScale *= 1.1; // Another 10% increase
                 fitScale /= 1.6667; // 40% decrease
+                fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
             }
             fitScale *= scale; // Apply dynamic zoom scale
@@ -255,24 +264,36 @@
 
         // Zoom and Pan handling
         let lastTouchDistance = null;
-        let lastMoveTime = 0;
-        const debounceDelay = 16; // Approx 60fps
+        let lastPanX = 0;
+        let lastPanY = 0;
+        let momentumFrame = null;
+
+        function applyMomentum() {
+            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
+                panOffsetX += velocityX;
+                panOffsetY += velocityY;
+                velocityX *= momentumDecay;
+                velocityY *= momentumDecay;
+                adjustCanvases();
+                momentumFrame = requestAnimationFrame(applyMomentum);
+            } else {
+                if (momentumFrame) cancelAnimationFrame(momentumFrame);
+            }
+        }
 
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left; // Absolute X in container
-            const mouseY = e.clientY - rect.top; // Absolute Y in container
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
             const now = performance.now();
 
-            // Smooth zoom by averaging delta over a short timeframe
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.2 : 1 / 1.2; // Smoother zoom factor (1.2x/0.83x)
+                const delta = e.deltaY < 0 ? 1.1 : 1 / 1.1; // Finer zoom factor (1.1x/0.909x)
                 const oldScale = scale;
                 scale *= delta;
-                scale = Math.min(Math.max(scale, minScale), maxScale); // Clamp zoom
+                scale = Math.min(Math.max(scale, minScale), maxScale);
 
-                // Pin zoom to cursor position
                 const scaleFactor = scale / oldScale;
                 const containerCenterX = rect.width / 2;
                 const containerCenterY = rect.height / 2;
@@ -288,6 +309,9 @@
             isDragging = true;
             startX = e.clientX - panOffsetX;
             startY = e.clientY - panOffsetY;
+            velocityX = 0;
+            velocityY = 0;
+            if (momentumFrame) cancelAnimationFrame(momentumFrame);
             e.preventDefault();
         });
 
@@ -295,20 +319,32 @@
             if (isDragging) {
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    panOffsetX = e.clientX - startX;
-                    panOffsetY = e.clientY - startY;
+                    const deltaX = e.clientX - startX - panOffsetX;
+                    const deltaY = e.clientY - startY - panOffsetY;
+                    panOffsetX += deltaX;
+                    panOffsetY += deltaY;
+                    velocityX = deltaX / (now - lastMoveTime);
+                    velocityY = deltaY / (now - lastMoveTime);
                     adjustCanvases();
                     lastMoveTime = now;
+                    lastPanX = e.clientX;
+                    lastPanY = e.clientY;
                 }
             }
         });
 
-        document.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', (e) => {
             isDragging = false;
+            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
+                momentumFrame = requestAnimationFrame(applyMomentum);
+            }
         });
 
         document.addEventListener('mouseleave', () => {
             isDragging = false;
+            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
+                momentumFrame = requestAnimationFrame(applyMomentum);
+            }
         });
 
         canvasContainer.addEventListener('touchstart', (e) => {
@@ -320,11 +356,17 @@
                     touch1.pageX - touch2.pageX,
                     touch1.pageY - touch2.pageY
                 );
+                velocityX = 0;
+                velocityY = 0;
+                if (momentumFrame) cancelAnimationFrame(momentumFrame);
             } else if (e.touches.length === 1) {
                 isDragging = true;
                 const touch = e.touches[0];
                 startX = touch.clientX - panOffsetX;
                 startY = touch.clientY - panOffsetY;
+                velocityX = 0;
+                velocityY = 0;
+                if (momentumFrame) cancelAnimationFrame(momentumFrame);
             }
         });
 
@@ -360,16 +402,26 @@
                     }
                 } else if (e.touches.length === 1 && isDragging) {
                     const touch = e.touches[0];
-                    panOffsetX = touch.clientX - startX;
-                    panOffsetY = touch.clientY - startY;
+                    const deltaX = touch.clientX - startX - panOffsetX;
+                    const deltaY = touch.clientY - startY - panOffsetY;
+                    panOffsetX += deltaX;
+                    panOffsetY += deltaY;
+                    velocityX = deltaX / (now - lastMoveTime);
+                    velocityY = deltaY / (now - lastMoveTime);
                     adjustCanvases();
+                    lastMoveTime = now;
+                    lastPanX = touch.clientX;
+                    lastPanY = touch.clientY;
                 }
                 lastMoveTime = now;
             }
         });
 
-        canvasContainer.addEventListener('touchend', () => {
+        canvasContainer.addEventListener('touchend', (e) => {
             isDragging = false;
+            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
+                momentumFrame = requestAnimationFrame(applyMomentum);
+            }
             lastTouchDistance = null;
         });
 
@@ -380,7 +432,6 @@
     </script>
 </body>
 </html>
-
 
 
 
