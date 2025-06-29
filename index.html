@@ -153,9 +153,6 @@
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasLeft.style.left = '0';
-                // Dynamically set canvasRight position based on canvasLeft width
-                const leftWidth = canvasLeft.getBoundingClientRect().width;
-                canvasRight.style.left = `${leftWidth}px`;
                 canvasRight.style.display = 'block';
                 crease.style.display = 'block';
                 try {
@@ -164,6 +161,10 @@
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}`);
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                     await renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                    // Set canvasRight position after rendering
+                    const leftWidth = canvasLeft.getBoundingClientRect().width;
+                    canvasRight.style.left = `${leftWidth}px`;
+                    console.log(`Set canvasRight left to: ${leftWidth}px, canvasRight width: ${canvasRight.getBoundingClientRect().width}px`);
                     console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
@@ -251,7 +252,7 @@
                 canvasRight.style.display = 'block';
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
-                console.log('Adjusted to spread:', pdfFiles[currentSpreadIndex].left, pdfFiles[currentSpreadIndex].right);
+                console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${leftWidth}px, rightWidth: ${canvasRight.getBoundingClientRect().width}px`);
             }
         }
 
