@@ -141,9 +141,11 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY) * 6; // Base 500% increase
             if (window.innerWidth > 600) {
-                fitScale /= 1.6667; // 40% decrease on desktop
+                fitScale /= 1.6667; // 40% decrease
+                fitScale *= 1.15; // 15% increase
             } else {
-                fitScale *= 1.15; // 15% increase on mobile
+                fitScale *= 1.15; // 15% increase
+                fitScale *= 1.1; // 10% increase
             }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
@@ -164,15 +166,17 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.25; // Adjusted to match spread page width
+            const maxWidth = window.innerWidth * 0.25; // Match spread page width
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY) * 6; // Base 500% increase
             if (window.innerWidth > 600) {
-                fitScale /= 1.6667; // 40% decrease on desktop
+                fitScale /= 1.6667; // 40% decrease
+                fitScale *= 1.15; // 15% increase
             } else {
-                fitScale *= 1.15; // 15% increase on mobile
+                fitScale *= 1.15; // 15% increase
+                fitScale *= 1.1; // 10% increase
             }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
