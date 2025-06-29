@@ -100,6 +100,8 @@
         let velocityY = 0;
         let lastVelocitiesX = [];
         let lastVelocitiesY = [];
+        let lastTouchX1 = 0;
+        let lastTouchX2 = 0;
         const minScale = 0.5;
         const maxScale = 10;
         const debounceDelay = 50;
@@ -170,6 +172,7 @@
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.42857; // 30% decrease
                 fitScale /= 1.6667; // 40% decrease
+                fitScale /= 3.33333; // 70% decrease
             }
             fitScale *= Math.abs(scale); // Apply dynamic zoom scale, ensure positive
 
@@ -216,6 +219,7 @@
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.42857; // 30% decrease
                 fitScale /= 1.6667; // 40% decrease
+                fitScale /= 3.33333; // 70% decrease
             }
             fitScale *= Math.abs(scale); // Apply dynamic zoom scale, ensure positive
 
@@ -270,7 +274,8 @@
         });
 
         // Zoom and Pan handling
-        let lastTouchDistance = null;
+        let lastTouchX1 = 0;
+        let lastTouchX2 = 0;
         let lastPanX = 0;
         let lastPanY = 0;
         let momentumFrame = null;
@@ -308,7 +313,7 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Very fine zoom factor (1.02x/0.9804x)
+                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Scroll forward to zoom in, backward to zoom out
                 scaleMomentum = (delta - 1) * dampeningFactor;
                 const oldScale = scale;
                 scale *= delta;
@@ -386,10 +391,8 @@
                 e.preventDefault();
                 const touch1 = e.touches[0];
                 const touch2 = e.touches[1];
-                lastTouchDistance = Math.hypot(
-                    touch1.pageX - touch2.pageX,
-                    touch1.pageY - touch2.pageY
-                );
+                lastTouchX1 = touch1.pageX;
+                lastTouchX2 = touch2.pageX;
                 velocityX = 0;
                 velocityY = 0;
                 lastVelocitiesX = [];
@@ -415,12 +418,12 @@
                 if (e.touches.length === 2) {
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
-                    const currentDistance = Math.hypot(
-                        touch1.pageX - touch2.pageX,
-                        touch1.pageY - touch2.pageY
-                    );
-                    if (lastTouchDistance) {
-                        const delta = currentDistance / lastTouchDistance;
+                    const currentX1 = touch1.pageX;
+                    const currentX2 = touch2.pageX;
+                    const deltaX = Math.abs(currentX2 - currentX1) - Math.abs(lastTouchX2 - lastTouchX1);
+
+                    if (Math.abs(deltaX) > 10) { // Threshold to detect spread
+                        const delta = 1 + (deltaX / 100); // Adjust zoom based on spread distance
                         scaleMomentum = (delta - 1) * dampeningFactor;
                         const oldScale = scale;
                         scale *= delta;
@@ -430,13 +433,14 @@
                         const rect = canvasContainer.getBoundingClientRect();
                         const centerX = rect.width / 2;
                         const centerY = rect.height / 2;
-                        const touchCenterX = (touch1.pageX + touch2.pageX) / 2 - rect.left;
+                        const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
                         const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
                         panOffsetX += (touchCenterX - centerX) * (1 - scaleFactor);
                         panOffsetY += (touchCenterY - centerY) * (1 - scaleFactor);
 
                         adjustCanvases();
-                        lastTouchDistance = currentDistance;
+                        lastTouchX1 = currentX1;
+                        lastTouchX2 = currentX2;
                         requestAnimationFrame(applyScaleMomentum);
                     }
                 } else if (e.touches.length === 1 && isDragging) {
@@ -472,7 +476,6 @@
             if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
                 momentumFrame = requestAnimationFrame(applyMomentum);
             }
-            lastTouchDistance = null;
         });
 
         window.addEventListener('resize', adjustCanvases);
