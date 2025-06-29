@@ -96,6 +96,7 @@
         let lastTouchX2 = 0;
         const minScale = 0.1;
         const maxScale = 10;
+        let lastMoveTime = 0;
         const debounceDelay = 16; // Approx 60 FPS
 
         async function loadSpread(index) {
@@ -241,56 +242,52 @@
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
 
-                    const scaleFactor = scale / oldScale;
-                    // No panning, just scale adjustment
                     adjustCanvases();
                     lastMoveTime = now;
                 }
             });
-        });
 
-        canvasContainer.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                lastTouchX1 = touch1.pageX;
-                lastTouchX2 = touch2.pageX;
-            }
-        });
-
-        canvasContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const now = performance.now();
-            if (now - lastMoveTime > debounceDelay) {
+            canvas.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
+                    e.preventDefault();
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
-                    const currentX1 = touch1.pageX;
-                    const currentX2 = touch2.pageX;
-                    const initialDistance = Math.hypot(lastTouchX2 - lastTouchX1, touch1.pageY - touch2.pageY);
-                    const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
-                    const deltaDistance = currentDistance - initialDistance;
-
-                    if (Math.abs(deltaDistance) > 1) {
-                        const delta = 1 + (deltaDistance * 0.005); // Smooth zoom
-                        const oldScale = scale;
-                        scale *= delta;
-                        scale = Math.min(Math.max(scale, minScale), maxScale);
-
-                        const scaleFactor = scale / oldScale;
-                        // No panning, just scale adjustment
-                        adjustCanvases();
-                        lastTouchX1 = currentX1;
-                        lastTouchX2 = currentX2;
-                    }
+                    lastTouchX1 = touch1.pageX;
+                    lastTouchX2 = touch2.pageX;
                 }
-                lastMoveTime = now;
-            }
-        });
+            });
 
-        canvasContainer.addEventListener('touchend', (e) => {
-            // No action needed
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const now = performance.now();
+                if (now - lastMoveTime > debounceDelay) {
+                    if (e.touches.length === 2) {
+                        const touch1 = e.touches[0];
+                        const touch2 = e.touches[1];
+                        const currentX1 = touch1.pageX;
+                        const currentX2 = touch2.pageX;
+                        const initialDistance = Math.hypot(lastTouchX2 - lastTouchX1, touch1.pageY - touch2.pageY);
+                        const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
+                        const deltaDistance = currentDistance - initialDistance;
+
+                        if (Math.abs(deltaDistance) > 1) {
+                            const delta = 1 + (deltaDistance * 0.005); // Smooth zoom
+                            const oldScale = scale;
+                            scale *= delta;
+                            scale = Math.min(Math.max(scale, minScale), maxScale);
+
+                            adjustCanvases();
+                            lastTouchX1 = currentX1;
+                            lastTouchX2 = currentX2;
+                        }
+                    }
+                    lastMoveTime = now;
+                }
+            });
+
+            canvas.addEventListener('touchend', (e) => {
+                // No action needed
+            });
         });
 
         window.addEventListener('resize', adjustCanvases);
