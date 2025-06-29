@@ -143,9 +143,11 @@
             if (window.innerWidth > 600) {
                 fitScale /= 1.6667; // 40% decrease
                 fitScale *= 1.15; // 15% increase
+                fitScale *= 1.15; // Another 15% increase
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
+                fitScale *= 1.1; // Another 10% increase
             }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
@@ -174,9 +176,11 @@
             if (window.innerWidth > 600) {
                 fitScale /= 1.6667; // 40% decrease
                 fitScale *= 1.15; // 15% increase
+                fitScale *= 1.15; // Another 15% increase
             } else {
                 fitScale *= 1.15; // 15% increase
                 fitScale *= 1.1; // 10% increase
+                fitScale *= 1.1; // Another 10% increase
             }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
