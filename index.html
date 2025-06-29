@@ -96,7 +96,7 @@
         const minScale = 0.1;
         const maxScale = 10;
         let lastMoveTime = 0;
-        const debounceDelay = 32; // Increased for smoother updates
+        const debounceDelay = 50; // Increased for smoother rendering
 
         // Restore last spread on refresh
         window.addEventListener('load', () => {
@@ -145,7 +145,11 @@
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1 });
+            let viewport = page.getViewport({ scale: 1 });
+            let rotation = page.getViewport({ scale: 1 }).rotation;
+            if (rotation === 180 || rotation === -180) { // Fix upside-down orientation
+                viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+            }
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -159,7 +163,7 @@
             }
             fitScale *= scale;
 
-            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
             const dpr = window.devicePixelRatio || 1;
             canvas.height = adjustedViewport.height * dpr;
             canvas.width = adjustedViewport.width * dpr;
@@ -177,7 +181,11 @@
 
         async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1 });
+            let viewport = page.getViewport({ scale: 1 });
+            let rotation = page.getViewport({ scale: 1 }).rotation;
+            if (rotation === 180 || rotation === -180) { // Fix upside-down orientation
+                viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+            }
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -191,7 +199,7 @@
             }
             fitScale *= scale;
 
-            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
             const dpr = window.devicePixelRatio || 1;
             canvas.height = adjustedViewport.height * dpr;
             canvas.width = adjustedViewport.width * dpr;
@@ -214,7 +222,9 @@
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]);
+                ]).then(() => {
+                    // Ensure rendering completes
+                });
             }
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
@@ -281,7 +291,7 @@
                         const initialDistance = Math.abs(lastTouchX2 - lastTouchX1);
                         const currentDistance = Math.abs(currentX2 - currentX1);
                         if (initialDistance > 0) {
-                            const delta = initialDistance / currentDistance; // Spread increases distance, zooms in
+                            const delta = currentDistance / initialDistance; // Spread to zoom in, squeeze to zoom out
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
 
@@ -298,6 +308,11 @@
                 // No action needed
             });
         });
+
+        // Remove background zoom by preventing default on container
+        canvasContainer.addEventListener('wheel', (e) => e.stopPropagation(), { passive: false });
+        canvasContainer.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+        canvasContainer.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: false });
 
         window.addEventListener('resize', adjustCanvases);
 
