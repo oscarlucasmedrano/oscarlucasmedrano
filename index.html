@@ -1,1 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Oscar-Lucas Medrano</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: black;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #flipbook-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+        #canvas-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #pdf-canvas-left, #pdf-canvas-right {
+            width: auto;
+            height: auto;
+        }
+        #pdf-canvas-single {
+            width: auto;
+            height: auto;
+        }
+        #crease {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(255,255,255,0.1));
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="flipbook-container">
+        <div id="canvas-container">
+            <canvas id="pdf-canvas-left"></canvas>
+            <canvas id="pdf-canvas-right"></canvas>
+            <canvas id="pdf-canvas-single"></canvas>
+            <div id="crease"></div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
+        const pdfFiles = [
+            { type: 'single', file: 'page1.pdf' },
+            { type: 'spread', left: 'page2.pdf', right: 'page3.pdf' }, // Updated to reflect renamed files
+            { type: 'single', file: 'page4.pdf' },
+            { type: 'single', file: 'page5.pdf' },
+            { type: 'single', file: 'page6.pdf' },
+            { type: 'single', file: 'page7.pdf' },
+            { type: 'single', file: 'page8.pdf' },
+            { type: 'single', file: 'page9.pdf' },
+            { type: 'single', file: 'page10.pdf' },
+            { type: 'single', file: 'page11.pdf' },
+            { type: 'single', file: 'page12.pdf' },
+            { type: 'single', file: 'page13.pdf' },
+            { type: 'single', file: 'page14.pdf' },
+            { type: 'single', file: 'page15.pdf' },
+            { type: 'single', file: 'page16.pdf' },
+            { type: 'single', file: 'page17.pdf' },
+            { type: 'single', file: 'page18.pdf' },
+            { type: 'single', file: 'page19.pdf' },
+            { type: 'single', file: 'page20.pdf' },
+            { type: 'single', file: 'page21.pdf' },
+            { type: 'single', file: 'page22.pdf' },
+            { type: 'single', file: 'page23.pdf' },
+            { type: 'single', file: 'page24.pdf' },
+            { type: 'single', file: 'page25.pdf' },
+            { type: 'single', file: 'page26.pdf' },
+            { type: 'single', file: 'page27.pdf' },
+            { type: 'single', file: 'page28.pdf' },
+            { type: 'single', file: 'page29.pdf' },
+            { type: 'single', file: 'page30.pdf' },
+            { type: 'single', file: 'page31.pdf' },
+            { type: 'single', file: 'page32.pdf' },
+            { type: 'single', file: 'page33.pdf' },
+            { type: 'single', file: 'page34.pdf' },
+            { type: 'single', file: 'page35.pdf' },
+            { type: 'single', file: 'page36.pdf' },
+            { type: 'single', file: 'page37.pdf' },
+            { type: 'single', file: 'page38.pdf' },
+            { type: 'single', file: 'page39.pdf' },
+            { type: 'single', file: 'page40.pdf' },
+            { type: 'single', file: 'page41.pdf' },
+            { type: 'single', file: 'page42.pdf' },
+            { type: 'single', file: 'page43.pdf' },
+            { type: 'single', file: 'page44.pdf' },
+            { type: 'single', file: 'page45.pdf' },
+            { type: 'single', file: 'page46.pdf' },
+            { type: 'single', file: 'page47.pdf' },
+            { type: 'single', file: 'page48.pdf' },
+            { type: 'single', file: 'page49.pdf' },
+            { type: 'single', file: 'page50.pdf' }
+        ];
+        let currentSpreadIndex = 0;
+        let scale = 1.0 * window.devicePixelRatio;
+        const canvasLeft = document.getElementById('pdf-canvas-left');
+        const canvasRight = document.getElementById('pdf-canvas-right');
+        const canvasSingle = document.getElementById('pdf-canvas-single');
+        const contextLeft = canvasLeft.getContext('2d');
+        const contextRight = canvasRight.getContext('2d');
+        const contextSingle = canvasSingle.getContext('2d');
+        const canvasContainer = document.getElementById('canvas-container');
+        const crease = document.getElementById('crease');
+        let pdfDocLeft = null;
+        let pdfDocRight = null;
+        const panOffsetX = 0; // Fixed at 0
+        const panOffsetY = 0; // Fixed at 0
+        let lastTouchX1 = 0;
+        let lastTouchX2 = 0;
+        const minScale = 0.1;
+        const maxScale = 10;
+        const debounceDelay = 16; // Approx 60 FPS
+
+        async function loadSpread(index) {
+            canvasLeft.style.display = 'none';
+            canvasRight.style.display = 'none';
+            canvasSingle.style.display = 'none';
+            crease.style.display = 'none';
+
+            const spread = pdfFiles[index];
+            if (spread.type === 'single') {
+                canvasSingle.style.display = 'block';
+                try {
+                    pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+                } catch (error) {
+                    console.error('Error loading single PDF:', error);
+                }
+            } else if (spread.type === 'spread') {
+                canvasLeft.style.display = 'block';
+                canvasRight.style.display = 'block';
+                crease.style.display = 'block';
+                try {
+                    pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
+                    pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
+                    await Promise.all([
+                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                    ]);
+                } catch (error) {
+                    console.error('Error loading spread PDFs:', error);
+                }
+            }
+            canvasContainer.style.left = '50%';
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
+        }
+
+        async function renderPage(pdfDoc, pageNum, canvas, context) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: scale });
+
+            const maxWidth = window.innerWidth * 0.25;
+            const maxHeight = window.innerHeight * 1;
+            const scaleX = maxWidth / viewport.width;
+            const scaleY = maxHeight / viewport.height;
+            let fitScale = Math.min(scaleX, scaleY);
+            if (window.innerWidth > 600) {
+                fitScale *= 1.265; // Current desktop scale
+            } else {
+                fitScale *= 1.76; // Current mobile scale
+            }
+            fitScale *= scale;
+
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+            canvas.height = adjustedViewport.height * window.devicePixelRatio;
+            canvas.width = adjustedViewport.width * window.devicePixelRatio;
+            canvas.style.width = `${adjustedViewport.width}px`;
+            canvas.style.height = `${adjustedViewport.height}px`;
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: adjustedViewport,
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+            };
+            await page.render(renderContext).promise;
+        }
+
+        async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: scale });
+
+            const maxWidth = window.innerWidth * 0.25;
+            const maxHeight = window.innerHeight * 1;
+            const scaleX = maxWidth / viewport.width;
+            const scaleY = maxHeight / viewport.height;
+            let fitScale = Math.min(scaleX, scaleY);
+            if (window.innerWidth > 600) {
+                fitScale *= 1.265; // Current desktop scale
+            } else {
+                fitScale *= 1.76; // Current mobile scale
+            }
+            fitScale *= scale;
+
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+            canvas.height = adjustedViewport.height * window.devicePixelRatio;
+            canvas.width = adjustedViewport.width * window.devicePixelRatio;
+            canvas.style.width = `${adjustedViewport.width}px`;
+            canvas.style.height = `${adjustedViewport.height}px`;
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: adjustedViewport,
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+            };
+            await page.render(renderContext).promise;
+        }
+
+        function adjustCanvases() {
+            if (pdfFiles[currentSpreadIndex].type === 'single') {
+                renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+            } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
+                Promise.all([
+                    renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                    renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                ]);
+            }
+            canvasContainer.style.left = '50%';
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
+        }
+
+        canvasContainer.addEventListener('click', (e) => {
+            const rect = canvasContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
+                currentSpreadIndex--;
+                loadSpread(currentSpreadIndex);
+            } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
+                currentSpreadIndex++;
+                loadSpread(currentSpreadIndex);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentSpreadIndex > 0) {
+                currentSpreadIndex--;
+                loadSpread(currentSpreadIndex);
+            } else if (e.key === 'ArrowRight' && currentSpreadIndex < pdfFiles.length - 1) {
+                currentSpreadIndex++;
+                loadSpread(currentSpreadIndex);
+            }
+        });
+
+        canvasContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastTouchX1 = touch1.pageX;
+                lastTouchX2 = touch2.pageX;
+            }
+        });
+
+        canvasContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const now = performance.now();
+            if (now - lastMoveTime > debounceDelay) {
+                if (e.touches.length === 2) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const currentX1 = touch1.pageX;
+                    const currentX2 = touch2.pageX;
+                    const initialDistance = Math.hypot(lastTouchX2 - lastTouchX1, touch1.pageY - touch2.pageY);
+                    const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
+                    const deltaDistance = currentDistance - initialDistance;
+
+                    if (Math.abs(deltaDistance) > 1) {
+                        const delta = 1 + (deltaDistance * 0.005); // Smooth zoom
+                        const oldScale = scale;
+                        scale *= delta;
+                        scale = Math.min(Math.max(scale, minScale), maxScale);
+
+                        adjustCanvases();
+                        lastTouchX1 = currentX1;
+                        lastTouchX2 = currentX2;
+                    }
+                }
+                lastMoveTime = now;
+            }
+        });
+
+        canvasContainer.addEventListener('touchend', (e) => {
+            // No action needed
+        });
+
+        window.addEventListener('resize', adjustCanvases);
+
+        loadSpread(currentSpreadIndex);
+    </script>
+</body>
+</html>
