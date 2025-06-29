@@ -89,19 +89,22 @@
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
         let pdfDocRight = null;
-        const panOffsetX = 0;
-        const panOffsetY = 0;
-        let lastTouchX1 = 0;
-        let lastTouchX2 = 0;
+        let panOffsetX = 0;
+        let panOffsetY = 0;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let isPanning = false;
+        let lastMoveTime = 0;
         const minScale = 0.1;
         const maxScale = 10;
-        let lastMoveTime = 0;
-        const debounceDelay = 120; // Increased for smoother rendering
+        const debounceDelay = 150; // Increased for smoother rendering
 
         // Return to cover page on refresh with fixed orientation
         window.addEventListener('load', async () => {
             currentSpreadIndex = 0; // Reset to cover page
             scale = 1.0; // Reset scale on refresh
+            panOffsetX = 0;
+            panOffsetY = 0;
             await loadSpread(currentSpreadIndex);
         });
 
@@ -162,7 +165,7 @@
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
+            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
@@ -237,18 +240,18 @@
 
         function adjustCanvases() {
             requestAnimationFrame(() => {
-                if (pdfFiles[currentSpreadIndex].type === 'single') {
-                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
-                } else {
-                    Promise.all([
-                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                    ]).then(() => {
-                        // Ensure rendering completes
-                    });
-                }
-                canvasContainer.style.left = '50%';
-                canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
+                return new Promise((resolve) => {
+                    if (pdfFiles[currentSpreadIndex].type === 'single') {
+                        renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle).then(resolve);
+                    } else {
+                        Promise.all([
+                            renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                            renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                        ]).then(resolve);
+                    }
+                    canvasContainer.style.left = '50%';
+                    canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+                });
             });
         }
 
@@ -283,13 +286,58 @@
                     const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Up to zoom in, down to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
-                    adjustCanvases();
+                    adjustCanvases().then(() => {
+                        if (scale > 1.0) {
+                            panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
+                            panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
+                        }
+                    });
                     lastMoveTime = now;
                 }
             });
 
+            container.addEventListener('mousedown', (e) => {
+                if (scale > 1.0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isPanning = true;
+                    lastTouchX = e.clientX - panOffsetX;
+                    lastTouchY = e.clientY - panOffsetY;
+                }
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (isPanning && scale > 1.0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const now = performance.now();
+                    if (now - lastMoveTime > debounceDelay) {
+                        panOffsetX = e.clientX - lastTouchX;
+                        panOffsetY = e.clientY - lastTouchY;
+                        panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
+                        panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
+                        adjustCanvases();
+                        lastMoveTime = now;
+                    }
+                }
+            });
+
+            container.addEventListener('mouseup', () => {
+                isPanning = false;
+            });
+
+            container.addEventListener('mouseleave', () => {
+                isPanning = false;
+            });
+
             container.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
+                if (e.touches.length === 1 && scale > 1.0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isPanning = true;
+                    lastTouchX = e.touches[0].clientX - panOffsetX;
+                    lastTouchY = e.touches[0].clientY - panOffsetY;
+                } else if (e.touches.length === 2) {
                     e.preventDefault();
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
@@ -302,7 +350,14 @@
                 e.preventDefault();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    if (e.touches.length === 2) {
+                    if (e.touches.length === 1 && isPanning && scale > 1.0) {
+                        const touch = e.touches[0];
+                        panOffsetX = touch.clientX - lastTouchX;
+                        panOffsetY = touch.clientY - lastTouchY;
+                        panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
+                        panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
+                        adjustCanvases();
+                    } else if (e.touches.length === 2) {
                         const touch1 = e.touches[0];
                         const touch2 = e.touches[1];
                         const currentX1 = touch1.pageX;
@@ -316,7 +371,12 @@
                             const oldScale = scale;
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
-                            adjustCanvases();
+                            adjustCanvases().then(() => {
+                                if (scale > 1.0) {
+                                    panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
+                                    panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
+                                }
+                            });
                             lastTouchX1 = currentX1;
                             lastTouchX2 = currentX2;
                         }
@@ -326,7 +386,9 @@
             });
 
             container.addEventListener('touchend', (e) => {
-                // No action needed
+                if (e.touches.length === 0) {
+                    isPanning = false;
+                }
             });
         });
 
