@@ -97,8 +97,8 @@
         let isPanning = false;
         let lastMoveTime = 0;
         const minScale = 0.5;
-        const maxScale = 4.0; // Limited range for detailed drawing
-        const debounceDelay = 300; // Increased for smoother rendering
+        const maxScale = 4.0;
+        const debounceDelay = 300;
 
         // Load homepage by default
         loadSpread(currentSpreadIndex);
@@ -170,11 +170,11 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth * 0.25;
-            const maxHeight = window.innerHeight * 1;
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.20 * window.innerWidth; // 30% larger on desktop, 20% smaller on mobile
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.80 * window.innerHeight; // 30% larger on desktop, 20% smaller on mobile
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * scale; // Apply scale directly
+            const fitScale = Math.min(scaleX, scaleY) * scale;
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
             const dpr = window.devicePixelRatio || 1;
             canvas.height = adjustedViewport.height * dpr;
@@ -198,11 +198,11 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth * 0.25;
-            const maxHeight = window.innerHeight * 1;
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.20 * window.innerWidth; // 30% larger on desktop, 20% smaller on mobile
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.80 * window.innerHeight; // 30% larger on desktop, 20% smaller on mobile
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * scale; // Apply scale directly
+            const fitScale = Math.min(scaleX, scaleY) * scale;
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
             const dpr = window.devicePixelRatio || 1;
             canvas.height = adjustedViewport.height * dpr;
