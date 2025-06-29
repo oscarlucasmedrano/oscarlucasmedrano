@@ -42,19 +42,20 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         #canvas-container.spread {
-            justify-content: space-between;
-            width: 80%; /* Adjust to fit both canvases side by side */
+            justify-content: space-around;
+            width: 90%; /* Wider to fit both canvases */
+            max-width: 1200px; /* Prevent excessive stretching */
         }
         #pdf-canvas-left, #pdf-canvas-right {
             width: auto;
             height: auto;
-            display: none; /* Controlled by script */
-            flex: 1; /* Equal width for spreads */
+            display: none;
+            max-width: 45%; /* Limit each canvas to half the container */
         }
         #pdf-canvas-single {
             width: auto;
             height: auto;
-            display: none; /* Controlled by script */
+            display: none;
         }
         #crease {
             position: absolute;
@@ -64,7 +65,7 @@
             height: 100%;
             background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(255,255,255,0.1));
             z-index: 1;
-            display: none; /* Controlled by script */
+            display: none;
         }
     </style>
 </head>
@@ -135,6 +136,11 @@
         let lastMoveTime = 0; // Track touchmove timing
 
         async function loadSpread(index) {
+            // Clear canvases
+            contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
+            contextRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
+            contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height);
+            
             canvasLeft.style.display = 'none';
             canvasRight.style.display = 'none';
             canvasSingle.style.display = 'none';
@@ -142,6 +148,7 @@
             canvasContainer.classList.remove('spread');
 
             const spread = pdfFiles[index];
+            console.log(`Loading index ${index}, type: ${spread.type}, file(s): ${spread.file || `${spread.left} + ${spread.right}`}`);
             if (spread.type === 'single') {
                 canvasSingle.style.display = 'block';
                 try {
@@ -162,6 +169,7 @@
                         renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                         renderPage(pdfDocRight, 1, canvasRight, contextRight)
                     ]);
+                    console.log('Spread rendered for:', spread.left, spread.right);
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
                 }
@@ -238,6 +246,7 @@
                 canvasRight.style.display = 'none';
                 crease.style.display = 'none';
                 canvasContainer.classList.remove('spread');
+                console.log('Rendered single page:', pdfFiles[currentSpreadIndex].file);
             } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
@@ -248,7 +257,8 @@
                     canvasRight.style.display = 'block';
                     canvasSingle.style.display = 'none';
                     crease.style.display = 'block';
-                });
+                    console.log('Rendered spread:', pdfFiles[currentSpreadIndex].left, pdfFiles[currentSpreadIndex].right);
+                }).catch(error => console.error('Render error:', error));
             }
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
