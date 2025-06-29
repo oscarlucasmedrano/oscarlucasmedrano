@@ -41,14 +41,20 @@
             transform-origin: center center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
+        #canvas-container.spread {
+            justify-content: space-between;
+            width: 80%; /* Adjust to fit both canvases side by side */
+        }
         #pdf-canvas-left, #pdf-canvas-right {
             width: auto;
             height: auto;
-            display: inline-block; /* Ensure side-by-side */
+            display: none; /* Controlled by script */
+            flex: 1; /* Equal width for spreads */
         }
         #pdf-canvas-single {
             width: auto;
             height: auto;
+            display: none; /* Controlled by script */
         }
         #crease {
             position: absolute;
@@ -58,6 +64,7 @@
             height: 100%;
             background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(255,255,255,0.1));
             z-index: 1;
+            display: none; /* Controlled by script */
         }
     </style>
 </head>
@@ -125,13 +132,14 @@
         const minScale = 0.1;
         const maxScale = 10;
         const debounceDelay = 16; // Approx 60 FPS
-        let lastMoveTime = 0; // Added to track touchmove timing
+        let lastMoveTime = 0; // Track touchmove timing
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
             canvasRight.style.display = 'none';
             canvasSingle.style.display = 'none';
             crease.style.display = 'none';
+            canvasContainer.classList.remove('spread');
 
             const spread = pdfFiles[index];
             if (spread.type === 'single') {
@@ -143,8 +151,9 @@
                     console.error('Error loading single PDF:', error);
                 }
             } else if (spread.type === 'spread') {
-                canvasLeft.style.display = 'inline-block'; // Ensure side-by-side
-                canvasRight.style.display = 'inline-block'; // Ensure side-by-side
+                canvasContainer.classList.add('spread');
+                canvasLeft.style.display = 'block';
+                canvasRight.style.display = 'block';
                 crease.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
@@ -228,13 +237,15 @@
                 canvasLeft.style.display = 'none';
                 canvasRight.style.display = 'none';
                 crease.style.display = 'none';
+                canvasContainer.classList.remove('spread');
             } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
                 ]).then(() => {
-                    canvasLeft.style.display = 'inline-block';
-                    canvasRight.style.display = 'inline-block';
+                    canvasContainer.classList.add('spread');
+                    canvasLeft.style.display = 'block';
+                    canvasRight.style.display = 'block';
                     canvasSingle.style.display = 'none';
                     crease.style.display = 'block';
                 });
