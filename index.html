@@ -38,7 +38,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transform-origin: center center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         #pdf-canvas-left, #pdf-canvas-right {
@@ -79,25 +78,32 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.0 * window.devicePixelRatio;
+        let scale = 1.0;
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
-        const contextLeft = canvasLeft.getContext('2d');
-        const contextRight = canvasRight.getContext('2d');
-        const contextSingle = canvasSingle.getContext('2d');
+        const contextLeft = canvasLeft.getContext('2d', { alpha: false });
+        const contextRight = canvasRight.getContext('2d', { alpha: false });
+        const contextSingle = canvasSingle.getContext('2d', { alpha: false });
         const canvasContainer = document.getElementById('canvas-container');
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
         let pdfDocRight = null;
-        const panOffsetX = 0; // Fixed at 0
-        const panOffsetY = 0; // Fixed at 0
+        const panOffsetX = 0;
+        const panOffsetY = 0;
         let lastTouchX1 = 0;
         let lastTouchX2 = 0;
         const minScale = 0.1;
         const maxScale = 10;
-        const debounceDelay = 16; // Approx 60 FPS
         let lastMoveTime = 0;
+        const debounceDelay = 75; // Increased for smoother rendering
+
+        // Return to cover page on refresh
+        window.addEventListener('load', async () => {
+            currentSpreadIndex = 0; // Reset to cover page
+            scale = 1.0; // Reset scale on refresh
+            await loadSpread(currentSpreadIndex);
+        });
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -106,11 +112,31 @@
             crease.style.display = 'none';
 
             const spread = pdfFiles[index];
-            if (spread.type === 'single') {
+            if (spread.type === 'single' && index === 0) { // Special handling for cover page
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+                    const page = await pdfDocLeft.getPage(1);
+                    let viewport = page.getViewport({ scale: 1 });
+                    let rotation = viewport.rotation;
+                    if (rotation === 180 || rotation === -180) { // Fix upside-down cover on refresh
+                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+                    }
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
+                } catch (error) {
+                    console.error('Error loading single PDF:', error);
+                }
+            } else if (spread.type === 'single') {
+                canvasSingle.style.display = 'block';
+                try {
+                    pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
+                    const page = await pdfDocLeft.getPage(1);
+                    let viewport = page.getViewport({ scale: 1 });
+                    let rotation = viewport.rotation;
+                    if (rotation === 180 || rotation === -180) {
+                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
+                    }
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
                 } catch (error) {
                     console.error('Error loading single PDF:', error);
                 }
@@ -121,21 +147,30 @@
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
+                    const pageLeft = await pdfDocLeft.getPage(1);
+                    const pageRight = await pdfDocRight.getPage(1);
+                    let rotationLeft = pageLeft.getViewport({ scale: 1 }).rotation;
+                    let rotationRight = pageRight.getViewport({ scale: 1 }).rotation;
+                    if (rotationLeft === 180 || rotationLeft === -180) rotationLeft += 180;
+                    if (rotationRight === 180 || rotationRight === -180) rotationRight += 180;
                     await Promise.all([
-                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft, rotationLeft),
+                        renderPage(pdfDocRight, 1, canvasRight, contextRight, rotationRight)
                     ]);
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
         }
 
-        async function renderPage(pdfDoc, pageNum, canvas, context) {
+        async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: scale });
+            let viewport = page.getViewport({ scale: 1 });
+            if (rotation === 180 || rotation === -180) { // Additional rotation fix
+                viewport = page.getViewport({ scale: 1, rotation: rotation });
+            }
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -143,29 +178,34 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // Current desktop scale
+                fitScale *= 1.265;
             } else {
-                fitScale *= 1.76; // Current mobile scale
+                fitScale *= 1.76;
             }
             fitScale *= scale;
 
-            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            canvas.height = adjustedViewport.height * window.devicePixelRatio;
-            canvas.width = adjustedViewport.width * window.devicePixelRatio;
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
+            const dpr = window.devicePixelRatio || 1;
+            canvas.height = adjustedViewport.height * dpr;
+            canvas.width = adjustedViewport.width * dpr;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
+            canvas.style.transform = 'none'; // Ensure no movement
 
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                transform: [dpr, 0, 0, dpr, 0, 0]
             };
             await page.render(renderContext).promise;
         }
 
-        async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
+        async function renderSinglePage(pdfDoc, pageNum, canvas, context, rotation = 0) {
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: scale });
+            let viewport = page.getViewport({ scale: 1 });
+            if (rotation === 180 || rotation === -180) { // Additional rotation fix
+                viewport = page.getViewport({ scale: 1, rotation: rotation });
+            }
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -173,22 +213,24 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // Current desktop scale
+                fitScale *= 1.265;
             } else {
-                fitScale *= 1.76; // Current mobile scale
+                fitScale *= 1.76;
             }
             fitScale *= scale;
 
-            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
-            canvas.height = adjustedViewport.height * window.devicePixelRatio;
-            canvas.width = adjustedViewport.width * window.devicePixelRatio;
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
+            const dpr = window.devicePixelRatio || 1;
+            canvas.height = adjustedViewport.height * dpr;
+            canvas.width = adjustedViewport.width * dpr;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
+            canvas.style.transform = 'none'; // Ensure no movement
 
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                transform: [dpr, 0, 0, dpr, 0, 0]
             };
             await page.render(renderContext).promise;
         }
@@ -200,10 +242,12 @@
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]);
+                ]).then(() => {
+                    // Ensure rendering completes
+                });
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)';
         }
 
         canvasContainer.addEventListener('click', (e) => {
@@ -234,7 +278,7 @@
                 e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY > 0 ? 1.05 : 1 / 1.05; // Down to zoom in, up to zoom out (matches trackpad)
+                    const delta = e.deltaY > 0 ? 1 / 1.05 : 1.05; // Up to zoom in, down to zoom out (matches trackpad)
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases();
@@ -266,7 +310,7 @@
                         const deltaDistance = currentDistance - initialDistance;
 
                         if (Math.abs(deltaDistance) > 1) {
-                            const delta = 1 - (deltaDistance * 0.005); // Pinch apart to zoom in, pinch together to zoom out
+                            const delta = 1 + (deltaDistance * 0.005); // Pinch together to zoom in, pinch apart to zoom out
                             const oldScale = scale;
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
