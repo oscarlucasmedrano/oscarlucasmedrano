@@ -150,9 +150,9 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // 10% increase from 1.15
+                fitScale *= 1.265; // Current desktop scale
             } else {
-                fitScale *= 1.76; // 10% increase from 1.6
+                fitScale *= 1.76; // Current mobile scale
             }
             fitScale *= scale;
 
@@ -180,9 +180,9 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // 10% increase from 1.15
+                fitScale *= 1.265; // Current desktop scale
             } else {
-                fitScale *= 1.76; // 10% increase from 1.6
+                fitScale *= 1.76; // Current mobile scale
             }
             fitScale *= scale;
 
@@ -235,23 +235,6 @@
             }
         });
 
-        let lastPanX = 0;
-        let lastPanY = 0;
-        let momentumFrame = null;
-
-        function applyMomentum() {
-            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
-                panOffsetX += velocityX;
-                panOffsetY += velocityY;
-                velocityX *= momentumDecay;
-                velocityY *= momentumDecay;
-                adjustCanvases();
-                momentumFrame = requestAnimationFrame(applyMomentum);
-            } else {
-                if (momentumFrame) cancelAnimationFrame(momentumFrame);
-            }
-        }
-
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasContainer.getBoundingClientRect();
@@ -260,7 +243,7 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // 5% zoom per scroll
+                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Zoom only
                 const oldScale = scale;
                 scale *= delta;
                 scale = Math.min(Math.max(scale, minScale), maxScale);
@@ -276,24 +259,24 @@
 
         canvasContainer.addEventListener('mousedown', (e) => {
             isDragging = true;
-            startX = e.clientX - panOffsetX;
-            startY = e.clientY - panOffsetY;
+            startX = e.clientX;
+            startY = e.clientY;
             velocityX = 0;
             velocityY = 0;
             lastVelocitiesX = [];
             lastVelocitiesY = [];
-            if (momentumFrame) cancelAnimationFrame(momentumFrame);
-            e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
             if (isDragging) {
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    const deltaX = e.clientX - startX - panOffsetX;
-                    const deltaY = e.clientY - startY - panOffsetY;
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
                     panOffsetX += deltaX;
                     panOffsetY += deltaY;
+                    startX = e.clientX;
+                    startY = e.clientY;
                     const timeDelta = (now - lastMoveTime) / 1000;
                     if (timeDelta > 0) {
                         const velX = deltaX / timeDelta;
@@ -309,24 +292,16 @@
                     }
                     adjustCanvases();
                     lastMoveTime = now;
-                    lastPanX = e.clientX;
-                    lastPanY = e.clientY;
                 }
             }
         });
 
         document.addEventListener('mouseup', (e) => {
             isDragging = false;
-            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
-                momentumFrame = requestAnimationFrame(applyMomentum);
-            }
         });
 
         document.addEventListener('mouseleave', () => {
             isDragging = false;
-            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
-                momentumFrame = requestAnimationFrame(applyMomentum);
-            }
         });
 
         canvasContainer.addEventListener('touchstart', (e) => {
@@ -341,17 +316,15 @@
                 velocityY = 0;
                 lastVelocitiesX = [];
                 lastVelocitiesY = [];
-                if (momentumFrame) cancelAnimationFrame(momentumFrame);
             } else if (e.touches.length === 1) {
                 isDragging = true;
                 const touch = e.touches[0];
-                startX = touch.clientX - panOffsetX;
-                startY = touch.clientY - panOffsetY;
+                startX = touch.clientX;
+                startY = touch.clientY;
                 velocityX = 0;
                 velocityY = 0;
                 lastVelocitiesX = [];
                 lastVelocitiesY = [];
-                if (momentumFrame) cancelAnimationFrame(momentumFrame);
             }
         });
 
@@ -387,10 +360,12 @@
                     }
                 } else if (e.touches.length === 1 && isDragging) {
                     const touch = e.touches[0];
-                    const deltaX = touch.clientX - startX - panOffsetX;
-                    const deltaY = touch.clientY - startY - panOffsetY;
+                    const deltaX = touch.clientX - startX;
+                    const deltaY = touch.clientY - startY;
                     panOffsetX += deltaX;
                     panOffsetY += deltaY;
+                    startX = touch.clientX;
+                    startY = touch.clientY;
                     const timeDelta = (now - lastMoveTime) / 1000;
                     if (timeDelta > 0) {
                         const velX = deltaX / timeDelta;
@@ -406,8 +381,6 @@
                     }
                     adjustCanvases();
                     lastMoveTime = now;
-                    lastPanX = touch.clientX;
-                    lastPanY = touch.clientY;
                 }
                 lastMoveTime = now;
             }
@@ -415,9 +388,6 @@
 
         canvasContainer.addEventListener('touchend', (e) => {
             isDragging = false;
-            if (Math.abs(velocityX) > 0.1 || Math.abs(velocityY) > 0.1) {
-                momentumFrame = requestAnimationFrame(applyMomentum);
-            }
         });
 
         window.addEventListener('resize', adjustCanvases);
