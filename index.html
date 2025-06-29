@@ -79,7 +79,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.8 * window.devicePixelRatio; // Increased base scale for larger mobile layout
+        let scale = 9.0 * window.devicePixelRatio; // 500% increase from 1.8
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -126,7 +126,7 @@
                     console.error('Error loading spread PDFs:', error);
                 }
             }
-            // Ensure canvas container remains centered after load
+            // Ensure canvas container remains centered and pinned
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
@@ -135,11 +135,11 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * (pdfFiles[currentSpreadIndex].type === 'single' ? 0.5 : 0.25); // Half width for single, quarter for each spread page
+            const maxWidth = window.innerWidth * 0.25; // Quarter width for each spread page
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80% for all pages
+            const fitScale = Math.min(scaleX, scaleY) * 1.8; // 80% increase
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -163,7 +163,7 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const fitScale = Math.min(scaleX, scaleY) * 1.8; // Increase size by 80% for all pages
+            const fitScale = Math.min(scaleX, scaleY) * 1.8; // 80% increase
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -188,7 +188,7 @@
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
                 ]);
             }
-            // Re-center and apply pan offset after any adjustment
+            // Re-center and apply pan offset after adjustment
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
@@ -221,28 +221,30 @@
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
             const rect = canvasContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const mouseX = e.clientX - rect.left - (rect.width / 2); // Center-relative X
+            const mouseY = e.clientY - rect.top - (rect.height / 2); // Center-relative Y
 
-            // Zoom toward cursor position
-            const delta = e.deltaY < 0 ? 1.1 : 0.9; // Up zooms in, down zooms out
+            // Consistent zoom: up zooms in, down zooms out
+            const delta = e.deltaY < 0 ? 1.1 : 0.9;
             const oldScale = scale;
             scale *= delta;
-            scale = Math.min(Math.max(0.5, scale), 5);
+            scale = Math.min(Math.max(1.0, scale), 5); // Start panning at scale 1.0
 
-            // Adjust pan offset to keep cursor over the same point
+            // Pin zoom to center, adjust pan to maintain stability
             const scaleFactor = scale / oldScale;
-            panOffsetX = (panOffsetX + mouseX) * scaleFactor - mouseX;
-            panOffsetY = (panOffsetY + mouseY) * scaleFactor - mouseY;
+            panOffsetX = (panOffsetX - mouseX) * scaleFactor + mouseX;
+            panOffsetY = (panOffsetY - mouseY) * scaleFactor + mouseY;
 
             adjustCanvases();
         });
 
         canvasContainer.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX - panOffsetX;
-            startY = e.clientY - panOffsetY;
-            e.preventDefault();
+            if (scale > 1.0) { // Enable dragging only after zooming
+                isDragging = true;
+                startX = e.clientX - panOffsetX;
+                startY = e.clientY - panOffsetY;
+                e.preventDefault();
+            }
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -270,7 +272,7 @@
                     touch1.pageX - touch2.pageX,
                     touch1.pageY - touch2.pageY
                 );
-            } else if (e.touches.length === 1) {
+            } else if (e.touches.length === 1 && scale > 1.0) {
                 isDragging = true;
                 const touch = e.touches[0];
                 startX = touch.clientX - panOffsetX;
@@ -290,7 +292,7 @@
                 if (lastTouchDistance) {
                     const delta = currentDistance / lastTouchDistance;
                     scale *= delta;
-                    scale = Math.min(Math.max(0.5, scale), 5);
+                    scale = Math.min(Math.max(1.0, scale), 5);
                     adjustCanvases();
                     lastTouchDistance = currentDistance;
                 }
