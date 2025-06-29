@@ -75,8 +75,7 @@
 
         const pdfFiles = [
             { type: 'single', file: 'page1.pdf' },
-            { type: 'single', file: 'page2.pdf' },
-            { type: 'single', file: 'page3.pdf' },
+            { type: 'spread', left: 'page2.pdf', right: 'page3.pdf' }, // Updated to reflect renamed files
             { type: 'single', file: 'page4.pdf' },
             { type: 'single', file: 'page5.pdf' },
             { type: 'single', file: 'page6.pdf' },
@@ -160,7 +159,7 @@
                 } catch (error) {
                     console.error('Error loading single PDF:', error);
                 }
-            } else {
+            } else if (spread.type === 'spread') {
                 canvasLeft.style.display = 'block';
                 canvasRight.style.display = 'block';
                 crease.style.display = 'block';
@@ -242,7 +241,7 @@
         function adjustCanvases() {
             if (pdfFiles[currentSpreadIndex].type === 'single') {
                 renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
-            } else {
+            } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
