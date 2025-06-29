@@ -265,7 +265,7 @@
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     const oldScale = scale;
-                    const delta = e.deltaY > 0 ? 1.02 : 1 / 1.02; // Scroll down to zoom in, scroll up to zoom out
+                    const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Scroll up to zoom in, scroll down to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases().then(() => {
@@ -273,6 +273,25 @@
                         panOffsetY = 0;
                     });
                     lastMoveTime = now;
+                }
+            });
+
+            // Simulate trackpad with wheel event for consistency
+            container.addEventListener('wheel', (e) => {
+                if (e.ctrlKey) { // Trackpad pinch often triggers ctrl+wheel
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const now = performance.now();
+                    if (now - lastMoveTime > debounceDelay) {
+                        const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Match wheel direction
+                        scale *= delta;
+                        scale = Math.min(Math.max(scale, minScale), maxScale);
+                        adjustCanvases().then(() => {
+                            panOffsetX = 0;
+                            panOffsetY = 0;
+                        });
+                        lastMoveTime = now;
+                    }
                 }
             });
 
