@@ -139,11 +139,11 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY) * 6; // 500% increase
+            let fitScale = Math.min(scaleX, scaleY) * 6; // Base 500% increase
             if (window.innerWidth > 600) {
-                fitScale /= 3; // 200% decrease on desktop
+                fitScale *= 2.25; // 125% increase on desktop
             } else {
-                fitScale *= 2; // 100% increase on mobile
+                fitScale /= 1.2; // 20% decrease on mobile
             }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
@@ -168,11 +168,11 @@
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY) * 6; // 500% increase
+            let fitScale = Math.min(scaleX, scaleY) * 6; // Base 500% increase
             if (window.innerWidth > 600) {
-                fitScale /= 3; // 200% decrease on desktop
+                fitScale *= 2.25; // 125% increase on desktop
             } else {
-                fitScale *= 2; // 100% increase on mobile
+                fitScale /= 1.2; // 20% decrease on mobile
             }
 
             const adjustedViewport = page.getViewport({ scale: fitScale });
