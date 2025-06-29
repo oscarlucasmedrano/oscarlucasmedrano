@@ -90,16 +90,8 @@
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
         let pdfDocRight = null;
-        let panOffsetX = 0;
-        let panOffsetY = 0;
-        let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-        let lastMoveTime = 0;
-        let velocityX = 0;
-        let velocityY = 0;
-        let lastVelocitiesX = [];
-        let lastVelocitiesY = [];
+        const panOffsetX = 0; // Fixed at 0
+        const panOffsetY = 0; // Fixed at 0
         let lastTouchX1 = 0;
         let lastTouchX2 = 0;
         const minScale = 0.1;
@@ -137,7 +129,7 @@
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
@@ -210,7 +202,7 @@
                 ]);
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         canvasContainer.addEventListener('click', (e) => {
@@ -235,96 +227,13 @@
             }
         });
 
-        canvasContainer.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const rect = canvasContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const now = performance.now();
-
-            if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Zoom only
-                const oldScale = scale;
-                scale *= delta;
-                scale = Math.min(Math.max(scale, minScale), maxScale);
-
-                const scaleFactor = scale / oldScale;
-                panOffsetX -= (mouseX - panOffsetX) * (scaleFactor - 1); // Pin to cursor
-                panOffsetY -= (mouseY - panOffsetY) * (scaleFactor - 1);
-
-                adjustCanvases();
-                lastMoveTime = now;
-            }
-        });
-
-        canvasContainer.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            velocityX = 0;
-            velocityY = 0;
-            lastVelocitiesX = [];
-            lastVelocitiesY = [];
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const now = performance.now();
-                if (now - lastMoveTime > debounceDelay) {
-                    const deltaX = e.clientX - startX;
-                    const deltaY = e.clientY - startY;
-                    panOffsetX += deltaX;
-                    panOffsetY += deltaY;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    const timeDelta = (now - lastMoveTime) / 1000;
-                    if (timeDelta > 0) {
-                        const velX = deltaX / timeDelta;
-                        const velY = deltaY / timeDelta;
-                        lastVelocitiesX.push(velX);
-                        lastVelocitiesY.push(velY);
-                        if (lastVelocitiesX.length > 3) {
-                            lastVelocitiesX.shift();
-                            lastVelocitiesY.shift();
-                        }
-                        velocityX = lastVelocitiesX.reduce((a, b) => a + b, 0) / lastVelocitiesX.length || 0;
-                        velocityY = lastVelocitiesY.reduce((a, b) => a + b, 0) / lastVelocitiesY.length || 0;
-                    }
-                    adjustCanvases();
-                    lastMoveTime = now;
-                }
-            }
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            isDragging = false;
-        });
-
-        document.addEventListener('mouseleave', () => {
-            isDragging = false;
-        });
-
         canvasContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 e.preventDefault();
-                isDragging = false; // Disable dragging for two-finger zoom
                 const touch1 = e.touches[0];
                 const touch2 = e.touches[1];
                 lastTouchX1 = touch1.pageX;
                 lastTouchX2 = touch2.pageX;
-                velocityX = 0;
-                velocityY = 0;
-                lastVelocitiesX = [];
-                lastVelocitiesY = [];
-            } else if (e.touches.length === 1) {
-                isDragging = true;
-                const touch = e.touches[0];
-                startX = touch.clientX;
-                startY = touch.clientY;
-                velocityX = 0;
-                velocityY = 0;
-                lastVelocitiesX = [];
-                lastVelocitiesY = [];
             }
         });
 
@@ -332,7 +241,7 @@
             e.preventDefault();
             const now = performance.now();
             if (now - lastMoveTime > debounceDelay) {
-                if (e.touches.length === 2 && !isDragging) {
+                if (e.touches.length === 2) {
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
                     const currentX1 = touch1.pageX;
@@ -351,43 +260,18 @@
                         const rect = canvasContainer.getBoundingClientRect();
                         const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
                         const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-                        panOffsetX -= (touchCenterX - panOffsetX) * (scaleFactor - 1); // Pin to touch center
-                        panOffsetY -= (touchCenterY - panOffsetY) * (scaleFactor - 1);
-
+                        // No panning, just scale adjustment
                         adjustCanvases();
                         lastTouchX1 = currentX1;
                         lastTouchX2 = currentX2;
                     }
-                } else if (e.touches.length === 1 && isDragging) {
-                    const touch = e.touches[0];
-                    const deltaX = touch.clientX - startX;
-                    const deltaY = touch.clientY - startY;
-                    panOffsetX += deltaX;
-                    panOffsetY += deltaY;
-                    startX = touch.clientX;
-                    startY = touch.clientY;
-                    const timeDelta = (now - lastMoveTime) / 1000;
-                    if (timeDelta > 0) {
-                        const velX = deltaX / timeDelta;
-                        const velY = deltaY / timeDelta;
-                        lastVelocitiesX.push(velX);
-                        lastVelocitiesY.push(velY);
-                        if (lastVelocitiesX.length > 3) {
-                            lastVelocitiesX.shift();
-                            lastVelocitiesY.shift();
-                        }
-                        velocityX = lastVelocitiesX.reduce((a, b) => a + b, 0) / lastVelocitiesX.length || 0;
-                        velocityY = lastVelocitiesY.reduce((a, b) => a + b, 0) / lastVelocitiesY.length || 0;
-                    }
-                    adjustCanvases();
-                    lastMoveTime = now;
                 }
                 lastMoveTime = now;
             }
         });
 
         canvasContainer.addEventListener('touchend', (e) => {
-            isDragging = false;
+            // No action needed
         });
 
         window.addEventListener('resize', adjustCanvases);
