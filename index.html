@@ -97,7 +97,7 @@
         let lastMoveTime = 0;
         const minScale = 0.1;
         const maxScale = 10;
-        const debounceDelay = 150; // Increased for smoother rendering
+        const debounceDelay = 200; // Increased for smoother rendering
 
         // Return to cover page on refresh with fixed orientation
         window.addEventListener('load', async () => {
@@ -122,7 +122,7 @@
                     const page = await pdfDocLeft.getPage(1);
                     let viewport = page.getViewport({ scale: 1 });
                     let rotation = viewport.rotation;
-                    if (rotation !== 0) { // Force upright if rotated
+                    if (rotation !== 0) { // Force upright
                         viewport = page.getViewport({ scale: 1, rotation: 0 });
                     }
                     renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
@@ -283,14 +283,14 @@
                 e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Up to zoom in, down to zoom out
+                    const oldScale = scale;
+                    const delta = e.deltaY > 0 ? 1 / 1.05 : 1.05; // Down to zoom in, up to zoom out
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
                     adjustCanvases().then(() => {
-                        if (scale > 1.0) {
-                            panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
-                            panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
-                        }
+                        // Keep pinned during zoom
+                        panOffsetX = 0;
+                        panOffsetY = 0;
                     });
                     lastMoveTime = now;
                 }
@@ -314,6 +314,7 @@
                     if (now - lastMoveTime > debounceDelay) {
                         panOffsetX = e.clientX - lastTouchX;
                         panOffsetY = e.clientY - lastTouchY;
+                        // Limit panning within bounds
                         panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
                         panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
                         adjustCanvases();
@@ -367,15 +368,14 @@
                         const deltaDistance = currentDistance - initialDistance;
 
                         if (Math.abs(deltaDistance) > 1) {
-                            const delta = 1 + (deltaDistance * 0.005); // Pinch together to zoom in, pinch apart to zoom out
                             const oldScale = scale;
+                            const delta = 1 + (deltaDistance * 0.005); // Pinch together to zoom in, pinch apart to zoom out
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
                             adjustCanvases().then(() => {
-                                if (scale > 1.0) {
-                                    panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
-                                    panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
-                                }
+                                // Keep pinned during zoom
+                                panOffsetX = 0;
+                                panOffsetY = 0;
                             });
                             lastTouchX1 = currentX1;
                             lastTouchX2 = currentX2;
