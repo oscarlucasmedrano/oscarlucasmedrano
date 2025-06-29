@@ -232,22 +232,19 @@
         [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                e.stopPropagation(); // Prevent background zoom
+                e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     const rect = canvas.getBoundingClientRect();
                     const mouseX = e.clientX - rect.left;
                     const mouseY = e.clientY - rect.top;
-                    const delta = e.deltaY < 0 ? 1.1 : 1 / 1.1; // Up to zoom in, down to zoom out
+                    const delta = e.deltaY > 0 ? 1.1 : 1 / 1.1; // Down to zoom in, up to zoom out
                     const oldScale = scale;
                     scale *= delta;
                     scale = Math.min(Math.max(scale, minScale), maxScale);
 
-                    // Adjust position to zoom at cursor
+                    // Cursor-based zoom
                     const scaleChange = scale / oldScale;
-                    const offsetX = (mouseX / rect.width) * (1 - scaleChange);
-                    const offsetY = (mouseY / rect.height) * (1 - scaleChange);
-                    // Apply offset to canvas style (though pinned, this ensures visual centering)
                     canvas.style.transformOrigin = `${mouseX}px ${mouseY}px`;
                     canvas.style.transform = `scale(${scale})`;
 
@@ -259,7 +256,7 @@
             canvas.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     e.preventDefault();
-                    e.stopPropagation(); // Prevent background zoom
+                    e.stopPropagation();
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
                     lastTouchX1 = touch1.pageX;
@@ -269,7 +266,7 @@
 
             canvas.addEventListener('touchmove', (e) => {
                 e.preventDefault();
-                e.stopPropagation(); // Prevent background zoom
+                e.stopPropagation();
                 const now = performance.now();
                 if (now - lastMoveTime > debounceDelay) {
                     if (e.touches.length === 2) {
