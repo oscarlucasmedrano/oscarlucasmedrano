@@ -138,7 +138,6 @@
                     console.error('Error loading spread PDFs:', error);
                 }
             }
-            // Ensure canvas container remains centered and pinned
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
@@ -147,34 +146,34 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.25; // Quarter width for each spread page
+            const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY) * 6; // Base 500% increase
+            let fitScale = Math.min(scaleX, scaleY) * 6;
             if (window.innerWidth > 600) {
-                fitScale /= 1.6667; // 40% decrease
-                fitScale *= 1.15; // 15% increase
-                fitScale *= 1.15; // Another 15% increase
-                fitScale *= 1.15; // Another 15% increase
-                fitScale *= 1.15; // Another 15% increase
-                fitScale /= 1.6667; // 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
+                fitScale /= 1.6667;
+                fitScale *= 1.15;
+                fitScale *= 1.15;
+                fitScale *= 1.15;
+                fitScale *= 1.15;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
             } else {
-                fitScale *= 1.15; // 15% increase
-                fitScale *= 1.1; // 10% increase
-                fitScale *= 1.1; // Another 10% increase
-                fitScale *= 1.1; // Another 10% increase
-                fitScale *= 1.1; // Another 10% increase
-                fitScale /= 1.6667; // 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
-                fitScale /= 1.42857; // 30% decrease
-                fitScale /= 1.6667; // 40% decrease
-                fitScale /= 3.33333; // 70% decrease
+                fitScale *= 1.15;
+                fitScale *= 1.1;
+                fitScale *= 1.1;
+                fitScale *= 1.1;
+                fitScale *= 1.1;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
+                fitScale /= 1.42857;
+                fitScale /= 1.6667;
+                fitScale /= 3.33333;
             }
-            fitScale *= Math.abs(scale); // Apply dynamic zoom scale, ensure positive
+            fitScale *= Math.abs(scale);
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -185,7 +184,7 @@
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] // Ensure no negative scaling
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
             };
             await page.render(renderContext).promise;
         }
@@ -194,34 +193,34 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.25; // Match spread page width
+            const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY) * 6; // Base 500% increase
+            let fitScale = Math.min(scaleX, scaleY) * 6;
             if (window.innerWidth > 600) {
-                fitScale /= 1.6667; // 40% decrease
-                fitScale *= 1.15; // 15% increase
-                fitScale *= 1.15; // Another 15% increase
-                fitScale *= 1.15; // Another 15% increase
-                fitScale *= 1.15; // Another 15% increase
-                fitScale /= 1.6667; // 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
+                fitScale /= 1.6667;
+                fitScale *= 1.15;
+                fitScale *= 1.15;
+                fitScale *= 1.15;
+                fitScale *= 1.15;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
             } else {
-                fitScale *= 1.15; // 15% increase
-                fitScale *= 1.1; // 10% increase
-                fitScale *= 1.1; // Another 10% increase
-                fitScale *= 1.1; // Another 10% increase
-                fitScale *= 1.1; // Another 10% increase
-                fitScale /= 1.6667; // 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
-                fitScale /= 1.6667; // Another 40% decrease
-                fitScale /= 1.42857; // 30% decrease
-                fitScale /= 1.6667; // 40% decrease
-                fitScale /= 3.33333; // 70% decrease
+                fitScale *= 1.15;
+                fitScale *= 1.1;
+                fitScale *= 1.1;
+                fitScale *= 1.1;
+                fitScale *= 1.1;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
+                fitScale /= 1.6667;
+                fitScale /= 1.42857;
+                fitScale /= 1.6667;
+                fitScale /= 3.33333;
             }
-            fitScale *= Math.abs(scale); // Apply dynamic zoom scale, ensure positive
+            fitScale *= Math.abs(scale);
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -232,7 +231,7 @@
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] // Ensure no negative scaling
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
             };
             await page.render(renderContext).promise;
         }
@@ -246,7 +245,6 @@
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
                 ]);
             }
-            // Re-center and apply pan offset after adjustment
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
         }
@@ -273,9 +271,6 @@
             }
         });
 
-        // Zoom and Pan handling
-        let lastTouchX1 = 0;
-        let lastTouchX2 = 0;
         let lastPanX = 0;
         let lastPanY = 0;
         let momentumFrame = null;
@@ -313,7 +308,7 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Scroll forward to zoom in, backward to zoom out
+                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02;
                 scaleMomentum = (delta - 1) * dampeningFactor;
                 const oldScale = scale;
                 scale *= delta;
@@ -422,8 +417,8 @@
                     const currentX2 = touch2.pageX;
                     const deltaX = Math.abs(currentX2 - currentX1) - Math.abs(lastTouchX2 - lastTouchX1);
 
-                    if (Math.abs(deltaX) > 10) { // Threshold to detect spread
-                        const delta = 1 + (deltaX / 100); // Adjust zoom based on spread distance
+                    if (Math.abs(deltaX) > 10) {
+                        const delta = 1 + (deltaX / 100);
                         scaleMomentum = (delta - 1) * dampeningFactor;
                         const oldScale = scale;
                         scale *= delta;
@@ -480,7 +475,6 @@
 
         window.addEventListener('resize', adjustCanvases);
 
-        // Load the first spread (cover)
         loadSpread(currentSpreadIndex);
     </script>
 </body>
