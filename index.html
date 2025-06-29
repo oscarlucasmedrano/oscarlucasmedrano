@@ -44,6 +44,7 @@
         #pdf-canvas-left, #pdf-canvas-right {
             width: auto;
             height: auto;
+            display: inline-block; /* Ensure side-by-side */
         }
         #pdf-canvas-single {
             width: auto;
@@ -124,6 +125,7 @@
         const minScale = 0.1;
         const maxScale = 10;
         const debounceDelay = 16; // Approx 60 FPS
+        let lastMoveTime = 0; // Added to track touchmove timing
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -141,8 +143,8 @@
                     console.error('Error loading single PDF:', error);
                 }
             } else if (spread.type === 'spread') {
-                canvasLeft.style.display = 'block';
-                canvasRight.style.display = 'block';
+                canvasLeft.style.display = 'inline-block'; // Ensure side-by-side
+                canvasRight.style.display = 'inline-block'; // Ensure side-by-side
                 crease.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
@@ -222,11 +224,20 @@
         function adjustCanvases() {
             if (pdfFiles[currentSpreadIndex].type === 'single') {
                 renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+                canvasSingle.style.display = 'block';
+                canvasLeft.style.display = 'none';
+                canvasRight.style.display = 'none';
+                crease.style.display = 'none';
             } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
                 Promise.all([
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
                     renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]);
+                ]).then(() => {
+                    canvasLeft.style.display = 'inline-block';
+                    canvasRight.style.display = 'inline-block';
+                    canvasSingle.style.display = 'none';
+                    crease.style.display = 'block';
+                });
             }
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
