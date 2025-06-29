@@ -79,7 +79,7 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.0 * window.devicePixelRatio; // Reset to base scale
+        let scale = 1.0 * window.devicePixelRatio;
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
@@ -102,9 +102,9 @@
         let lastVelocitiesY = [];
         let lastTouchX1 = 0;
         let lastTouchX2 = 0;
-        const minScale = 0.1; // Allow smaller zoom for detailed view
+        const minScale = 0.1;
         const maxScale = 10;
-        const debounceDelay = 16; // Approx 60 FPS for smoothness
+        const debounceDelay = 16; // Approx 60 FPS
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -152,7 +152,7 @@
             if (window.innerWidth > 600) {
                 fitScale *= 1.15; // Slight adjustment for desktop
             } else {
-                fitScale /= 5; // 500% decrease (1/5th base scale)
+                fitScale *= 3.75; // 275% increase (3.75x base scale)
             }
             fitScale *= scale;
 
@@ -182,7 +182,7 @@
             if (window.innerWidth > 600) {
                 fitScale *= 1.15; // Slight adjustment for desktop
             } else {
-                fitScale /= 5; // 500% decrease (1/5th base scale)
+                fitScale *= 3.75; // 275% increase (3.75x base scale)
             }
             fitScale *= scale;
 
@@ -266,8 +266,10 @@
                 scale = Math.min(Math.max(scale, minScale), maxScale);
 
                 const scaleFactor = scale / oldScale;
-                panOffsetX -= (mouseX - panOffsetX) * (scaleFactor - 1); // Pin to cursor
-                panOffsetY -= (mouseY - panOffsetY) * (scaleFactor - 1);
+                const newPanOffsetX = panOffsetX - (mouseX - panOffsetX) * (scaleFactor - 1);
+                const newPanOffsetY = panOffsetY - (mouseY - panOffsetY) * (scaleFactor - 1);
+                panOffsetX = newPanOffsetX;
+                panOffsetY = newPanOffsetY;
 
                 adjustCanvases();
                 lastMoveTime = now;
@@ -368,7 +370,7 @@
                     const deltaDistance = currentDistance - initialDistance;
 
                     if (Math.abs(deltaDistance) > 1) {
-                        const delta = 1 + (deltaDistance * 0.01); // 1% zoom per pixel of spread
+                        const delta = 1 + (deltaDistance * 0.01); // 1% zoom per pixel
                         const oldScale = scale;
                         scale *= delta;
                         scale = Math.min(Math.max(scale, minScale), maxScale);
@@ -377,8 +379,10 @@
                         const rect = canvasContainer.getBoundingClientRect();
                         const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
                         const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
-                        panOffsetX -= (touchCenterX - panOffsetX) * (scaleFactor - 1); // Pin to touch center
-                        panOffsetY -= (touchCenterY - panOffsetY) * (scaleFactor - 1);
+                        const newPanOffsetX = panOffsetX - (touchCenterX - panOffsetX) * (scaleFactor - 1); // Prevent shift
+                        const newPanOffsetY = panOffsetY - (touchCenterY - panOffsetY) * (scaleFactor - 1);
+                        panOffsetX = newPanOffsetX;
+                        panOffsetY = newPanOffsetY;
 
                         adjustCanvases();
                         lastTouchX1 = currentX1;
