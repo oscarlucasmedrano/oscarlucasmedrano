@@ -38,6 +38,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            transform-origin: center center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         #pdf-canvas-left, #pdf-canvas-right {
@@ -78,37 +79,24 @@
             { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' }
         ];
         let currentSpreadIndex = 0;
-        let scale = 1.0;
+        let scale = 1.0 * window.devicePixelRatio;
         const canvasLeft = document.getElementById('pdf-canvas-left');
         const canvasRight = document.getElementById('pdf-canvas-right');
         const canvasSingle = document.getElementById('pdf-canvas-single');
-        const contextLeft = canvasLeft.getContext('2d', { alpha: false });
-        const contextRight = canvasRight.getContext('2d', { alpha: false });
-        const contextSingle = canvasSingle.getContext('2d', { alpha: false });
+        const contextLeft = canvasLeft.getContext('2d');
+        const contextRight = canvasRight.getContext('2d');
+        const contextSingle = canvasSingle.getContext('2d');
         const canvasContainer = document.getElementById('canvas-container');
         const crease = document.getElementById('crease');
         let pdfDocLeft = null;
         let pdfDocRight = null;
-        let panOffsetX = 0;
-        let panOffsetY = 0;
+        const panOffsetX = 0; // Fixed at 0
+        const panOffsetY = 0; // Fixed at 0
         let lastTouchX1 = 0;
         let lastTouchX2 = 0;
-        let isPanning = false;
-        let lastPanX = 0;
-        let lastPanY = 0;
         const minScale = 0.1;
         const maxScale = 10;
-        let lastMoveTime = 0;
-        const debounceDelay = 120; // Increased for smoother mobile rendering
-
-        // Return to cover page on refresh
-        window.addEventListener('load', async () => {
-            currentSpreadIndex = 0; // Reset to cover page
-            scale = 1.0; // Reset scale on refresh
-            panOffsetX = 0;
-            panOffsetY = 0;
-            await loadSpread(currentSpreadIndex);
-        });
+        const debounceDelay = 16; // Approx 60 FPS
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -117,31 +105,11 @@
             crease.style.display = 'none';
 
             const spread = pdfFiles[index];
-            if (spread.type === 'single' && index === 0) { // Special handling for cover page
+            if (spread.type === 'single') {
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    const page = await pdfDocLeft.getPage(1);
-                    let viewport = page.getViewport({ scale: 1 });
-                    let rotation = viewport.rotation;
-                    if (rotation === 180 || rotation === -180) { // Fix upside-down cover on refresh
-                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
-                    }
-                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
-                } catch (error) {
-                    console.error('Error loading single PDF:', error);
-                }
-            } else if (spread.type === 'single') {
-                canvasSingle.style.display = 'block';
-                try {
-                    pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    const page = await pdfDocLeft.getPage(1);
-                    let viewport = page.getViewport({ scale: 1 });
-                    let rotation = viewport.rotation;
-                    if (rotation === 180 || rotation === -180) {
-                        viewport = page.getViewport({ scale: 1, rotation: rotation + 180 });
-                    }
-                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle, viewport.rotation);
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
                 } catch (error) {
                     console.error('Error loading single PDF:', error);
                 }
@@ -152,30 +120,21 @@
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
-                    const pageLeft = await pdfDocLeft.getPage(1);
-                    const pageRight = await pdfDocRight.getPage(1);
-                    let rotationLeft = pageLeft.getViewport({ scale: 1 }).rotation;
-                    let rotationRight = pageRight.getViewport({ scale: 1 }).rotation;
-                    if (rotationLeft === 180 || rotationLeft === -180) rotationLeft += 180;
-                    if (rotationRight === 180 || rotationRight === -180) rotationRight += 180;
                     await Promise.all([
-                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft, rotationLeft),
-                        renderPage(pdfDocRight, 1, canvasRight, contextRight, rotationRight)
+                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
                     ]);
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
                 }
             }
             canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
-        async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
+        async function renderPage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            let viewport = page.getViewport({ scale: 1 });
-            if (rotation === 180 || rotation === -180) { // Additional rotation fix
-                viewport = page.getViewport({ scale: 1, rotation: rotation });
-            }
+            const viewport = page.getViewport({ scale: scale });
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -183,34 +142,29 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265;
+                fitScale *= 1.265; // Current desktop scale
             } else {
-                fitScale *= 1.76;
+                fitScale *= 1.76; // Current mobile scale
             }
             fitScale *= scale;
 
-            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
-            const dpr = window.devicePixelRatio || 1;
-            canvas.height = adjustedViewport.height * dpr;
-            canvas.width = adjustedViewport.width * dpr;
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+            canvas.height = adjustedViewport.height * window.devicePixelRatio;
+            canvas.width = adjustedViewport.width * window.devicePixelRatio;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
-            canvas.style.transform = 'none'; // Ensure no movement
 
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [dpr, 0, 0, dpr, 0, 0]
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
             };
             await page.render(renderContext).promise;
         }
 
-        async function renderSinglePage(pdfDoc, pageNum, canvas, context, rotation = 0) {
+        async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
-            let viewport = page.getViewport({ scale: 1 });
-            if (rotation === 180 || rotation === -180) { // Additional rotation fix
-                viewport = page.getViewport({ scale: 1, rotation: rotation });
-            }
+            const viewport = page.getViewport({ scale: scale });
 
             const maxWidth = window.innerWidth * 0.25;
             const maxHeight = window.innerHeight * 1;
@@ -218,43 +172,37 @@
             const scaleY = maxHeight / viewport.height;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265;
+                fitScale *= 1.265; // Current desktop scale
             } else {
-                fitScale *= 1.76;
+                fitScale *= 1.76; // Current mobile scale
             }
             fitScale *= scale;
 
-            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale), rotation: viewport.rotation });
-            const dpr = window.devicePixelRatio || 1;
-            canvas.height = adjustedViewport.height * dpr;
-            canvas.width = adjustedViewport.width * dpr;
+            const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+            canvas.height = adjustedViewport.height * window.devicePixelRatio;
+            canvas.width = adjustedViewport.width * window.devicePixelRatio;
             canvas.style.width = `${adjustedViewport.width}px`;
             canvas.style.height = `${adjustedViewport.height}px`;
-            canvas.style.transform = 'none'; // Ensure no movement
 
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [dpr, 0, 0, dpr, 0, 0]
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
             };
             await page.render(renderContext).promise;
         }
 
         function adjustCanvases() {
-            requestAnimationFrame(() => {
-                if (pdfFiles[currentSpreadIndex].type === 'single') {
-                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
-                } else {
-                    Promise.all([
-                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                    ]).then(() => {
-                        // Ensure rendering completes
-                    });
-                }
-                canvasContainer.style.left = '50%';
-                canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
-            });
+            if (pdfFiles[currentSpreadIndex].type === 'single') {
+                renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+            } else {
+                Promise.all([
+                    renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                    renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                ]);
+            }
+            canvasContainer.style.left = '50%';
+            canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
         }
 
         canvasContainer.addEventListener('click', (e) => {
@@ -279,117 +227,52 @@
             }
         });
 
-        [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
-            canvas.addEventListener('wheel', (e) => {
+        canvasContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
                 e.preventDefault();
-                e.stopPropagation();
-                const now = performance.now();
-                if (now - lastMoveTime > debounceDelay) {
-                    const delta = e.deltaY > 0 ? 1.05 : 1 / 1.05; // Down to zoom in, up to zoom out
-                    scale *= delta;
-                    scale = Math.min(Math.max(scale, minScale), maxScale);
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastTouchX1 = touch1.pageX;
+                lastTouchX2 = touch2.pageX;
+            }
+        });
 
-                    adjustCanvases();
-                    lastMoveTime = now;
-                }
-            });
+        canvasContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const now = performance.now();
+            if (now - lastMoveTime > debounceDelay) {
+                if (e.touches.length === 2) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const currentX1 = touch1.pageX;
+                    const currentX2 = touch2.pageX;
+                    const initialDistance = Math.hypot(lastTouchX2 - lastTouchX1, touch1.pageY - touch2.pageY);
+                    const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
+                    const deltaDistance = currentDistance - initialDistance;
 
-            canvas.addEventListener('mousedown', (e) => {
-                if (scale > 1.0) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    isPanning = true;
-                    lastPanX = e.clientX;
-                    lastPanY = e.clientY;
-                }
-            });
+                    if (Math.abs(deltaDistance) > 1) {
+                        const delta = 1 + (deltaDistance * 0.005); // Smooth zoom
+                        const oldScale = scale;
+                        scale *= delta;
+                        scale = Math.min(Math.max(scale, minScale), maxScale);
 
-            canvas.addEventListener('mousemove', (e) => {
-                if (isPanning && scale > 1.0) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const now = performance.now();
-                    if (now - lastMoveTime > debounceDelay) {
-                        const deltaX = e.clientX - lastPanX;
-                        const deltaY = e.clientY - lastPanY;
-                        panOffsetX += deltaX;
-                        panOffsetY += deltaY;
-                        lastPanX = e.clientX;
-                        lastPanY = e.clientY;
-
+                        const scaleFactor = scale / oldScale;
+                        const rect = canvasContainer.getBoundingClientRect();
+                        const touchCenterX = (currentX1 + currentX2) / 2 - rect.left;
+                        const touchCenterY = (touch1.pageY + touch2.pageY) / 2 - rect.top;
+                        // No panning, just scale adjustment
                         adjustCanvases();
-                        lastMoveTime = now;
-                    }
-                }
-            });
-
-            canvas.addEventListener('mouseup', () => {
-                isPanning = false;
-            });
-
-            canvas.addEventListener('mouseleave', () => {
-                isPanning = false;
-            });
-
-            canvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && scale > 1.0) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    isPanning = true;
-                    lastPanX = e.touches[0].clientX;
-                    lastPanY = e.touches[0].clientY;
-                } else if (e.touches.length === 2) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    lastTouchX1 = e.touches[0].pageX;
-                    lastTouchX2 = e.touches[1].pageX;
-                }
-            });
-
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const now = performance.now();
-                if (now - lastMoveTime > debounceDelay) {
-                    if (e.touches.length === 1 && isPanning && scale > 1.0) {
-                        const touch = e.touches[0];
-                        const deltaX = touch.clientX - lastPanX;
-                        const deltaY = touch.clientY - lastPanY;
-                        panOffsetX += deltaX;
-                        panOffsetY += deltaY;
-                        lastPanX = touch.clientX;
-                        lastPanY = touch.clientY;
-                    } else if (e.touches.length === 2) {
-                        const touch1 = e.touches[0];
-                        const touch2 = e.touches[1];
-                        const currentX1 = touch1.pageX;
-                        const currentX2 = touch2.pageX;
-                        const initialDistance = Math.abs(lastTouchX2 - lastTouchX1);
-                        const currentDistance = Math.abs(currentX2 - currentX1);
-                        if (initialDistance > 0) {
-                            const delta = currentDistance / initialDistance; // Spread to zoom in, squeeze to zoom out
-                            scale *= delta;
-                            scale = Math.min(Math.max(scale, minScale), maxScale);
-                        }
                         lastTouchX1 = currentX1;
                         lastTouchX2 = currentX2;
                     }
-                    adjustCanvases();
-                    lastMoveTime = now;
                 }
-            });
-
-            canvas.addEventListener('touchend', (e) => {
-                if (e.touches.length === 0) {
-                    isPanning = false;
-                }
-            });
+                lastMoveTime = now;
+            }
         });
 
-        // Remove background zoom
-        canvasContainer.addEventListener('wheel', (e) => e.stopPropagation(), { passive: false });
-        canvasContainer.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
-        canvasContainer.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: false });
+        canvasContainer.addEventListener('touchend', (e) => {
+            // No action needed
+        });
 
         window.addEventListener('resize', adjustCanvases);
 
