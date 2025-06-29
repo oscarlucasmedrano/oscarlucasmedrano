@@ -102,9 +102,9 @@
         let lastVelocitiesY = [];
         const minScale = 0.5;
         const maxScale = 10;
-        const debounceDelay = 50; // Increased for smoother interaction
+        const debounceDelay = 50;
         const momentumDecay = 0.95;
-        const dampeningFactor = 0.8; // For zoom smoothing
+        const dampeningFactor = 0.8;
 
         async function loadSpread(index) {
             canvasLeft.style.display = 'none';
@@ -169,8 +169,9 @@
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.42857; // 30% decrease
+                fitScale /= 1.6667; // 40% decrease
             }
-            fitScale *= scale; // Apply dynamic zoom scale
+            fitScale *= Math.abs(scale); // Apply dynamic zoom scale, ensure positive
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -181,7 +182,7 @@
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] // Ensure no negative scaling
             };
             await page.render(renderContext).promise;
         }
@@ -214,8 +215,9 @@
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.6667; // Another 40% decrease
                 fitScale /= 1.42857; // 30% decrease
+                fitScale /= 1.6667; // 40% decrease
             }
-            fitScale *= scale; // Apply dynamic zoom scale
+            fitScale *= Math.abs(scale); // Apply dynamic zoom scale, ensure positive
 
             const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
@@ -226,7 +228,7 @@
             const renderContext = {
                 canvasContext: context,
                 viewport: adjustedViewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0] // Ensure no negative scaling
             };
             await page.render(renderContext).promise;
         }
@@ -306,7 +308,7 @@
             const now = performance.now();
 
             if (now - lastMoveTime > debounceDelay) {
-                const delta = e.deltaY < 0 ? 1.05 : 1 / 1.05; // Finer zoom factor (1.05x/0.952x)
+                const delta = e.deltaY < 0 ? 1.02 : 1 / 1.02; // Very fine zoom factor (1.02x/0.9804x)
                 scaleMomentum = (delta - 1) * dampeningFactor;
                 const oldScale = scale;
                 scale *= delta;
