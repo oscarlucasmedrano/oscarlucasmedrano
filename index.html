@@ -99,18 +99,15 @@
         const minScale = 0.1;
         const maxScale = 10;
         let lastMoveTime = 0;
-        const debounceDelay = 100; // Increased for smoother rendering
+        const debounceDelay = 120; // Increased for smoother mobile rendering
 
-        // Restore last spread on refresh with orientation fix
+        // Return to cover page on refresh
         window.addEventListener('load', async () => {
-            const savedIndex = localStorage.getItem('currentSpreadIndex');
-            if (savedIndex !== null) {
-                currentSpreadIndex = parseInt(savedIndex, 10);
-            }
+            currentSpreadIndex = 0; // Reset to cover page
             scale = 1.0; // Reset scale on refresh
             panOffsetX = 0;
             panOffsetY = 0;
-            await loadSpread(currentSpreadIndex); // Ensure initial load fixes orientation
+            await loadSpread(currentSpreadIndex);
         });
 
         async function loadSpread(index) {
@@ -171,7 +168,6 @@
             }
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
-            localStorage.setItem('currentSpreadIndex', index); // Save current index
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context, rotation = 0) {
@@ -245,18 +241,20 @@
         }
 
         function adjustCanvases() {
-            if (pdfFiles[currentSpreadIndex].type === 'single') {
-                renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
-            } else {
-                Promise.all([
-                    renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                    renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]).then(() => {
-                    // Ensure rendering completes
-                });
-            }
-            canvasContainer.style.left = '50%';
-            canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+            requestAnimationFrame(() => {
+                if (pdfFiles[currentSpreadIndex].type === 'single') {
+                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+                } else {
+                    Promise.all([
+                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
+                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
+                    ]).then(() => {
+                        // Ensure rendering completes
+                    });
+                }
+                canvasContainer.style.left = '50%';
+                canvasContainer.style.transform = `translateX(-50%) translate(${panOffsetX}px, ${panOffsetY}px)`;
+            });
         }
 
         canvasContainer.addEventListener('click', (e) => {
