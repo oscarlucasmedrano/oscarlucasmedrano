@@ -35,27 +35,31 @@
         }
         #canvas-container {
             position: absolute;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: block;
+            width: 90%;
+            max-width: 1200px;
+            height: 100%;
             transform-origin: center center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         #canvas-container.spread {
-            justify-content: space-around;
-            width: 90%; /* Wider to fit both canvases */
-            max-width: 1200px; /* Prevent excessive stretching */
+            position: relative;
         }
         #pdf-canvas-left, #pdf-canvas-right {
             width: auto;
             height: auto;
             display: none;
-            max-width: 45%; /* Limit each canvas to half the container */
+            position: absolute;
+            top: 0;
         }
         #pdf-canvas-single {
             width: auto;
             height: auto;
             display: none;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
         }
         #crease {
             position: absolute;
@@ -148,28 +152,30 @@
             canvasContainer.classList.remove('spread');
 
             const spread = pdfFiles[index];
-            console.log(`Loading index ${index}, type: ${spread.type}, file(s): ${spread.file || `${spread.left} + ${spread.right}`}`);
+            console.log(`Attempting to load index ${index}, type: ${spread.type}, file(s): ${spread.file || `${spread.left} + ${spread.right}`}`);
             if (spread.type === 'single') {
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
                     renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
+                    console.log(`Loaded single page: ${spread.file}`);
                 } catch (error) {
                     console.error('Error loading single PDF:', error);
                 }
             } else if (spread.type === 'spread') {
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
+                canvasLeft.style.left = '0';
                 canvasRight.style.display = 'block';
+                canvasRight.style.left = '50%';
                 crease.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
-                    await Promise.all([
-                        renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                        renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                    ]);
-                    console.log('Spread rendered for:', spread.left, spread.right);
+                    console.log(`Loading PDFs: ${spread.left} and ${spread.right}`);
+                    await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
+                    await renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                    console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
                 }
@@ -246,19 +252,18 @@
                 canvasRight.style.display = 'none';
                 crease.style.display = 'none';
                 canvasContainer.classList.remove('spread');
-                console.log('Rendered single page:', pdfFiles[currentSpreadIndex].file);
+                console.log('Adjusted to single page:', pdfFiles[currentSpreadIndex].file);
             } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
-                Promise.all([
-                    renderPage(pdfDocLeft, 1, canvasLeft, contextLeft),
-                    renderPage(pdfDocRight, 1, canvasRight, contextRight)
-                ]).then(() => {
-                    canvasContainer.classList.add('spread');
-                    canvasLeft.style.display = 'block';
-                    canvasRight.style.display = 'block';
-                    canvasSingle.style.display = 'none';
-                    crease.style.display = 'block';
-                    console.log('Rendered spread:', pdfFiles[currentSpreadIndex].left, pdfFiles[currentSpreadIndex].right);
-                }).catch(error => console.error('Render error:', error));
+                renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
+                renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                canvasContainer.classList.add('spread');
+                canvasLeft.style.display = 'block';
+                canvasLeft.style.left = '0';
+                canvasRight.style.display = 'block';
+                canvasRight.style.left = '50%';
+                canvasSingle.style.display = 'none';
+                crease.style.display = 'block';
+                console.log('Adjusted to spread:', pdfFiles[currentSpreadIndex].left, pdfFiles[currentSpreadIndex].right);
             }
             canvasContainer.style.left = '50%';
             canvasContainer.style.transform = 'translateX(-50%) translate(0px, 0px)'; // Fixed position
