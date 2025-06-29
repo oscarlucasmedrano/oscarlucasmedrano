@@ -98,7 +98,7 @@
         let lastMoveTime = 0;
         const minScale = 0.5;
         const maxScale = 4.0;
-        const debounceDelay = 400; // Increased for mobile stability
+        const debounceDelay = 500; // Increased for mobile stability
 
         // Load homepage by default
         loadSpread(currentSpreadIndex);
@@ -170,8 +170,8 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.025 * window.innerWidth; // 30% larger on desktop, 200% smaller on mobile
-            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.10 * window.innerHeight; // 30% larger on desktop, 200% smaller on mobile
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.0125 * window.innerWidth; // 30% larger on desktop, 300% smaller on mobile
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.05 * window.innerHeight; // 30% larger on desktop, 300% smaller on mobile
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY) * scale;
@@ -198,8 +198,8 @@
                 viewport = page.getViewport({ scale: 1, rotation: rotation });
             }
 
-            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.025 * window.innerWidth; // 30% larger on desktop, 200% smaller on mobile
-            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.10 * window.innerHeight; // 30% larger on desktop, 200% smaller on mobile
+            const maxWidth = window.innerWidth > 600 ? 0.325 * window.innerWidth : 0.0125 * window.innerWidth; // 30% larger on desktop, 300% smaller on mobile
+            const maxHeight = window.innerWidth > 600 ? 1.30 * window.innerHeight : 0.05 * window.innerHeight; // 30% larger on desktop, 300% smaller on mobile
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
             const fitScale = Math.min(scaleX, scaleY) * scale;
@@ -276,7 +276,7 @@
                 }
             });
 
-            // Trackpad zoom with ctrlKey, matching mouse wheel
+            // Trackpad zoom with ctrlKey, corrected to match mouse wheel
             container.addEventListener('wheel', (e) => {
                 if (e.ctrlKey) {
                     e.preventDefault();
@@ -357,7 +357,7 @@
                         panOffsetX = Math.max(-canvasContainer.offsetWidth * (scale - 1), Math.min(0, panOffsetX));
                         panOffsetY = Math.max(-canvasContainer.offsetHeight * (scale - 1), Math.min(0, panOffsetY));
                         adjustCanvases();
-                    } else if (e.touches.length === 2) {
+                    } else if (e.touches.length === 2 && now - lastMoveTime > 200) { // Stricter rate limit
                         const touch1 = e.touches[0];
                         const touch2 = e.touches[1];
                         const currentX1 = touch1.pageX;
@@ -366,9 +366,9 @@
                         const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
                         const deltaDistance = currentDistance - initialDistance;
 
-                        if (Math.abs(deltaDistance) > 1 && now - lastMoveTime > debounceDelay / 2) {
+                        if (Math.abs(deltaDistance) > 1) {
                             const oldScale = scale;
-                            const delta = 1 + (deltaDistance * 0.0002); // Slower zoom factor
+                            const delta = 1 + (deltaDistance * 0.0002);
                             scale *= delta;
                             scale = Math.min(Math.max(scale, minScale), maxScale);
                             adjustCanvases().then(() => {
@@ -377,7 +377,7 @@
                             });
                             lastTouchX1 = currentX1;
                             lastTouchX2 = currentX2;
-                            canUpdate = false; // Prevent immediate re-render
+                            canUpdate = false;
                         }
                     }
                     if (canUpdate) lastMoveTime = now;
