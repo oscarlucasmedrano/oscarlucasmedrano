@@ -15,6 +15,7 @@
       touch-action: none;
       user-select: none;
     }
+
     #viewer {
       position: absolute;
       top: 50%;
@@ -24,6 +25,7 @@
       transform: translate(-50%, -50%) scale(1);
       transform-origin: center;
     }
+
     canvas {
       border: 1px solid white;
       box-sizing: border-box;
@@ -31,33 +33,52 @@
       max-height: 100vh;
       width: auto;
       height: auto;
+      background: black;
+    }
+
+    #sliderContainer {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 600px;
+      z-index: 100;
+    }
+
+    input[type=range] {
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <div id="viewer"></div>
+  <div id="sliderContainer">
+    <input type="range" id="pageSlider" min="0" max="16" step="1" value="0" />
+  </div>
 
-  <!-- PDF.js v3.x -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
   <script>
     const viewer = document.getElementById('viewer');
+    const slider = document.getElementById('pageSlider');
+
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions = {
       workerSrc: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
     };
 
-    let scale = 1, startScale = 1, startDist = 0;
-    let panX = 0, panY = 0;
-    let dragging = false, lastX = 0, lastY = 0;
-    let currentSpread = 0;
-
-    // Build spreads array: [page1], [page2,page3], ..., [page30,page31], [page32]
+    // Setup spreads
     const spreads = [["page1.pdf"]];
     for (let i = 2; i < 32; i += 2) {
       spreads.push([`page${i}.pdf`, `page${i+1}.pdf`]);
     }
-    spreads.push(["page32.pdf"]); // Back cover as last page
+    spreads.push(["page32.pdf"]);
+
+    let currentSpread = 0;
+    let scale = 1, startScale = 1, startDist = 0;
+    let panX = 0, panY = 0;
+    let dragging = false, zooming = false, lastX = 0, lastY = 0;
 
     function clearViewer() {
       viewer.innerHTML = '';
@@ -68,10 +89,8 @@
         pdf.getPage(1).then(page => {
           const viewport = page.getViewport({ scale: 1 });
           const dpi = window.devicePixelRatio || 1;
-
           const targetWidth = window.innerWidth / pagesWide * 0.95;
           const scaleToFit = targetWidth / viewport.width;
-
           const scaledViewport = page.getViewport({ scale: scaleToFit });
 
           canvas.style.width = scaledViewport.width + 'px';
@@ -91,22 +110,26 @@
     function renderCurrentSpread() {
       clearViewer();
       const files = spreads[currentSpread];
-      const pagesWide = files.length === 1 ? 2 : 2; // Always render with same width assumption
+      const pagesWide = files.length === 1 ? 2 : 2;
+
       files.forEach((pdf, i) => {
         const canvas = document.createElement('canvas');
         viewer.appendChild(canvas);
-        renderPDF(pdf, canvas, pagesWide);
-        canvas.addEventListener('click', () => {
-          if (files.length === 1) {
-            if (currentSpread === 0) currentSpread = 1; // cover to page2–3
-            else if (currentSpread === spreads.length - 1) currentSpread = spreads.length - 2; // back to last spread
-          } else if (i === 0) {
-            currentSpread = Math.max(currentSpread - 1, 0);
-          } else {
-            currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
-          }
-          resetTransform();
-          renderCurrentSpread();
+        renderPDF(pdf, canvas, pagesWide, () => {
+          canvas.onclick = () => {
+            if (dragging || zooming) return; // ignore clicks during zoom/drag
+            if (files.length === 1) {
+              if (currentSpread === 0) currentSpread = 1;
+              else if (currentSpread === spreads.length - 1) currentSpread = spreads.length - 2;
+            } else if (i === 0) {
+              currentSpread = Math.max(currentSpread - 1, 0);
+            } else {
+              currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
+            }
+            slider.value = currentSpread;
+            resetTransform();
+            renderCurrentSpread();
+          };
         });
       });
     }
@@ -124,15 +147,18 @@
     // Zoom
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
+      zooming = true;
       const zoomIntensity = 0.05;
       scale += e.deltaY < 0 ? zoomIntensity : -zoomIntensity;
       scale = Math.max(0.2, Math.min(scale, 5));
       applyTransform();
+      setTimeout(() => zooming = false, 200);
     }, { passive: false });
 
     // Touch zoom + drag
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
+        zooming = true;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         startDist = Math.hypot(dx, dy);
@@ -161,9 +187,12 @@
       }
     }, { passive: false });
 
-    window.addEventListener('touchend', () => dragging = false);
+    window.addEventListener('touchend', () => {
+      dragging = false;
+      setTimeout(() => zooming = false, 200);
+    });
 
-    // Desktop drag (mouse or trackpad)
+    // Desktop drag
     window.addEventListener('mousedown', (e) => {
       dragging = true;
       lastX = e.clientX;
@@ -182,21 +211,29 @@
 
     window.addEventListener('mouseup', () => dragging = false);
 
-    // Keyboard nav
+    // Keyboard navigation
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') {
         currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
+        slider.value = currentSpread;
         resetTransform();
         renderCurrentSpread();
       }
       if (e.key === 'ArrowLeft') {
         currentSpread = Math.max(currentSpread - 1, 0);
+        slider.value = currentSpread;
         resetTransform();
         renderCurrentSpread();
       }
     });
 
-    // Resize handler
+    // Slider change
+    slider.addEventListener('input', () => {
+      currentSpread = parseInt(slider.value);
+      resetTransform();
+      renderCurrentSpread();
+    });
+
     window.addEventListener('resize', () => {
       resetTransform();
       renderCurrentSpread();
@@ -206,3 +243,4 @@
   </script>
 </body>
 </html>
+
