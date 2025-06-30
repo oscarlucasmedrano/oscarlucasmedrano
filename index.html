@@ -252,19 +252,20 @@
             const containerRect = canvasContainer.getBoundingClientRect();
             const leftRect = canvasLeft.getBoundingClientRect();
             const rightRect = canvasRight.getBoundingClientRect();
-            const gap = 5;
-            const totalWidth = leftRect.width + gap + rightRect.width;
+            const totalGap = 5; // Total gap of 5px, split into 2.5px on each side
+            const halfGap = totalGap / 2;
+            const totalWidth = leftRect.width + totalGap + rightRect.width;
             const spreadWidth = Math.min(totalWidth, containerRect.width);
             const totalHeight = Math.max(leftRect.height, rightRect.height);
             const centerOffsetX = (containerRect.width - spreadWidth) / 2;
             const centerOffsetY = (containerRect.height - totalHeight) / 2;
             canvasLeft.style.left = `${centerOffsetX}px`;
             canvasLeft.style.top = `${centerOffsetY}px`;
-            canvasRight.style.left = `${centerOffsetX + leftRect.width + gap}px`;
+            canvasRight.style.left = `${centerOffsetX + leftRect.width + totalGap}px`;
             canvasRight.style.top = `${centerOffsetY}px`;
-            const creaseLeft = centerOffsetX + leftRect.width + (gap / 2);
+            const creaseLeft = centerOffsetX + leftRect.width + halfGap; // Center crease with 2.5px gaps
             crease.style.left = `${creaseLeft}px`;
-            console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + leftRect.width + gap}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
+            console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + leftRect.width + totalGap}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
         }
 
         function adjustCanvases() {
@@ -293,7 +294,6 @@
             }
         }
 
-        // Restrict navigation to PDF canvases
         [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
             canvas.addEventListener('click', (e) => {
                 const rect = canvas.getBoundingClientRect();
