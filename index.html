@@ -123,8 +123,6 @@
         const maxScale = 10;
         const debounceDelay = 16;
         let lastMoveTime = 0;
-        let referenceWidth = 0;
-        let referenceHeight = 0;
 
         async function loadSpread(index) {
             contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
@@ -158,7 +156,7 @@
                     const scaleY = maxHeight / viewport.height;
                     let fitScale = Math.min(scaleX, scaleY);
                     if (window.innerWidth > 600) fitScale *= 1.1; else fitScale *= 1.3;
-                    scale = Math.min(Math.max(fitScale, minScale), maxScale);
+                    scale = Math.min(Math.max(fitScale, minScale), maxScale); // Set scale based on cover
                     const adjustedViewport = page.getViewport({ scale: scale });
                     canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
                     canvasSingle.width = adjustedViewport.width * window.devicePixelRatio;
@@ -181,27 +179,6 @@
                 crease.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
-                    const leftPage = await pdfDocLeft.getPage(1);
-                    const leftViewport = leftPage.getViewport({ scale: scale });
-                    if (index === 1) {
-                        // Set reference dimensions from first spread
-                        let maxWidth = window.innerWidth * 0.9;
-                        let maxHeight = window.innerHeight * 0.9;
-                        if (window.innerWidth <= 600) {
-                            maxWidth -= 240;
-                            maxHeight -= 240;
-                        } else {
-                            maxWidth -= 55;
-                            maxHeight -= 55;
-                        }
-                        const scaleX = maxWidth / leftViewport.width;
-                        const scaleY = maxHeight / leftViewport.height;
-                        let fitScale = Math.min(scaleX, scaleY);
-                        if (window.innerWidth > 600) fitScale *= 1.1; else fitScale *= 1.3;
-                        scale = Math.min(Math.max(fitScale, minScale), maxScale);
-                        referenceWidth = leftViewport.width;
-                        referenceHeight = leftViewport.height;
-                    }
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}`);
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
@@ -248,20 +225,6 @@
         async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
-            let maxWidth = window.innerWidth * 0.9;
-            let maxHeight = window.innerHeight * 0.9;
-            if (window.innerWidth <= 600) {
-                maxWidth -= 240;
-                maxHeight -= 240;
-            } else {
-                maxWidth -= 55;
-                maxHeight -= 55;
-            }
-            const scaleX = maxWidth / viewport.width;
-            const scaleY = maxHeight / viewport.height;
-            let fitScale = Math.min(scaleX, scaleY);
-            if (window.innerWidth > 600) fitScale *= 1.1; else fitScale *= 1.3;
-            scale = Math.min(Math.max(fitScale, minScale), maxScale);
             const adjustedViewport = page.getViewport({ scale: scale });
             canvas.height = adjustedViewport.height * window.devicePixelRatio;
             canvas.width = adjustedViewport.width * window.devicePixelRatio;
