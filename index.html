@@ -32,12 +32,14 @@
     #pdf-container {
       display: flex;
       flex-direction: row;
-      gap: 10px;
+      justify-content: center;
+      align-items: center;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(1);
       transform-origin: center center;
+      gap: 10px;
       transition: transform 0.05s linear;
     }
 
@@ -75,26 +77,47 @@
     return canvas;
   }
 
+  function applyZoom() {
+    container.style.transform = `translate(-50%, -50%) scale(${viewScale})`;
+  }
+
+  function resetZoom() {
+    viewScale = 1;
+    applyZoom();
+    viewport.scrollTop = 0;
+    viewport.scrollLeft = 0;
+  }
+
   async function renderSpread(index) {
     container.innerHTML = '';
 
+    let pages = [];
     if (index === 0) {
-      const canvas = await loadCanvas(pdfFiles[0], pdfScale);
-      container.appendChild(canvas);
+      pages = [await loadCanvas(pdfFiles[0], pdfScale)];
     } else {
       const leftIndex = index;
       const rightIndex = index + 1;
-
-      const leftCanvas = await loadCanvas(pdfFiles[leftIndex], pdfScale);
-      container.appendChild(leftCanvas);
-
+      pages.push(await loadCanvas(pdfFiles[leftIndex], pdfScale));
       if (rightIndex < pdfFiles.length) {
-        const rightCanvas = await loadCanvas(pdfFiles[rightIndex], pdfScale);
-        container.appendChild(rightCanvas);
+        pages.push(await loadCanvas(pdfFiles[rightIndex], pdfScale));
       }
     }
 
-    resetZoom(); // Recenter after render
+    pages.forEach(canvas => container.appendChild(canvas));
+
+    fitToScreen(pages);
+  }
+
+  function fitToScreen(pages) {
+    // Try to fit both canvases in 90% width and 90% height of screen
+    const totalWidth = pages.reduce((sum, canvas) => sum + canvas.width, 0) + (pages.length - 1) * 10;
+    const maxHeight = Math.max(...pages.map(c => c.height));
+
+    const scaleX = (window.innerWidth * 0.9) / totalWidth;
+    const scaleY = (window.innerHeight * 0.9) / maxHeight;
+
+    viewScale = Math.min(scaleX, scaleY, 1);
+    applyZoom();
   }
 
   function showNext() {
@@ -108,18 +131,7 @@
     renderSpread(currentIndex);
   }
 
-  function applyZoom() {
-    container.style.transform = `translate(-50%, -50%) scale(${viewScale})`;
-  }
-
-  function resetZoom() {
-    viewScale = 1;
-    applyZoom();
-    viewport.scrollTop = (container.offsetHeight - viewport.clientHeight) / 2;
-    viewport.scrollLeft = (container.offsetWidth - viewport.clientWidth) / 2;
-  }
-
-  // Trackpad / mouse wheel zoom
+  // Scroll zoom
   viewport.addEventListener("wheel", (e) => {
     if (e.ctrlKey || Math.abs(e.deltaY) < 50) {
       e.preventDefault();
@@ -129,7 +141,7 @@
     }
   }, { passive: false });
 
-  // Pinch zoom for mobile
+  // Pinch zoom
   let lastDist = null;
   viewport.addEventListener("touchmove", (e) => {
     if (e.touches.length === 2) {
@@ -145,24 +157,27 @@
     }
   }, { passive: false });
 
-  viewport.addEventListener("touchend", () => {
-    lastDist = null;
-  });
+  viewport.addEventListener("touchend", () => lastDist = null);
 
-  // Tap / click for navigation
+  // Click/tap nav
   viewport.addEventListener("click", e => {
     const x = e.clientX;
     if (x > window.innerWidth / 2) showNext();
     else showPrev();
   });
 
+  // Arrows
   document.addEventListener("keydown", e => {
     if (e.key === "ArrowRight") showNext();
     if (e.key === "ArrowLeft") showPrev();
   });
+
+  // On resize, re-fit
+  window.addEventListener("resize", () => renderSpread(currentIndex));
 
   renderSpread(currentIndex);
 </script>
 
 </body>
 </html>
+
