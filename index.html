@@ -171,7 +171,7 @@
                     await page.render(renderContext).promise;
                     console.log(`Loaded single page: ${spread.file}, width: ${viewport.width}px, height: ${viewport.height}px, rendered width: ${adjustedViewport.width}px`);
                 } catch (error) {
-                    console.error('Error loading single PDF:', error);
+                    console.error('Error loading cover PDF:', error);
                 }
             } else if (spread.type === 'spread') {
                 canvasContainer.classList.add('spread');
@@ -185,7 +185,7 @@
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}, applying scale: ${scale}`);
                     const leftPage = await pdfDocLeft.getPage(1);
                     const leftViewport = leftPage.getViewport({ scale: scale });
-                    console.log(`Left page dimensions: width ${leftViewport.width}px, height ${leftViewport.height}px`);
+                    console.log(`Left page dimensions: width ${leftViewport.width}px, height ${leftViewport.height}px, rendered width: ${canvasLeft.getBoundingClientRect().width}px`);
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                     const renderResult = await renderPage(pdfDocRight, 1, canvasRight, contextRight);
                     if (!renderResult) {
@@ -252,16 +252,16 @@
             const containerRect = canvasContainer.getBoundingClientRect();
             const leftRect = canvasLeft.getBoundingClientRect();
             const rightRect = canvasRight.getBoundingClientRect();
-            const totalWidth = leftRect.width + rightRect.width; // Remove margin for precise alignment
+            const totalWidth = leftRect.width + rightRect.width;
             const spreadWidth = Math.min(totalWidth, containerRect.width);
             const totalHeight = Math.max(leftRect.height, rightRect.height);
             const centerOffsetX = (containerRect.width - spreadWidth) / 2;
             const centerOffsetY = (containerRect.height - totalHeight) / 2;
             canvasLeft.style.left = `${centerOffsetX}px`;
             canvasLeft.style.top = `${centerOffsetY}px`;
-            canvasRight.style.left = `${centerOffsetX + leftRect.width}px`; // Align right edge to crease
+            canvasRight.style.left = `${centerOffsetX + leftRect.width}px`;
             canvasRight.style.top = `${centerOffsetY}px`;
-            const creaseLeft = centerOffsetX + leftRect.width; // Position crease at right edge of left canvas
+            const creaseLeft = centerOffsetX + leftRect.width;
             crease.style.left = `${creaseLeft}px`;
             console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + leftRect.width}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
         }
@@ -298,9 +298,11 @@
             if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
                 currentSpreadIndex--;
                 loadSpread(currentSpreadIndex);
+                console.log(`Navigated to index ${currentSpreadIndex}`);
             } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
                 currentSpreadIndex++;
                 loadSpread(currentSpreadIndex);
+                console.log(`Navigated to index ${currentSpreadIndex}`);
             }
         });
 
@@ -308,9 +310,11 @@
             if (e.key === 'ArrowLeft' && currentSpreadIndex > 0) {
                 currentSpreadIndex--;
                 loadSpread(currentSpreadIndex);
+                console.log(`Navigated to index ${currentSpreadIndex}`);
             } else if (e.key === 'ArrowRight' && currentSpreadIndex < pdfFiles.length - 1) {
                 currentSpreadIndex++;
                 loadSpread(currentSpreadIndex);
+                console.log(`Navigated to index ${currentSpreadIndex}`);
             }
         });
 
@@ -354,7 +358,7 @@
             // No action needed
         });
 
-        window.addEventListener('resize', adjustCanvasess);
+        window.addEventListener('resize', adjustCanvases);
 
         loadSpread(currentSpreadIndex);
     </script>
