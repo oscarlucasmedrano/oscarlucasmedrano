@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Simple PDF Flipbook</title>
+    <title>PDF Flipbook</title>
     <style>
         * {
             margin: 0;
@@ -19,48 +19,36 @@
             align-items: center;
             overflow: hidden;
         }
-        #container {
+        #flipbook {
             position: relative;
-            text-align: center;
+            perspective: 1000px;
         }
         #pdf-canvas {
             width: 574.43px;
             height: auto;
             border: 1px solid white;
-            display: block;
-            margin: 0 auto;
-        }
-        #nav-buttons {
             position: absolute;
             top: 50%;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            transform: translateY(-50%);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.5s ease, opacity 0.3s ease;
+            opacity: 1;
         }
-        .nav-button {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 10px;
-            width: 50px;
+        #pdf-canvas.out {
+            transform: translate(-50%, -50%) translateX(100%) rotateY(20deg);
+            opacity: 0;
         }
-        .nav-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        #pdf-canvas.in {
+            transform: translate(-50%, -50%) translateX(-100%) rotateY(-20deg);
+            opacity: 0;
         }
     </style>
 </head>
 <body>
-    <div id="container">
+    <div id="flipbook">
         <canvas id="pdf-canvas"></canvas>
-        <div id="nav-buttons">
-            <button id="prev-btn" class="nav-button">&larr;</button>
-            <button id="next-btn" class="nav-button">&rarr;</button>
-        </div>
     </div>
+    <audio id="page-turn-sound" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -77,15 +65,11 @@
         let currentIndex = 0;
         const canvas = document.getElementById('pdf-canvas');
         const context = canvas.getContext('2d');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
+        const pageTurnSound = document.getElementById('page-turn-sound');
         let scale = 1.0;
         const TARGET_WIDTH = 574.43;
-        const minScale = 0.1;
-        const maxScale = 5.0;
 
         async function loadPage(index) {
-            context.clearRect(0, 0, canvas.width, canvas.height);
             const pdfDoc = await pdfjsLib.getDocument(pdfFiles[index]).promise;
             const page = await pdfDoc.getPage(1);
             const viewport = page.getViewport({ scale: 1.0 });
@@ -101,73 +85,38 @@
             };
             await page.render(renderContext).promise;
             console.log(`Loaded page: ${pdfFiles[index]}, rendered width: ${TARGET_WIDTH}px, rendered height: ${adjustedViewport.height}px`);
-            updateButtons();
         }
 
-        function updateButtons() {
-            prevBtn.disabled = currentIndex === 0;
-            nextBtn.disabled = currentIndex === pdfFiles.length - 1;
-        }
-
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                loadPage(currentIndex);
-            }
-        });
-
-        nextBtn.addEventListener('click', () => {
-            if (currentIndex < pdfFiles.length - 1) {
+        async function turnPage(direction) {
+            const oldCanvas = canvas.cloneNode();
+            oldCanvas.className = 'out';
+            canvas.parentNode.appendChild(oldCanvas);
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            if (direction === 'next' && currentIndex < pdfFiles.length - 1) {
                 currentIndex++;
-                loadPage(currentIndex);
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                canvas.className = 'in';
+                await loadPage(currentIndex);
+                canvas.className = '';
+                pageTurnSound.play();
+            } else if (direction === 'prev' && currentIndex > 0) {
                 currentIndex--;
-                loadPage(currentIndex);
-            } else if (e.key === 'ArrowRight' && currentIndex < pdfFiles.length - 1) {
-                currentIndex++;
-                loadPage(currentIndex);
+                canvas.className = 'in';
+                await loadPage(currentIndex);
+                canvas.className = '';
+                pageTurnSound.play();
             }
-        });
-
-        // Mouse wheel zoom
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const delta = e.deltaY * -0.001;
-            scale = Math.min(maxScale, Math.max(minScale, scale + delta));
-            renderZoomed();
-        });
-
-        // Mobile pinch zoom
-        let lastTouchDistance = 0;
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                lastTouchDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-            }
-        });
-
-        canvas.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-                const delta = (currentDistance - lastTouchDistance) * 0.01;
-                scale = Math.min(maxScale, Math.max(minScale, scale + delta));
-                lastTouchDistance = currentDistance;
-                renderZoomed();
-            }
-        });
-
-        function renderZoomed() {
-            loadPage(currentIndex);
+            setTimeout(() => oldCanvas.remove(), 500);
         }
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            if (clickX < rect.width / 2 && currentIndex > 0) {
+                turnPage('prev');
+            } else if (clickX >= rect.width / 2 && currentIndex < pdfFiles.length - 1) {
+                turnPage('next');
+            }
+        });
 
         window.addEventListener('resize', () => loadPage(currentIndex));
 
