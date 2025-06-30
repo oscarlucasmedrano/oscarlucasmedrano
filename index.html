@@ -142,7 +142,7 @@
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
                     const page = await pdfDocLeft.getPage(1);
-                    const viewport = page.getViewport({ scale: scale });
+                    const viewport = page.getViewport({ scale: 1.0 });
                     let maxWidth = window.innerWidth * 0.9;
                     let maxHeight = window.innerHeight * 0.9;
                     if (window.innerWidth <= 600) {
@@ -154,9 +154,9 @@
                     }
                     const scaleX = maxWidth / viewport.width;
                     const scaleY = maxHeight / viewport.height;
-                    let fitScale = Math.min(scaleX, scaleY);
-                    if (window.innerWidth > 600) fitScale *= 1.1; else fitScale *= 1.3;
-                    baseScale = Math.min(Math.max(fitScale, minScale), maxScale);
+                    baseScale = Math.min(Math.min(scaleX, scaleY), Math.max(scaleX, scaleY));
+                    if (window.innerWidth > 600) baseScale *= 1.1; else baseScale *= 1.3;
+                    baseScale = Math.min(Math.max(baseScale, minScale), maxScale);
                     scale = baseScale;
                     const adjustedViewport = page.getViewport({ scale: scale });
                     canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
@@ -169,7 +169,7 @@
                         transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
                     };
                     await page.render(renderContext).promise;
-                    console.log(`Loaded single page: ${spread.file}, width: ${viewport.width}px, height: ${viewport.height}px, rendered width: ${adjustedViewport.width}px`);
+                    console.log(`Loaded single page: ${spread.file}, width: ${viewport.width}px, height: ${viewport.height}px, rendered width: ${adjustedViewport.width}px, baseScale: ${baseScale}`);
                 } catch (error) {
                     console.error('Error loading cover PDF:', error);
                 }
@@ -181,7 +181,7 @@
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
-                    scale = baseScale;
+                    scale = baseScale; // Use cover's baseScale for all spreads
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}, applying scale: ${scale}`);
                     const leftPage = await pdfDocLeft.getPage(1);
                     const leftViewport = leftPage.getViewport({ scale: scale });
@@ -252,7 +252,7 @@
             const containerRect = canvasContainer.getBoundingClientRect();
             const leftRect = canvasLeft.getBoundingClientRect();
             const rightRect = canvasRight.getBoundingClientRect();
-            const totalGap = 5; // Total gap of 5px, split into 2.5px on each side
+            const totalGap = 5;
             const halfGap = totalGap / 2;
             const totalWidth = leftRect.width + totalGap + rightRect.width;
             const spreadWidth = Math.min(totalWidth, containerRect.width);
@@ -263,7 +263,7 @@
             canvasLeft.style.top = `${centerOffsetY}px`;
             canvasRight.style.left = `${centerOffsetX + leftRect.width + totalGap}px`;
             canvasRight.style.top = `${centerOffsetY}px`;
-            const creaseLeft = centerOffsetX + leftRect.width + halfGap; // Center crease with 2.5px gaps
+            const creaseLeft = centerOffsetX + leftRect.width + halfGap;
             crease.style.left = `${creaseLeft}px`;
             console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + leftRect.width + totalGap}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
         }
