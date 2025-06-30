@@ -55,6 +55,7 @@
       z-index: 10;
       width: 90%;
       max-width: 600px;
+      touch-action: auto; /* fixes mobile slider bug */
     }
 
     #pageSlider {
@@ -141,8 +142,7 @@
       const left = spreads[currentSpread][0];
       const match = left.match(/page(\d+)\.pdf/);
       const first = match ? parseInt(match[1]) : 1;
-      const total = 32;
-      pageNumber.textContent = `Page ${first} / ${total}`;
+      pageNumber.textContent = `Page ${first} / 32`;
     }
 
     function renderPDF(url, canvas, pagesWide, callback) {
@@ -150,7 +150,9 @@
         pdf.getPage(1).then(page => {
           const viewport = page.getViewport({ scale: 1 });
           const dpi = window.devicePixelRatio || 1;
-          const targetWidth = window.innerWidth / pagesWide * 0.95;
+          const isDesktop = window.innerWidth >= 768;
+          const rawTargetWidth = window.innerWidth / pagesWide * 0.95;
+          const targetWidth = isDesktop ? rawTargetWidth * 0.8 : rawTargetWidth;
           const scaleToFit = targetWidth / viewport.width;
           const scaledViewport = page.getViewport({ scale: scaleToFit });
 
@@ -288,7 +290,8 @@
       }
     });
 
-    slider.addEventListener('input', () => {
+    slider.addEventListener('input', (e) => {
+      e.stopPropagation();
       currentSpread = parseInt(slider.value);
       resetTransform();
       renderCurrentSpread();
@@ -303,3 +306,4 @@
   </script>
 </body>
 </html>
+
