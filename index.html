@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
       align-items: center;
       height: 100vh;
       width: 100vw;
-      touch-action: none; /* Prevent default touch behaviors */
+      touch-action: none;
     }
 
     #pdf-container {
@@ -26,7 +27,7 @@
       max-width: 100%;
       max-height: 100%;
       overflow: hidden;
-      touch-action: pinch-zoom pan-x pan-y; /* Allow pinch-zoom and panning */
+      touch-action: pinch-zoom pan-x pan-y;
     }
 
     #pdf-canvas {
@@ -43,6 +44,17 @@
       cursor: grabbing;
     }
 
+    #error-message {
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
     @media (max-width: 768px) {
       #pdf-canvas {
         max-width: 95%;
@@ -54,88 +66,105 @@
 <body>
   <div id="pdf-container">
     <canvas id="pdf-canvas"></canvas>
+    <div id="error-message"></div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
-    // Initialize pdf.js
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    const pdfUrls = ['page1.pdf', 'page2.pdf', 'page3.pdf'];
+    // Replace with your PDF paths or use the sample PDF for testing
+    const pdfUrls = [
+      'page1.pdf',
+      'page2.pdf',
+      'page3.pdf'
+      // For testing: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey.pdf'
+    ];
     let currentPageIndex = 0;
     let pdfDoc = null;
     let scale = 1;
     let translateX = 0;
     let translateY = 0;
     let isDragging = false;
-    let startX, startY;
-    let startTranslateX, startTranslateY;
+    let startX, startY, startTranslateX, startTranslateY;
 
     const canvas = document.getElementById('pdf-canvas');
     const ctx = canvas.getContext('2d');
     const container = document.getElementById('pdf-container');
+    const errorMessage = document.getElementById('error-message');
 
     async function loadPDF(index) {
       try {
         const loadingTask = pdfjsLib.getDocument(pdfUrls[index]);
         pdfDoc = await loadingTask.promise;
+        console.log(`Loaded PDF: ${pdfUrls[index]}`);
+        errorMessage.style.display = 'none';
+        canvas.style.border = '1px solid white';
         renderPage();
       } catch (error) {
         console.error('Error loading PDF:', error);
+        canvas.style.border = '1px solid red';
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = `Failed to load ${pdfUrls[index]}. Check file path or CORS.`;
       }
     }
 
     async function renderPage() {
-      const page = await pdfDoc.getPage(1);
-      const viewport = page.getViewport({ scale: 1 });
-      
-      // Adjust scale to fit within container
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      const pdfWidth = viewport.width;
-      const pdfHeight = viewport.height;
-      const scaleX = containerWidth / pdfWidth * 0.9;
-      const scaleY = containerHeight / pdfHeight * 0.9;
-      scale = Math.min(scaleX, scaleY);
-      
-      const scaledViewport = page.getViewport({ scale });
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
+      try {
+        const page = await pdfDoc.getPage(1);
+        const viewport = page.getViewport({ scale: 1 });
 
-      // For side-by-side display on pages 2 and 3
-      if (currentPageIndex === 1) {
-        canvas.width = scaledViewport.width * 2; // Double width for two pages
-      }
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const scaleX = containerWidth / viewport.width * 0.9;
+        const scaleY = containerHeight / viewport.height * 0.9;
+        scale = Math.min(scaleX, scaleY);
 
-      // Center the canvas
-      translateX = (containerWidth - canvas.width) / 2;
-      translateY = (containerHeight - canvas.height) / 2;
-      updateTransform();
+        const scaledViewport = page.getViewport({ scale });
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
 
-      // Render the page(s)
-      if (currentPageIndex === 1) {
-        // Render page2.pdf
-        const renderContext1 = {
-          canvasContext: ctx,
-          viewport: scaledViewport,
-        };
-        await page.render(renderContext1).promise;
+        if (currentPageIndex === 1) {
+          canvas.width = scaledViewport.width * 2;
+        }
 
-        // Render page3.pdf next to it
-        const page3Doc = await pdfjsLib.getDocument(pdfUrls[2]).promise;
-        const page3 = await page3Doc.getPage(1);
-        const renderContext2 = {
-          canvasContext: ctx,
-          viewport: scaledViewport,
-          transform: [1, 0, 0, 1, scaledViewport.width, 0], // Offset to the right
-        };
-        await page3.render(renderContext2).promise;
-      } else {
-        const renderContext = {
-          canvasContext: ctx,
-          viewport: scaledViewport,
-        };
-        await page.render(renderContext).promise;
+        translateX = (containerWidth - canvas.width) / 2;
+        translateY = (containerHeight - canvas.height) / 2;
+        updateTransform();
+
+        if (currentPageIndex === 1) {
+          const renderContext1 = {
+            canvasContext: ctx,
+            viewport: scaledViewport,
+          };
+          await page.render(renderContext1).promise;
+
+          try {
+            const page3Doc = await pdfjsLib.getDocument(pdfUrls[2]).promise;
+            const page3 = await page3Doc.getPage(1);
+            const renderContext2 = {
+              canvasContext: ctx,
+              viewport: scaledViewport,
+              transform: [1, 0, 0, 1, scaledViewport.width, 0],
+            };
+            await page3.render(renderContext2).promise;
+          } catch (error) {
+            console.error('Error loading page3.pdf:', error);
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = 'Failed to load page3.pdf';
+          }
+        } else {
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: scaledViewport,
+          };
+          await page.render(renderContext).promise;
+        }
+      } catch (error) {
+        console.error('Error rendering PDF:', error);
+        canvas.style.border = '1px solid red';
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Failed to render PDF';
       }
     }
 
@@ -143,9 +172,7 @@
       canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
     }
 
-    // Zoom and Pan Handlers
     let lastDistance = null;
-
     function getDistance(touches) {
       if (touches.length < 2) return 0;
       const dx = touches[0].clientX - touches[1].clientX;
@@ -180,7 +207,7 @@
         if (lastDistance) {
           const scaleChange = distance / lastDistance;
           scale *= scaleChange;
-          scale = Math.max(0.5, Math.min(scale, 5)); // Limit zoom
+          scale = Math.max(0.5, Math.min(scale, 5));
           updateTransform();
         }
         lastDistance = distance;
@@ -224,13 +251,12 @@
       e.preventDefault();
       const zoomSpeed = 0.001;
       scale += e.deltaY * -zoomSpeed;
-      scale = Math.max(0.5, Math.min(scale, 5)); // Limit zoom
+      scale = Math.max(0.5, Math.min(scale, 5));
       updateTransform();
     });
 
-    // Page Navigation
     canvas.addEventListener('click', () => {
-      currentPageIndex = (currentPageIndex + 1) % 2; // Toggle between page1 and page2+3
+      currentPageIndex = (currentPageIndex + 1) % 2;
       loadPDF(currentPageIndex);
     });
 
@@ -244,8 +270,8 @@
       }
     });
 
-    // Initial Load
     loadPDF(currentPageIndex);
   </script>
 </body>
 </html>
+```
