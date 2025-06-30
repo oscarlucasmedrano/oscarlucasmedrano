@@ -22,8 +22,11 @@
         #flipbook {
             position: relative;
             perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        #pdf-canvas {
+        .pdf-canvas {
             width: 574.43px;
             height: auto;
             border: 1px solid white;
@@ -34,19 +37,35 @@
             transition: transform 0.5s ease, opacity 0.3s ease;
             opacity: 1;
         }
-        #pdf-canvas.out {
+        .pdf-canvas.out {
             transform: translate(-50%, -50%) translateX(100%) rotateY(20deg);
             opacity: 0;
         }
-        #pdf-canvas.in {
+        .pdf-canvas.in {
             transform: translate(-50%, -50%) translateX(-100%) rotateY(-20deg);
             opacity: 0;
+        }
+        #canvas-left, #canvas-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #canvas-left {
+            left: calc(50% - 287.215px); /* Half of 574.43px */
+        }
+        #canvas-right {
+            left: calc(50% + 287.215px); /* Half of 574.43px */
+        }
+        .spread {
+            display: flex;
+            width: 1148.86px; /* 574.43px * 2 */
         }
     </style>
 </head>
 <body>
     <div id="flipbook">
-        <canvas id="pdf-canvas"></canvas>
+        <canvas id="canvas-left" class="pdf-canvas"></canvas>
+        <canvas id="canvas-right" class="pdf-canvas"></canvas>
     </div>
     <audio id="page-turn-sound" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -54,66 +73,128 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         const pdfFiles = [
-            'page1.pdf', 'page2.pdf', 'page3.pdf', 'page4.pdf', 'page5.pdf',
-            'page6.pdf', 'page7.pdf', 'page8.pdf', 'page9.pdf', 'page10.pdf',
-            'page11.pdf', 'page12.pdf', 'page13.pdf', 'page14.pdf', 'page15.pdf',
-            'page16.pdf', 'page17.pdf', 'page18.pdf', 'page19.pdf', 'page20.pdf',
-            'page21.pdf', 'page22.pdf', 'page23.pdf', 'page24.pdf', 'page25.pdf',
-            'page26.pdf', 'page27.pdf', 'page28.pdf', 'page29.pdf', 'page30.pdf',
-            'page31.pdf', 'page32.pdf', 'page33.pdf'
+            { type: 'single', file: 'page1.pdf' },
+            { type: 'spread', left: 'page2.pdf', right: 'page3.pdf' },
+            { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' },
+            { type: 'spread', left: 'page6.pdf', right: 'page7.pdf' },
+            { type: 'spread', left: 'page8.pdf', right: 'page9.pdf' },
+            { type: 'spread', left: 'page10.pdf', right: 'page11.pdf' },
+            { type: 'spread', left: 'page12.pdf', right: 'page13.pdf' },
+            { type: 'spread', left: 'page14.pdf', right: 'page15.pdf' },
+            { type: 'spread', left: 'page16.pdf', right: 'page17.pdf' },
+            { type: 'spread', left: 'page18.pdf', right: 'page19.pdf' },
+            { type: 'spread', left: 'page20.pdf', right: 'page21.pdf' },
+            { type: 'spread', left: 'page22.pdf', right: 'page23.pdf' },
+            { type: 'spread', left: 'page24.pdf', right: 'page25.pdf' },
+            { type: 'spread', left: 'page26.pdf', right: 'page27.pdf' },
+            { type: 'spread', left: 'page28.pdf', right: 'page29.pdf' },
+            { type: 'spread', left: 'page30.pdf', right: 'page31.pdf' },
+            { type: 'spread', left: 'page32.pdf', right: 'page33.pdf' }
         ];
         let currentIndex = 0;
-        const canvas = document.getElementById('pdf-canvas');
-        const context = canvas.getContext('2d');
+        const canvasLeft = document.getElementById('canvas-left');
+        const canvasRight = document.getElementById('canvas-right');
+        const contextLeft = canvasLeft.getContext('2d');
+        const contextRight = canvasRight.getContext('2d');
         const pageTurnSound = document.getElementById('page-turn-sound');
-        let scale = 1.0;
+        const dpr = window.devicePixelRatio || 1;
         const TARGET_WIDTH = 574.43;
 
         async function loadPage(index) {
-            const pdfDoc = await pdfjsLib.getDocument(pdfFiles[index]).promise;
-            const page = await pdfDoc.getPage(1);
-            const viewport = page.getViewport({ scale: 1.0 });
-            scale = TARGET_WIDTH / viewport.width;
-            const adjustedViewport = page.getViewport({ scale: scale });
-            canvas.height = adjustedViewport.height;
-            canvas.width = adjustedViewport.width;
-            canvas.style.width = `${TARGET_WIDTH}px`;
-            canvas.style.height = `${adjustedViewport.height}px`;
-            const renderContext = {
-                canvasContext: context,
-                viewport: adjustedViewport
-            };
-            await page.render(renderContext).promise;
-            console.log(`Loaded page: ${pdfFiles[index]}, rendered width: ${TARGET_WIDTH}px, rendered height: ${adjustedViewport.height}px`);
+            const spread = pdfFiles[index];
+            contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
+            contextRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
+
+            if (spread.type === 'single') {
+                const pdfDoc = await pdfjsLib.getDocument(spread.file).promise;
+                const page = await pdfDoc.getPage(1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                const scale = TARGET_WIDTH / viewport.width;
+                const adjustedViewport = page.getViewport({ scale: scale * dpr });
+                canvasLeft.height = adjustedViewport.height / dpr;
+                canvasLeft.width = adjustedViewport.width / dpr;
+                canvasLeft.style.width = `${TARGET_WIDTH}px`;
+                canvasLeft.style.height = `${adjustedViewport.height / dpr}px`;
+                canvasRight.style.display = 'none';
+                const renderContext = {
+                    canvasContext: contextLeft,
+                    viewport: adjustedViewport,
+                    transform: [dpr, 0, 0, dpr, 0, 0]
+                };
+                await page.render(renderContext).promise;
+                canvasRight.style.display = 'none';
+            } else if (spread.type === 'spread') {
+                const pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
+                const pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
+                const leftPage = await pdfDocLeft.getPage(1);
+                const rightPage = await pdfDocRight.getPage(1);
+                const leftViewport = leftPage.getViewport({ scale: 1.0 });
+                const rightViewport = rightPage.getViewport({ scale: 1.0 });
+                const leftScale = TARGET_WIDTH / leftViewport.width;
+                const rightScale = TARGET_WIDTH / rightViewport.width;
+                const leftAdjustedViewport = leftPage.getViewport({ scale: leftScale * dpr });
+                const rightAdjustedViewport = rightPage.getViewport({ scale: rightScale * dpr });
+                canvasLeft.height = leftAdjustedViewport.height / dpr;
+                canvasLeft.width = leftAdjustedViewport.width / dpr;
+                canvasRight.height = rightAdjustedViewport.height / dpr;
+                canvasRight.width = rightAdjustedViewport.width / dpr;
+                canvasLeft.style.width = `${TARGET_WIDTH}px`;
+                canvasLeft.style.height = `${leftAdjustedViewport.height / dpr}px`;
+                canvasRight.style.width = `${TARGET_WIDTH}px`;
+                canvasRight.style.height = `${rightAdjustedViewport.height / dpr}px`;
+                canvasLeft.style.display = 'block';
+                canvasRight.style.display = 'block';
+                const renderContextLeft = {
+                    canvasContext: contextLeft,
+                    viewport: leftAdjustedViewport,
+                    transform: [dpr, 0, 0, dpr, 0, 0]
+                };
+                const renderContextRight = {
+                    canvasContext: contextRight,
+                    viewport: rightAdjustedViewport,
+                    transform: [dpr, 0, 0, dpr, 0, 0]
+                };
+                await leftPage.render(renderContextLeft).promise;
+                await rightPage.render(renderContextRight).promise;
+                console.log(`Loaded spread: ${spread.left} + ${spread.right}, left width: ${TARGET_WIDTH}px, right width: ${TARGET_WIDTH}px`);
+            }
         }
 
         async function turnPage(direction) {
-            const oldCanvas = canvas.cloneNode();
-            oldCanvas.className = 'out';
-            canvas.parentNode.appendChild(oldCanvas);
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            const oldLeft = canvasLeft.cloneNode();
+            const oldRight = canvasRight.cloneNode();
+            oldLeft.className = 'pdf-canvas out';
+            oldRight.className = 'pdf-canvas out';
+            flipbook.appendChild(oldLeft);
+            flipbook.appendChild(oldRight);
+            contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
+            contextRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
+            canvasLeft.className = 'pdf-canvas in';
+            canvasRight.className = 'pdf-canvas in';
             if (direction === 'next' && currentIndex < pdfFiles.length - 1) {
                 currentIndex++;
-                canvas.className = 'in';
                 await loadPage(currentIndex);
-                canvas.className = '';
-                pageTurnSound.play();
             } else if (direction === 'prev' && currentIndex > 0) {
                 currentIndex--;
-                canvas.className = 'in';
                 await loadPage(currentIndex);
-                canvas.className = '';
-                pageTurnSound.play();
             }
-            setTimeout(() => oldCanvas.remove(), 500);
+            canvasLeft.className = 'pdf-canvas';
+            canvasRight.className = 'pdf-canvas';
+            pageTurnSound.play();
+            setTimeout(() => {
+                oldLeft.remove();
+                oldRight.remove();
+            }, 500);
         }
 
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
+        const flipbook = document.getElementById('flipbook');
+        flipbook.addEventListener('click', (e) => {
+            const rect = flipbook.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
-            if (clickX < rect.width / 2 && currentIndex > 0) {
+            const halfWidth = rect.width / 2;
+            if (clickX < halfWidth && currentIndex > 0) {
                 turnPage('prev');
-            } else if (clickX >= rect.width / 2 && currentIndex < pdfFiles.length - 1) {
+            } else if (clickX >= halfWidth && currentIndex < pdfFiles.length - 1) {
                 turnPage('next');
             }
         });
