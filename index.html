@@ -38,19 +38,22 @@
             width: 90%;
             max-width: 1200px;
             height: 100%;
-            margin: 0 auto; /* Center the container */
+            margin: 0 auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            text-align: center; /* Help center single pages */
+            text-align: center;
         }
         #canvas-container.spread {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             position: relative;
         }
         #pdf-canvas-left, #pdf-canvas-right {
             width: auto;
             height: auto;
             display: none;
-            position: absolute;
-            top: 0;
+            position: relative;
+            margin: 0 5px; /* Small margin between canvases */
         }
         #pdf-canvas-single {
             width: auto;
@@ -59,7 +62,7 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%); /* Center single pages */
+            transform: translate(-50%, -50%);
         }
         #crease {
             position: absolute;
@@ -125,6 +128,8 @@
         const maxScale = 10;
         const debounceDelay = 16; // Approx 60 FPS
         let lastMoveTime = 0; // Track touchmove timing
+        let coverWidth = 0;
+        let coverHeight = 0;
 
         async function loadSpread(index) {
             // Clear canvases
@@ -144,15 +149,34 @@
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    renderSinglePage(pdfDocLeft, 1, canvasSingle, contextSingle);
-                    console.log(`Loaded single page: ${spread.file}`);
+                    const page = await pdfDocLeft.getPage(1);
+                    const viewport = page.getViewport({ scale: scale });
+                    coverWidth = viewport.width;
+                    coverHeight = viewport.height;
+                    const maxWidth = window.innerWidth * 0.9; // Use 90% of window width for cover
+                    const maxHeight = window.innerHeight * 0.9;
+                    const scaleX = maxWidth / coverWidth;
+                    const scaleY = maxHeight / coverHeight;
+                    let fitScale = Math.min(scaleX, scaleY);
+                    fitScale *= scale;
+                    const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
+                    canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
+                    canvasSingle.width = adjustedViewport.width * window.devicePixelRatio;
+                    canvasSingle.style.width = `${adjustedViewport.width}px`;
+                    canvasSingle.style.height = `${adjustedViewport.height}px`;
+                    const renderContext = {
+                        canvasContext: contextSingle,
+                        viewport: adjustedViewport,
+                        transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                    };
+                    await page.render(renderContext).promise;
+                    console.log(`Loaded single page: ${spread.file}, width: ${coverWidth}px, height: ${coverHeight}px`);
                 } catch (error) {
                     console.error('Error loading single PDF:', error);
                 }
             } else if (spread.type === 'spread') {
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
-                canvasLeft.style.left = '0';
                 canvasRight.style.display = 'block';
                 crease.style.display = 'block';
                 try {
@@ -176,10 +200,10 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.45; // Adjusted for two canvases
-            const maxHeight = window.innerHeight * 1;
-            const scaleX = maxWidth / viewport.width;
-            const scaleY = maxHeight / viewport.height;
+            const maxWidth = window.innerWidth * 0.9; // Match cover's max width
+            const maxHeight = window.innerHeight * 0.9; // Match cover's max height
+            const scaleX = maxWidth / coverWidth;
+            const scaleY = maxHeight / coverHeight;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
                 fitScale *= 1.265; // Current desktop scale
@@ -206,10 +230,10 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.25;
-            const maxHeight = window.innerHeight * 1;
-            const scaleX = maxWidth / viewport.width;
-            const scaleY = maxHeight / viewport.height;
+            const maxWidth = window.innerWidth * 0.9; // Match cover's max width
+            const maxHeight = window.innerHeight * 0.9; // Match cover's max height
+            const scaleX = maxWidth / coverWidth;
+            const scaleY = maxHeight / coverHeight;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
                 fitScale *= 1.265; // Current desktop scale
@@ -246,10 +270,9 @@
                 renderPage(pdfDocRight, 1, canvasRight, contextRight);
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
-                canvasLeft.style.left = '0';
+                canvasRight.style.display = 'block';
                 const leftWidth = canvasLeft.getBoundingClientRect().width;
                 canvasRight.style.left = `${leftWidth + 10}px`; // Add 10px margin
-                canvasRight.style.display = 'block';
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
                 console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${leftWidth}px, rightWidth: ${canvasRight.getBoundingClientRect().width}px`);
