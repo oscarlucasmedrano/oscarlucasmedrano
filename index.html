@@ -199,15 +199,22 @@
                         console.error('Right page render failed, retrying...');
                         await renderPage(pdfDocRight, 1, canvasRight, contextRight); // Retry once
                     }
-                    // Position canvases dynamically
-                    const containerWidth = canvasContainer.getBoundingClientRect().width;
+                    // Position canvases within container
+                    const containerRect = canvasContainer.getBoundingClientRect();
                     const leftRect = canvasLeft.getBoundingClientRect();
                     const rightRect = canvasRight.getBoundingClientRect();
                     const totalWidth = leftRect.width + rightRect.width + 10; // 10px margin
-                    const centerOffset = (containerWidth - totalWidth) / 2;
+                    if (totalWidth > containerRect.width) {
+                        console.warn('Spread width exceeds container, adjusting scale...');
+                        const fitScale = containerRect.width / totalWidth;
+                        scale = Math.min(scale * fitScale, maxScale);
+                        await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
+                        await renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                    }
+                    const centerOffset = (containerRect.width - Math.min(totalWidth, containerRect.width)) / 2;
                     canvasLeft.style.left = `${centerOffset}px`;
                     canvasRight.style.left = `${centerOffset + leftRect.width + 10}px`; // After left canvas with margin
-                    console.log(`Set canvasLeft left to: ${centerOffset}px, canvasRight left to: ${centerOffset + leftRect.width + 10}px, containerWidth: ${containerWidth}px`);
+                    console.log(`Set canvasLeft left to: ${centerOffset}px, canvasRight left to: ${centerOffset + leftRect.width + 10}px, containerWidth: ${containerRect.width}px, totalWidth: ${totalWidth}px`);
                     console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
@@ -318,11 +325,18 @@
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasRight.style.display = 'block';
-                const containerWidth = canvasContainer.getBoundingClientRect().width;
+                const containerRect = canvasContainer.getBoundingClientRect();
                 const leftRect = canvasLeft.getBoundingClientRect();
                 const rightRect = canvasRight.getBoundingClientRect();
                 const totalWidth = leftRect.width + rightRect.width + 10; // 10px margin
-                const centerOffset = (containerWidth - totalWidth) / 2;
+                if (totalWidth > containerRect.width) {
+                    console.warn('Spread width exceeds container, adjusting scale...');
+                    const fitScale = containerRect.width / totalWidth;
+                    scale = Math.min(scale * fitScale, maxScale);
+                    renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
+                    renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                }
+                const centerOffset = (containerRect.width - Math.min(totalWidth, containerRect.width)) / 2;
                 canvasLeft.style.left = `${centerOffset}px`;
                 canvasRight.style.left = `${centerOffset + leftRect.width + 10}px`; // After left canvas with margin
                 canvasSingle.style.display = 'none';
