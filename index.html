@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
-  <title>PDF Book Viewer</title>
+  <title>Oscar-Lucas Medrano</title>
   <style>
     html, body {
       margin: 0;
@@ -48,9 +48,15 @@
     };
 
     let scale = 1, startScale = 1, startDist = 0;
-    let currentView = 1;
-    let panX = 0, panY = 0, startPanX = 0, startPanY = 0;
-    let dragging = false, lastX = 0, lastY = 0;
+    let currentSpread = 0; // 0 = cover, 1 = pages 2–3, 2 = pages 4–5, ...
+    const spreads = [["page1.pdf"]];
+
+    // Add spreads [page2, page3], [page4, page5], ..., [page32.pdf]
+    for (let i = 2; i <= 32; i += 2) {
+      spreads.push([`page${i}.pdf`, `page${i + 1}.pdf`]);
+    }
+
+    let panX = 0, panY = 0, dragging = false, lastX = 0, lastY = 0;
 
     function clearViewer() {
       viewer.innerHTML = '';
@@ -79,28 +85,25 @@
       });
     }
 
-    function showCover() {
-      currentView = 1;
+    function renderCurrentSpread() {
       clearViewer();
-      const canvas = document.createElement('canvas');
-      viewer.appendChild(canvas);
-      renderPDF('page1.pdf', canvas, 2, () => {
-        canvas.addEventListener('click', showBook);
-      });
-    }
-
-    function showBook() {
-      currentView = 2;
-      clearViewer();
-      const canvas1 = document.createElement('canvas');
-      const canvas2 = document.createElement('canvas');
-      viewer.appendChild(canvas1);
-      viewer.appendChild(canvas2);
-      renderPDF('page2.pdf', canvas1, 2, () => {
-        canvas1.addEventListener('click', showCover);
-      });
-      renderPDF('page3.pdf', canvas2, 2, () => {
-        canvas2.addEventListener('click', showBook);
+      const files = spreads[currentSpread];
+      const pagesWide = files.length;
+      files.forEach((pdf, i) => {
+        const canvas = document.createElement('canvas');
+        viewer.appendChild(canvas);
+        renderPDF(pdf, canvas, pagesWide);
+        canvas.addEventListener('click', () => {
+          if (pagesWide === 1) {
+            currentSpread = 1;
+          } else if (i === 0) {
+            currentSpread = Math.max(currentSpread - 1, 0);
+          } else {
+            currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
+          }
+          resetTransform();
+          renderCurrentSpread();
+        });
       });
     }
 
@@ -108,7 +111,13 @@
       viewer.style.transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${scale})`;
     }
 
-    // Zoom desktop
+    function resetTransform() {
+      scale = 1;
+      panX = panY = 0;
+      applyTransform();
+    }
+
+    // Zoom and pan
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomIntensity = 0.05;
@@ -117,7 +126,6 @@
       applyTransform();
     }, { passive: false });
 
-    // Pinch zoom mobile
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -128,8 +136,6 @@
         dragging = true;
         lastX = e.touches[0].clientX;
         lastY = e.touches[0].clientY;
-        startPanX = panX;
-        startPanY = panY;
       }
     });
 
@@ -150,11 +156,8 @@
       }
     }, { passive: false });
 
-    window.addEventListener('touchend', () => {
-      dragging = false;
-    });
+    window.addEventListener('touchend', () => dragging = false);
 
-    // Desktop drag (mouse)
     window.addEventListener('mousedown', (e) => {
       dragging = true;
       lastX = e.clientX;
@@ -171,29 +174,31 @@
       }
     });
 
-    window.addEventListener('mouseup', () => {
-      dragging = false;
-    });
+    window.addEventListener('mouseup', () => dragging = false);
 
-    // Keyboard nav
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') showBook();
-      if (e.key === 'ArrowLeft') showCover();
+      if (e.key === 'ArrowRight') {
+        currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
+        resetTransform();
+        renderCurrentSpread();
+      }
+      if (e.key === 'ArrowLeft') {
+        currentSpread = Math.max(currentSpread - 1, 0);
+        resetTransform();
+        renderCurrentSpread();
+      }
     });
 
-    // Re-render on resize
     window.addEventListener('resize', () => {
-      scale = 1;
-      panX = panY = 0;
-      applyTransform();
-      currentView === 1 ? showCover() : showBook();
+      resetTransform();
+      renderCurrentSpread();
     });
 
-    // Start with cover
-    showCover();
+    renderCurrentSpread();
   </script>
 </body>
 </html>
+
 
 
 
