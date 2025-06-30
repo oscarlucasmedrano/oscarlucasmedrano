@@ -88,14 +88,10 @@
 
         const pdfFiles = [
             { type: 'single', file: 'page1.pdf' }, // Cover, single page
-            { type: 'single', file: 'page2.pdf' }, // 2-3 as single pages
-            { type: 'single', file: 'page3.pdf' },
-            { type: 'single', file: 'page4.pdf' }, // 4-5 as single pages
-            { type: 'single', file: 'page5.pdf' },
-            { type: 'single', file: 'page6.pdf' }, // 6-7 as single pages
-            { type: 'single', file: 'page7.pdf' },
-            { type: 'single', file: 'page8.pdf' }, // 8-9 as single pages
-            { type: 'single', file: 'page9.pdf' },
+            { type: 'spread', left: 'page2.pdf', right: 'page3.pdf' },
+            { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' },
+            { type: 'spread', left: 'page6.pdf', right: 'page7.pdf' },
+            { type: 'spread', left: 'page8.pdf', right: 'page9.pdf' },
             { type: 'spread', left: 'page10.pdf', right: 'page11.pdf' },
             { type: 'spread', left: 'page12.pdf', right: 'page13.pdf' },
             { type: 'spread', left: 'page14.pdf', right: 'page15.pdf' },
@@ -103,11 +99,11 @@
             { type: 'spread', left: 'page18.pdf', right: 'page19.pdf' },
             { type: 'spread', left: 'page20.pdf', right: 'page21.pdf' },
             { type: 'spread', left: 'page22.pdf', right: 'page23.pdf' },
-            { type: 'single', file: 'page24.pdf' }, // Single page
-            { type: 'spread', left: 'page25.pdf', right: 'page26.pdf' },
-            { type: 'spread', left: 'page27.pdf', right: 'page28.pdf' },
-            { type: 'spread', left: 'page29.pdf', right: 'page30.pdf' },
-            { type: 'spread', left: 'page31.pdf', right: 'page32.pdf' }
+            { type: 'spread', left: 'page24.pdf', right: 'page25.pdf' },
+            { type: 'spread', left: 'page26.pdf', right: 'page27.pdf' },
+            { type: 'spread', left: 'page28.pdf', right: 'page29.pdf' },
+            { type: 'spread', left: 'page30.pdf', right: 'page31.pdf' },
+            { type: 'spread', left: 'page32.pdf', right: 'page33.pdf' }
         ];
         let currentSpreadIndex = 0;
         let scale = 1.0 * window.devicePixelRatio;
@@ -165,10 +161,10 @@
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}`);
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                     await renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                    // Set canvasRight position after rendering
+                    // Set canvasRight position after rendering with margin
                     const leftWidth = canvasLeft.getBoundingClientRect().width;
-                    canvasRight.style.left = `${leftWidth}px`;
-                    console.log(`Set canvasRight left to: ${leftWidth}px, canvasRight width: ${canvasRight.getBoundingClientRect().width}px`);
+                    canvasRight.style.left = `${leftWidth + 10}px`; // Add 10px margin
+                    console.log(`Set canvasRight left to: ${leftWidth + 10}px, canvasRight width: ${canvasRight.getBoundingClientRect().width}px`);
                     console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
@@ -252,7 +248,7 @@
                 canvasLeft.style.display = 'block';
                 canvasLeft.style.left = '0';
                 const leftWidth = canvasLeft.getBoundingClientRect().width;
-                canvasRight.style.left = `${leftWidth}px`;
+                canvasRight.style.left = `${leftWidth + 10}px`; // Add 10px margin
                 canvasRight.style.display = 'block';
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
