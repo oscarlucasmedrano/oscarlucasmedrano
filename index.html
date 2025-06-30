@@ -20,8 +20,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            max-width: 90vw;
-            max-height: 90vh;
+            max-width: 100vw;
+            max-height: 100vh;
             overflow: visible;
             transform-origin: center center;
         }
@@ -34,6 +34,10 @@
             gap: 2px;
         }
         @media (max-width: 768px) {
+            .pdf-container {
+                width: 90vw;
+                height: 90vh;
+            }
             .pdf-page {
                 width: 45vw;
                 height: 60vw;
@@ -43,12 +47,16 @@
             }
         }
         @media (min-width: 769px) {
+            .pdf-container {
+                width: 100vw;
+                height: 100vh;
+            }
             .pdf-page {
-                width: 45vw;
-                height: 60vh;
+                width: 50vw;
+                height: 100vh;
             }
             .pdf-double .pdf-page {
-                width: 22.5vw;
+                width: 25vw;
             }
         }
         .hidden {
@@ -90,6 +98,7 @@
             translateX = 0;
             translateY = 0;
             pdfContainer.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            window.scrollTo(0, 0); // Ensure centered on load
         }
 
         // Zoom and pan functionality
