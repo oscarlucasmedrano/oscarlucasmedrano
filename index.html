@@ -13,9 +13,9 @@
       margin: 0;
       padding: 0;
       background: black;
-      overflow: hidden;
       height: 100%;
       width: 100%;
+      overflow: hidden;
       touch-action: none;
     }
 
@@ -23,28 +23,26 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       touch-action: pan-x pan-y;
     }
 
     #pdf-container {
       display: flex;
-      justify-content: center;
-      align-items: center;
+      flex-direction: row;
       gap: 10px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(1);
+      transform: scale(1);
       transform-origin: center center;
       transition: transform 0.05s linear;
       background: black;
     }
 
     canvas {
-      border: 1px solid white;
       display: block;
       background: black;
+      border: 1px solid white;
     }
   </style>
 </head>
@@ -69,25 +67,29 @@
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale });
     const aspectRatio = viewport.width / viewport.height;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
 
+    const canvas = document.createElement("canvas");
     canvas.height = fixedCanvasHeight;
     canvas.width = canvas.height * aspectRatio;
 
+    const context = canvas.getContext("2d");
+
+    // Fill black background manually
+    context.fillStyle = "black";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
     const renderViewport = page.getViewport({ scale: canvas.height / viewport.height });
-    await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
+    await page.render({ canvasContext: context, viewport: renderViewport }).promise;
 
     return canvas;
   }
 
   function applyZoom() {
-    container.style.transform = `translate(-50%, -50%) scale(${viewScale})`;
+    container.style.transform = `scale(${viewScale})`;
   }
 
   async function renderSpread(index) {
     container.innerHTML = '';
-    container.style.transformOrigin = "center center";
 
     let pages = [];
     if (index === 0) {
@@ -126,7 +128,7 @@
     renderSpread(currentIndex);
   }
 
-  // Mouse zoom (wheel + cursor zoom center)
+  // Mouse + trackpad zoom
   viewport.addEventListener("wheel", (e) => {
     if (e.ctrlKey || Math.abs(e.deltaY) < 50) {
       e.preventDefault();
@@ -142,7 +144,7 @@
     }
   }, { passive: false });
 
-  // Pinch zoom (mobile center on fingers)
+  // Mobile pinch zoom
   let lastDist = null;
   viewport.addEventListener("touchmove", (e) => {
     if (e.touches.length === 2) {
@@ -169,7 +171,7 @@
   }, { passive: false });
   viewport.addEventListener("touchend", () => lastDist = null);
 
-  // Arrow key + click nav
+  // Navigation: keys & click
   document.addEventListener("keydown", e => {
     if (e.key === "ArrowRight") showNext();
     if (e.key === "ArrowLeft") showPrev();
@@ -180,8 +182,11 @@
   });
 
   window.addEventListener("resize", () => renderSpread(currentIndex));
+
   renderSpread(currentIndex);
 </script>
 </body>
 </html>
+
+
 
