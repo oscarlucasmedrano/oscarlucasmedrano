@@ -37,6 +37,8 @@
             .pdf-container {
                 width: 90vw;
                 height: 90vh;
+                align-items: flex-start;
+                padding-top: 5vh; /* Shift slightly higher for midpoint centering */
             }
             .pdf-page {
                 width: 45vw;
@@ -52,11 +54,18 @@
                 height: 100vh;
             }
             .pdf-page {
-                width: 50vw;
+                max-width: 50vw;
+                max-height: 100vh;
+                width: auto;
                 height: 100vh;
             }
+            .pdf-double {
+                max-width: 100vw;
+            }
             .pdf-double .pdf-page {
-                width: 25vw;
+                max-width: 25vw;
+                width: auto;
+                height: 100vh;
             }
         }
         .hidden {
@@ -80,6 +89,9 @@
         const coverPage = document.getElementById('coverPage');
         const doublePage = document.getElementById('doublePage');
         const pdfContainer = document.getElementById('pdfContainer');
+        const pdf1 = document.getElementById('pdf1');
+        const pdf2 = document.getElementById('pdf2');
+        const pdf3 = document.getElementById('pdf3');
 
         function showPage(page) {
             if (page === 0) {
@@ -184,7 +196,7 @@
             if (!isPanning && e.changedTouches.length === 1) {
                 const touchDuration = Date.now() - touchStartTime;
                 if (touchDuration < 300) { // Short tap, not a pan
-                    const rect = pdfContainer.getBoundingClientRect();
+                    const rect = (currentPage === 0 ? pdf1 : doublePage).getBoundingClientRect();
                     const touchX = e.changedTouches[0].clientX - rect.left;
                     if (touchX < rect.width / 2) {
                         if (currentPage === 1) showPage(0);
@@ -200,12 +212,15 @@
         // Desktop page flip
         pdfContainer.addEventListener('click', (e) => {
             if (!isPanning) {
-                const rect = pdfContainer.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                if (clickX < rect.width / 2) {
-                    if (currentPage === 1) showPage(0);
-                } else {
-                    if (currentPage === 0) showPage(1);
+                const target = e.target;
+                if (target === pdf1 || target === pdf2 || target === pdf3) {
+                    const rect = (currentPage === 0 ? pdf1 : doublePage).getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    if (clickX < rect.width / 2) {
+                        if (currentPage === 1) showPage(0);
+                    } else {
+                        if (currentPage === 0) showPage(1);
+                    }
                 }
             }
         });
