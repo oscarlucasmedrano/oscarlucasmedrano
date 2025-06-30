@@ -199,12 +199,15 @@
                         console.error('Right page render failed, retrying...');
                         await renderPage(pdfDocRight, 1, canvasRight, contextRight); // Retry once
                     }
-                    // Position canvases relative to crease
+                    // Position canvases dynamically
                     const containerWidth = canvasContainer.getBoundingClientRect().width;
-                    const leftWidth = canvasLeft.getBoundingClientRect().width;
-                    canvasLeft.style.left = `${(containerWidth / 2 - leftWidth - 5) / 2}px`; // Center left page
-                    canvasRight.style.left = `${containerWidth / 2 + 5}px`; // Start right page after crease with margin
-                    console.log(`Set canvasLeft left to: ${(containerWidth / 2 - leftWidth - 5) / 2}px, canvasRight left to: ${containerWidth / 2 + 5}px`);
+                    const leftRect = canvasLeft.getBoundingClientRect();
+                    const rightRect = canvasRight.getBoundingClientRect();
+                    const totalWidth = leftRect.width + rightRect.width + 10; // 10px margin
+                    const centerOffset = (containerWidth - totalWidth) / 2;
+                    canvasLeft.style.left = `${centerOffset}px`;
+                    canvasRight.style.left = `${centerOffset + leftRect.width + 10}px`; // After left canvas with margin
+                    console.log(`Set canvasLeft left to: ${centerOffset}px, canvasRight left to: ${centerOffset + leftRect.width + 10}px, containerWidth: ${containerWidth}px`);
                     console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
@@ -316,12 +319,15 @@
                 canvasLeft.style.display = 'block';
                 canvasRight.style.display = 'block';
                 const containerWidth = canvasContainer.getBoundingClientRect().width;
-                const leftWidth = canvasLeft.getBoundingClientRect().width;
-                canvasLeft.style.left = `${(containerWidth / 2 - leftWidth - 5) / 2}px`; // Center left page
-                canvasRight.style.left = `${containerWidth / 2 + 5}px`; // Start right page after crease with margin
+                const leftRect = canvasLeft.getBoundingClientRect();
+                const rightRect = canvasRight.getBoundingClientRect();
+                const totalWidth = leftRect.width + rightRect.width + 10; // 10px margin
+                const centerOffset = (containerWidth - totalWidth) / 2;
+                canvasLeft.style.left = `${centerOffset}px`;
+                canvasRight.style.left = `${centerOffset + leftRect.width + 10}px`; // After left canvas with margin
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
-                console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${leftWidth}px, rightWidth: ${canvasRight.getBoundingClientRect().width}px`);
+                console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${leftRect.width}px, rightWidth: ${rightRect.width}px`);
             }
         }
 
