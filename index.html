@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Oscar-Lucas Medrano</title>
+    <title>Simple PDF Flipbook</title>
     <style>
         * {
             margin: 0;
@@ -12,71 +12,53 @@
         }
         body {
             background-color: black;
-            overflow: hidden;
             height: 100vh;
             width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
-        #flipbook-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1;
-        }
-        #canvas-container {
+        #container {
             position: relative;
-            width: 90%;
-            max-width: 1200px;
-            height: 100%;
-            margin: 0 auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            padding: 5px;
+            text-align: center;
         }
-        #canvas-container.spread {
-            position: relative;
-        }
-        #pdf-canvas-left, #pdf-canvas-right, #pdf-canvas-single {
-            width: auto;
+        #pdf-canvas {
+            width: 574.43px;
             height: auto;
-            display: none;
-            position: absolute;
             border: 1px solid white;
-            margin: 0;
+            display: block;
+            margin: 0 auto;
         }
-        #pdf-canvas-single {
+        #nav-buttons {
             position: absolute;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) translate(-1px, -1px);
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
         }
-        #crease {
-            position: absolute;
-            top: 0;
-            width: 2px;
-            height: 100%;
-            background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(255,255,255,0.1));
-            z-index: 1;
-            display: none;
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            width: 50px;
+        }
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <div id="flipbook-container">
-        <div id="canvas-container">
-            <canvas id="pdf-canvas-left"></canvas>
-            <canvas id="pdf-canvas-right"></canvas>
-            <canvas id="pdf-canvas-single"></canvas>
-            <div id="crease"></div>
+    <div id="container">
+        <canvas id="pdf-canvas"></canvas>
+        <div id="nav-buttons">
+            <button id="prev-btn" class="nav-button">&larr;</button>
+            <button id="next-btn" class="nav-button">&rarr;</button>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -84,283 +66,112 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         const pdfFiles = [
-            { type: 'single', file: 'page1.pdf' },
-            { type: 'spread', left: 'page2.pdf', right: 'page3.pdf' },
-            { type: 'spread', left: 'page4.pdf', right: 'page5.pdf' },
-            { type: 'spread', left: 'page6.pdf', right: 'page7.pdf' },
-            { type: 'spread', left: 'page8.pdf', right: 'page9.pdf' },
-            { type: 'spread', left: 'page10.pdf', right: 'page11.pdf' },
-            { type: 'spread', left: 'page12.pdf', right: 'page13.pdf' },
-            { type: 'spread', left: 'page14.pdf', right: 'page15.pdf' },
-            { type: 'spread', left: 'page16.pdf', right: 'page17.pdf' },
-            { type: 'spread', left: 'page18.pdf', right: 'page19.pdf' },
-            { type: 'spread', left: 'page20.pdf', right: 'page21.pdf' },
-            { type: 'spread', left: 'page22.pdf', right: 'page23.pdf' },
-            { type: 'spread', left: 'page24.pdf', right: 'page25.pdf' },
-            { type: 'spread', left: 'page26.pdf', right: 'page27.pdf' },
-            { type: 'spread', left: 'page28.pdf', right: 'page29.pdf' },
-            { type: 'spread', left: 'page30.pdf', right: 'page31.pdf' },
-            { type: 'spread', left: 'page32.pdf', right: 'page33.pdf' }
+            'page1.pdf', 'page2.pdf', 'page3.pdf', 'page4.pdf', 'page5.pdf',
+            'page6.pdf', 'page7.pdf', 'page8.pdf', 'page9.pdf', 'page10.pdf',
+            'page11.pdf', 'page12.pdf', 'page13.pdf', 'page14.pdf', 'page15.pdf',
+            'page16.pdf', 'page17.pdf', 'page18.pdf', 'page19.pdf', 'page20.pdf',
+            'page21.pdf', 'page22.pdf', 'page23.pdf', 'page24.pdf', 'page25.pdf',
+            'page26.pdf', 'page27.pdf', 'page28.pdf', 'page29.pdf', 'page30.pdf',
+            'page31.pdf', 'page32.pdf', 'page33.pdf'
         ];
-        let currentSpreadIndex = 0;
-        let scale = 1.0 * window.devicePixelRatio;
-        const canvasLeft = document.getElementById('pdf-canvas-left');
-        const canvasRight = document.getElementById('pdf-canvas-right');
-        const canvasSingle = document.getElementById('pdf-canvas-single');
-        const contextLeft = canvasLeft.getContext('2d');
-        const contextRight = canvasRight.getContext('2d');
-        const contextSingle = canvasSingle.getContext('2d');
-        const canvasContainer = document.getElementById('canvas-container');
-        const crease = document.getElementById('crease');
-        let pdfDocLeft = null;
-        let pdfDocRight = null;
-        const panOffsetX = 0;
-        const panOffsetY = 0;
-        let lastTouchX1 = 0;
-        let lastTouchX2 = 0;
+        let currentIndex = 0;
+        const canvas = document.getElementById('pdf-canvas');
+        const context = canvas.getContext('2d');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        let scale = 1.0;
+        const TARGET_WIDTH = 574.43;
         const minScale = 0.1;
-        const maxScale = 10;
-        const debounceDelay = 16;
-        let lastMoveTime = 0;
-        const TARGET_WIDTH = 574.43; // Match cover's rendered width
+        const maxScale = 5.0;
 
-        async function loadSpread(index) {
-            contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
-            contextRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
-            contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height);
-            
-            canvasLeft.style.display = 'none';
-            canvasRight.style.display = 'none';
-            canvasSingle.style.display = 'none';
-            crease.style.display = 'none';
-            canvasContainer.classList.remove('spread');
-
-            const spread = pdfFiles[index];
-            console.log(`Attempting to load index ${index}, type: ${spread.type}, file(s): ${spread.file || `${spread.left} + ${spread.right}`}`);
-            if (spread.type === 'single' && index === 0) {
-                canvasSingle.style.display = 'block';
-                try {
-                    pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    const page = await pdfDocLeft.getPage(1);
-                    const viewport = page.getViewport({ scale: 1.0 });
-                    scale = TARGET_WIDTH / viewport.width;
-                    const adjustedViewport = page.getViewport({ scale: scale });
-                    canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
-                    canvasSingle.width = adjustedViewport.width * window.devicePixelRatio;
-                    canvasSingle.style.width = `${TARGET_WIDTH}px`; // Force exact width
-                    canvasSingle.style.height = `${adjustedViewport.height}px`;
-                    const renderContext = {
-                        canvasContext: contextSingle,
-                        viewport: adjustedViewport,
-                        transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
-                    };
-                    await page.render(renderContext).promise;
-                    console.log(`Loaded single page: ${spread.file}, width: ${viewport.width}px, height: ${viewport.height}px, rendered width: ${TARGET_WIDTH}px, rendered height: ${adjustedViewport.height}px`);
-                } catch (error) {
-                    console.error('Error loading cover PDF:', error);
-                }
-            } else if (spread.type === 'spread') {
-                canvasContainer.classList.add('spread');
-                canvasLeft.style.display = 'block';
-                canvasRight.style.display = 'block';
-                crease.style.display = 'block';
-                try {
-                    pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
-                    pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
-                    const leftPage = await pdfDocLeft.getPage(1);
-                    const rightPage = await pdfDocRight.getPage(1);
-                    const leftViewport = leftPage.getViewport({ scale: 1.0 });
-                    const rightViewport = rightPage.getViewport({ scale: 1.0 });
-                    scale = TARGET_WIDTH / leftViewport.width;
-                    const leftAdjustedViewport = leftPage.getViewport({ scale: scale });
-                    const rightAdjustedViewport = rightPage.getViewport({ scale: TARGET_WIDTH / rightViewport.width });
-                    canvasLeft.height = leftAdjustedViewport.height * window.devicePixelRatio;
-                    canvasLeft.width = leftAdjustedViewport.width * window.devicePixelRatio;
-                    canvasLeft.style.width = `${TARGET_WIDTH}px`; // Force exact width
-                    canvasLeft.style.height = `${leftAdjustedViewport.height}px`;
-                    canvasRight.height = rightAdjustedViewport.height * window.devicePixelRatio;
-                    canvasRight.width = rightAdjustedViewport.width * window.devicePixelRatio;
-                    canvasRight.style.width = `${TARGET_WIDTH}px`; // Force exact width
-                    canvasRight.style.height = `${rightAdjustedViewport.height}px`;
-                    await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
-                    const renderResult = await renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                    if (!renderResult) {
-                        console.error('Right page render failed, retrying...');
-                        await renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                    }
-                    centerSpread();
-                    console.log(`Spread rendered: left width ${canvasLeft.getBoundingClientRect().width}px, right width ${canvasRight.getBoundingClientRect().width}px`);
-                } catch (error) {
-                    console.error('Error loading spread PDFs:', error);
-                }
-            } else if (spread.type === 'single' && index > 0) {
-                canvasSingle.style.display = 'block';
-                try {
-                    pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    const page = await pdfDocLeft.getPage(1);
-                    const viewport = page.getViewport({ scale: 1.0 });
-                    scale = TARGET_WIDTH / viewport.width;
-                    const adjustedViewport = page.getViewport({ scale: scale });
-                    canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
-                    canvasSingle.width = adjustedViewport.width * window.devicePixelRatio;
-                    canvasSingle.style.width = `${TARGET_WIDTH}px`; // Force exact width
-                    canvasSingle.style.height = `${adjustedViewport.height}px`;
-                    const renderContext = {
-                        canvasContext: contextSingle,
-                        viewport: adjustedViewport,
-                        transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
-                    };
-                    await page.render(renderContext).promise;
-                    console.log(`Loaded single page: ${spread.file}, rendered width: ${TARGET_WIDTH}px, rendered height: ${adjustedViewport.height}px`);
-                } catch (error) {
-                    console.error('Error loading single PDF:', error);
-                }
-            }
-        }
-
-        async function renderPage(pdfDoc, pageNum, canvas, context) {
-            if (!context) {
-                console.error('Canvas context is null for:', canvas.id);
-                return false;
-            }
-            const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: scale });
-            canvas.height = viewport.height * window.devicePixelRatio;
-            canvas.width = viewport.width * window.devicePixelRatio;
-            canvas.style.width = `${TARGET_WIDTH}px`; // Force exact width
-            canvas.style.height = `${viewport.height}px`;
+        async function loadPage(index) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            const pdfDoc = await pdfjsLib.getDocument(pdfFiles[index]).promise;
+            const page = await pdfDoc.getPage(1);
+            const viewport = page.getViewport({ scale: 1.0 });
+            scale = TARGET_WIDTH / viewport.width;
+            const adjustedViewport = page.getViewport({ scale: scale });
+            canvas.height = adjustedViewport.height;
+            canvas.width = adjustedViewport.width;
+            canvas.style.width = `${TARGET_WIDTH}px`;
+            canvas.style.height = `${adjustedViewport.height}px`;
             const renderContext = {
                 canvasContext: context,
-                viewport: viewport,
-                transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
+                viewport: adjustedViewport
             };
-            try {
-                await page.render(renderContext).promise;
-                return true;
-            } catch (error) {
-                console.error('Render error for canvas:', canvas.id, error);
-                return false;
+            await page.render(renderContext).promise;
+            console.log(`Loaded page: ${pdfFiles[index]}, rendered width: ${TARGET_WIDTH}px, rendered height: ${adjustedViewport.height}px`);
+            updateButtons();
+        }
+
+        function updateButtons() {
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === pdfFiles.length - 1;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadPage(currentIndex);
             }
-        }
+        });
 
-        function centerSpread() {
-            const containerRect = canvasContainer.getBoundingClientRect();
-            const leftRect = canvasLeft.getBoundingClientRect();
-            const rightRect = canvasRight.getBoundingClientRect();
-            const totalGap = 0;
-            const totalWidth = TARGET_WIDTH + totalGap + TARGET_WIDTH;
-            const spreadWidth = Math.min(totalWidth, containerRect.width);
-            const totalHeight = Math.max(leftRect.height, rightRect.height);
-            const centerOffsetX = (containerRect.width - spreadWidth) / 2;
-            const centerOffsetY = (containerRect.height - totalHeight) / 2;
-            canvasLeft.style.left = `${centerOffsetX}px`;
-            canvasLeft.style.top = `${centerOffsetY}px`;
-            canvasRight.style.left = `${centerOffsetX + TARGET_WIDTH}px`;
-            canvasRight.style.top = `${centerOffsetY}px`;
-            const creaseLeft = centerOffsetX + TARGET_WIDTH;
-            crease.style.left = `${creaseLeft}px`;
-            console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + TARGET_WIDTH}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
-        }
-
-        function adjustCanvases() {
-            if (pdfFiles[currentSpreadIndex].type === 'single') {
-                renderPage(pdfDocLeft, 1, canvasSingle, contextSingle);
-                canvasSingle.style.display = 'block';
-                canvasLeft.style.display = 'none';
-                canvasRight.style.display = 'none';
-                crease.style.display = 'none';
-                canvasContainer.classList.remove('spread');
-                console.log('Adjusted to single page:', pdfFiles[currentSpreadIndex].file);
-            } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
-                renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
-                const renderResult = renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                if (!renderResult) {
-                    console.error('Right page render failed, retrying...');
-                    renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                }
-                canvasContainer.classList.add('spread');
-                canvasLeft.style.display = 'block';
-                canvasRight.style.display = 'block';
-                centerSpread();
-                canvasSingle.style.display = 'none';
-                crease.style.display = 'block';
-                console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${canvasLeft.getBoundingClientRect().width}px, rightWidth: ${canvasRight.getBoundingClientRect().width}px`);
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < pdfFiles.length - 1) {
+                currentIndex++;
+                loadPage(currentIndex);
             }
-        }
-
-        [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
-            canvas.addEventListener('click', (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
-                    currentSpreadIndex--;
-                    contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height);
-                    loadSpread(currentSpreadIndex);
-                    console.log(`Navigated to index ${currentSpreadIndex} from ${canvas.id}`);
-                } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
-                    currentSpreadIndex++;
-                    loadSpread(currentSpreadIndex);
-                    console.log(`Navigated to index ${currentSpreadIndex} from ${canvas.id}`);
-                }
-            });
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' && currentSpreadIndex > 0) {
-                currentSpreadIndex--;
-                contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height);
-                loadSpread(currentSpreadIndex);
-                console.log(`Navigated to index ${currentSpreadIndex}`);
-            } else if (e.key === 'ArrowRight' && currentSpreadIndex < pdfFiles.length - 1) {
-                currentSpreadIndex++;
-                loadSpread(currentSpreadIndex);
-                console.log(`Navigated to index ${currentSpreadIndex}`);
+            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                currentIndex--;
+                loadPage(currentIndex);
+            } else if (e.key === 'ArrowRight' && currentIndex < pdfFiles.length - 1) {
+                currentIndex++;
+                loadPage(currentIndex);
             }
         });
 
-        canvasContainer.addEventListener('touchstart', (e) => {
+        // Mouse wheel zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY * -0.001;
+            scale = Math.min(maxScale, Math.max(minScale, scale + delta));
+            renderZoomed();
+        });
+
+        // Mobile pinch zoom
+        let lastTouchDistance = 0;
+        canvas.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 e.preventDefault();
                 const touch1 = e.touches[0];
                 const touch2 = e.touches[1];
-                lastTouchX1 = touch1.pageX;
-                lastTouchX2 = touch2.pageX;
+                lastTouchDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
             }
         });
 
-        canvasContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const now = performance.now();
-            if (now - lastMoveTime > debounceDelay) {
-                if (e.touches.length === 2) {
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const currentX1 = touch1.pageX;
-                    const currentX2 = touch2.pageX;
-                    const initialDistance = Math.hypot(lastTouchX2 - lastTouchX1, touch1.pageY - touch2.pageY);
-                    const currentDistance = Math.hypot(currentX2 - currentX1, touch1.pageY - touch2.pageY);
-                    const deltaDistance = currentDistance - initialDistance;
-
-                    if (Math.abs(deltaDistance) > 1) {
-                        const delta = 1 + (deltaDistance * 0.005);
-                        scale *= delta;
-                        scale = Math.min(Math.max(scale, minScale), maxScale);
-                        adjustCanvases();
-                        lastTouchX1 = currentX1;
-                        lastTouchX2 = currentX2;
-                    }
-                }
-                lastMoveTime = now;
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
+                const delta = (currentDistance - lastTouchDistance) * 0.01;
+                scale = Math.min(maxScale, Math.max(minScale, scale + delta));
+                lastTouchDistance = currentDistance;
+                renderZoomed();
             }
         });
 
-        canvasContainer.addEventListener('touchend', (e) => {
-            // No action needed
-        });
+        function renderZoomed() {
+            loadPage(currentIndex);
+        }
 
-        window.addEventListener('resize', adjustCanvases);
+        window.addEventListener('resize', () => loadPage(currentIndex));
 
-        loadSpread(currentSpreadIndex);
+        loadPage(currentIndex);
     </script>
 </body>
 </html>
