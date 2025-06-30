@@ -63,27 +63,12 @@
             }
             .pdf-double {
                 width: 50vw;
+                height: 100vh;
             }
             .pdf-double .pdf-page {
                 width: 25vw;
                 height: 100vh;
             }
-        }
-        .arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 40px;
-            color: white;
-            cursor: pointer;
-            user-select: none;
-            padding: 10px;
-        }
-        .arrow-left {
-            left: 10px;
-        }
-        .arrow-right {
-            right: 10px;
         }
         .hidden {
             display: none;
@@ -99,8 +84,6 @@
             <embed src="page2.pdf#toolbar=0" class="pdf-page" id="pdf2">
             <embed src="page3.pdf#toolbar=0" class="pdf-page" id="pdf3">
         </div>
-        <div class="arrow arrow-left" id="arrowLeft" onclick="prevPage()">◀</div>
-        <div class="arrow arrow-right" id="arrowRight" onclick="nextPage()">▶</div>
     </div>
 
     <script>
@@ -111,20 +94,14 @@
         const pdf1 = document.getElementById('pdf1');
         const pdf2 = document.getElementById('pdf2');
         const pdf3 = document.getElementById('pdf3');
-        const arrowLeft = document.getElementById('arrowLeft');
-        const arrowRight = document.getElementById('arrowRight');
 
         function showPage(page) {
             if (page === 0) {
                 coverPage.classList.remove('hidden');
                 doublePage.classList.add('hidden');
-                arrowLeft.classList.add('hidden');
-                arrowRight.classList.remove('hidden');
             } else {
                 coverPage.classList.add('hidden');
                 doublePage.classList.remove('hidden');
-                arrowLeft.classList.remove('hidden');
-                arrowRight.classList.add('hidden');
             }
             currentPage = page;
             resetTransform();
@@ -249,14 +226,6 @@
                 }
             }
         });
-
-        function nextPage() {
-            if (currentPage === 0) showPage(1);
-        }
-
-        function prevPage() {
-            if (currentPage === 1) showPage(0);
-        }
 
         // Initialize
         showPage(0);
