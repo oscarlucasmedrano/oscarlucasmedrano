@@ -32,12 +32,15 @@
 <body>
   <div id="viewer"></div>
 
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
+  <!-- PDF.js v3.x -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
   <script>
     const viewer = document.getElementById('viewer');
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions = {
+      workerSrc: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+    };
 
     let scale = 1, originX = 0, originY = 0;
     let startX, startY, startDist, startScale = 1;
@@ -79,12 +82,12 @@
       }
     });
 
-    // Zoom handling
+    // Zoom logic
     function applyTransform() {
       viewer.style.transform = `translate(-50%, -50%) scale(${scale})`;
     }
 
-    // Desktop wheel zoom
+    // Desktop zoom
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomIntensity = 0.05;
@@ -115,9 +118,8 @@
       }
     }, { passive: false });
 
-    // Initialize
+    // Initialize cover
     showCover();
   </script>
 </body>
 </html>
-
