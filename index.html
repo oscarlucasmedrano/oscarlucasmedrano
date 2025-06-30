@@ -43,16 +43,13 @@
             padding: 5px;
         }
         #canvas-container.spread {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            position: relative; /* Remove flex, use absolute for canvases */
         }
         #pdf-canvas-left, #pdf-canvas-right, #pdf-canvas-single {
             width: auto;
             height: auto;
             display: none;
-            position: relative;
+            position: absolute;
             border: 1px solid white; /* Thinner white boundary around PDFs */
             margin: 0 5px; /* Small margin between canvases */
         }
@@ -199,7 +196,7 @@
                         console.error('Right page render failed, retrying...');
                         await renderPage(pdfDocRight, 1, canvasRight, contextRight); // Retry once
                     }
-                    // Position canvases within container
+                    // Position spread as a unit
                     const containerRect = canvasContainer.getBoundingClientRect();
                     const leftRect = canvasLeft.getBoundingClientRect();
                     const rightRect = canvasRight.getBoundingClientRect();
@@ -211,10 +208,14 @@
                         await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                         await renderPage(pdfDocRight, 1, canvasRight, contextRight);
                     }
-                    const centerOffset = (containerRect.width - Math.min(totalWidth, containerRect.width)) / 2;
+                    const spreadWidth = Math.min(totalWidth, containerRect.width);
+                    const centerOffset = (containerRect.width - spreadWidth) / 2;
                     canvasLeft.style.left = `${centerOffset}px`;
                     canvasRight.style.left = `${centerOffset + leftRect.width + 10}px`; // After left canvas with margin
-                    console.log(`Set canvasLeft left to: ${centerOffset}px, canvasRight left to: ${centerOffset + leftRect.width + 10}px, containerWidth: ${containerRect.width}px, totalWidth: ${totalWidth}px`);
+                    // Set crease at midpoint of spread
+                    const creaseLeft = centerOffset + (spreadWidth / 2);
+                    crease.style.left = `${creaseLeft}px`;
+                    console.log(`Set canvasLeft left to: ${centerOffset}px, canvasRight left to: ${centerOffset + leftRect.width + 10}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px`);
                     console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
@@ -336,9 +337,13 @@
                     renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                     renderPage(pdfDocRight, 1, canvasRight, contextRight);
                 }
-                const centerOffset = (containerRect.width - Math.min(totalWidth, containerRect.width)) / 2;
+                const spreadWidth = Math.min(totalWidth, containerRect.width);
+                const centerOffset = (containerRect.width - spreadWidth) / 2;
                 canvasLeft.style.left = `${centerOffset}px`;
                 canvasRight.style.left = `${centerOffset + leftRect.width + 10}px`; // After left canvas with margin
+                // Set crease at midpoint of spread
+                const creaseLeft = centerOffset + (spreadWidth / 2);
+                crease.style.left = `${creaseLeft}px`;
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
                 console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${leftRect.width}px, rightWidth: ${rightRect.width}px`);
