@@ -22,36 +22,34 @@
             align-items: center;
             max-width: 90vw;
             max-height: 90vh;
-            overflow: hidden;
+            overflow: visible;
+            transform-origin: center center;
         }
         .pdf-page {
             border: 1px solid white;
-            max-width: 100%;
-            max-height: 100%;
             object-fit: contain;
         }
         .pdf-double {
             display: flex;
             gap: 2px;
         }
-        .pdf-double .pdf-page {
-            width: 50%;
+        @media (max-width: 768px) {
+            .pdf-page {
+                width: 45vw;
+                height: 60vw;
+            }
+            .pdf-double .pdf-page {
+                width: 45vw;
+            }
         }
-        .arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 40px;
-            color: white;
-            cursor: pointer;
-            user-select: none;
-            padding: 10px;
-        }
-        .arrow-left {
-            left: 10px;
-        }
-        .arrow-right {
-            right: 10px;
+        @media (min-width: 769px) {
+            .pdf-page {
+                width: 45vw;
+                height: 60vh;
+            }
+            .pdf-double .pdf-page {
+                width: 22.5vw;
+            }
         }
         .hidden {
             display: none;
@@ -67,55 +65,77 @@
             <embed src="page2.pdf" class="pdf-page" id="pdf2">
             <embed src="page3.pdf" class="pdf-page" id="pdf3">
         </div>
-        <div class="arrow arrow-left" id="arrowLeft" onclick="prevPage()">&#9664;</div>
-        <div class="arrow arrow-right" id="arrowRight" onclick="nextPage()">&#9654;</div>
     </div>
 
     <script>
         let currentPage = 0;
         const coverPage = document.getElementById('coverPage');
         const doublePage = document.getElementById('doublePage');
-        const arrowLeft = document.getElementById('arrowLeft');
-        const arrowRight = document.getElementById('arrowRight');
         const pdfContainer = document.getElementById('pdfContainer');
 
         function showPage(page) {
             if (page === 0) {
                 coverPage.classList.remove('hidden');
                 doublePage.classList.add('hidden');
-                arrowLeft.classList.add('hidden');
-                arrowRight.classList.remove('hidden');
             } else {
                 coverPage.classList.add('hidden');
                 doublePage.classList.remove('hidden');
-                arrowLeft.classList.remove('hidden');
-                arrowRight.classList.add('hidden');
             }
             currentPage = page;
+            resetTransform();
         }
 
-        function nextPage() {
-            if (currentPage === 0) {
-                showPage(1);
-            }
+        function resetTransform() {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            pdfContainer.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
         }
 
-        function prevPage() {
-            if (currentPage === 1) {
-                showPage(0);
-            }
-        }
-
-        // Zoom functionality
+        // Zoom and pan functionality
         let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        let isPanning = false;
+        let startX, startY;
+
+        // Desktop zoom and pan
         pdfContainer.addEventListener('wheel', (e) => {
             e.preventDefault();
             const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            scale = Math.min(Math.max(1, scale + delta), 3); // Limit zoom 1x to 3x
-            pdfContainer.style.transform = `scale(${scale})`;
+            scale = Math.min(Math.max(1, scale + delta), 3);
+            pdfContainer.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
         });
 
-        // Pinch to zoom for mobile
+        pdfContainer.addEventListener('mousedown', (e) => {
+            if (scale > 1) {
+                isPanning = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                pdfContainer.style.cursor = 'grabbing';
+            }
+        });
+
+        pdfContainer.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                e.preventDefault();
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                pdfContainer.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+            }
+        });
+
+        pdfContainer.addEventListener('mouseup', () => {
+            isPanning = false;
+            pdfContainer.style.cursor = 'default';
+        });
+
+        pdfContainer.addEventListener('mouseleave', () => {
+            isPanning = false;
+            pdfContainer.style.cursor = 'default';
+        });
+
+        // Mobile zoom and pan
         let lastDist = 0;
         pdfContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -123,12 +143,16 @@
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY
                 );
+            } else if (e.touches.length === 1 && scale > 1) {
+                isPanning = true;
+                startX = e.touches[0].pageX - translateX;
+                startY = e.touches[0].pageY - translateY;
             }
         });
 
         pdfContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
             if (e.touches.length === 2) {
-                e.preventDefault();
                 const dist = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY
@@ -136,24 +160,47 @@
                 if (lastDist > 0) {
                     const delta = dist - lastDist;
                     scale = Math.min(Math.max(1, scale + delta * 0.005), 3);
-                    pdfContainer.style.transform = `scale(${scale})`;
                 }
                 lastDist = dist;
+            } else if (e.touches.length === 1 && isPanning) {
+                translateX = e.touches[0].pageX - startX;
+                translateY = e.touches[0].pageY - startY;
             }
+            pdfContainer.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
         });
 
         pdfContainer.addEventListener('touchend', () => {
             lastDist = 0;
+            isPanning = false;
+        });
+
+        // Page flip on click
+        pdfContainer.addEventListener('click', (e) => {
+            const rect = pdfContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            if (clickX < rect.width / 2) {
+                if (currentPage === 1) showPage(0);
+            } else {
+                if (currentPage === 0) showPage(1);
+            }
+        });
+
+        pdfContainer.addEventListener('touchend', (e) => {
+            const rect = pdfContainer.getBoundingClientRect();
+            const touchX = e.changedTouches[0].clientX - rect.left;
+            if (touchX < rect.width / 2) {
+                if (currentPage === 1) showPage(0);
+            } else {
+                if (currentPage === 0) showPage(1);
+            }
         });
 
         // Initialize
         showPage(0);
 
-        // Ensure PDFs are reloaded on refresh to maintain position
+        // Reset on refresh
         window.addEventListener('load', () => {
             showPage(0);
-            pdfContainer.style.transform = `scale(1)`;
-            scale = 1;
         });
     </script>
 </body>
