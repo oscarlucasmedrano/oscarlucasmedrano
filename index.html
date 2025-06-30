@@ -30,23 +30,14 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-direction: row;
       gap: 10px;
-      max-width: 100%;
-      max-height: 100%;
-      flex-wrap: nowrap;
     }
 
     canvas {
       border: 1px solid white;
       height: auto;
-      max-height: 95vh;
-      max-width: 48vw;
-      transition: border 0.2s ease;
-    }
-
-    canvas.active {
-      border: 1px solid white;
+      width: auto;
+      display: block;
     }
   </style>
 </head>
@@ -72,58 +63,42 @@
 
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
+
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
       await page.render({ canvasContext: context, viewport }).promise;
-      return { canvas, height: viewport.height };
+      return canvas;
     }
 
     async function renderSpread(index) {
       clearCanvas();
 
-      // Keep PDFs centered on refresh/zoom
+      // Force recenters on any render
       container.style.top = '50%';
       container.style.left = '50%';
       container.style.transform = 'translate(-50%, -50%)';
 
       if (index === 0) {
-        const { canvas } = await loadCanvas(pdfFiles[0]);
-        canvas.classList.add('active');
+        const canvas = await loadCanvas(pdfFiles[0]);
         container.appendChild(canvas);
       } else {
         const leftIndex = index;
         const rightIndex = index + 1;
 
-        const left = await loadCanvas(pdfFiles[leftIndex]);
-        const right = rightIndex < pdfFiles.length
-          ? await loadCanvas(pdfFiles[rightIndex])
-          : null;
+        const leftCanvas = await loadCanvas(pdfFiles[leftIndex]);
+        container.appendChild(leftCanvas);
 
-        // Match height (rescale both if needed)
-        const maxHeight = Math.max(left.height, right?.height || 0);
-        const fitScale = scale * (0.95 * window.innerHeight / maxHeight);
-
-        const [leftFinal, rightFinal] = await Promise.all([
-          loadCanvas(pdfFiles[leftIndex], fitScale),
-          right ? loadCanvas(pdfFiles[rightIndex], fitScale) : null
-        ]);
-
-        leftFinal.canvas.classList.add('active');
-        container.appendChild(leftFinal.canvas);
-
-        if (rightFinal) {
-          rightFinal.canvas.classList.add('active');
-          container.appendChild(rightFinal.canvas);
+        if (rightIndex < pdfFiles.length) {
+          const rightCanvas = await loadCanvas(pdfFiles[rightIndex]);
+          container.appendChild(rightCanvas);
         }
       }
     }
 
     function showNext() {
       currentIndex = currentIndex === 0 ? 1 : currentIndex + 2;
-      if (currentIndex >= pdfFiles.length) {
-        currentIndex = pdfFiles.length - 1;
-      }
+      if (currentIndex >= pdfFiles.length) currentIndex = pdfFiles.length - 1;
       renderSpread(currentIndex);
     }
 
@@ -138,22 +113,26 @@
       renderSpread(currentIndex);
     }
 
+    // Arrow key navigation
     document.addEventListener("keydown", e => {
       if (e.key === "ArrowRight") showNext();
       if (e.key === "ArrowLeft") showPrev();
     });
 
+    // Tap/click navigation
     container.addEventListener("click", e => {
       const x = e.clientX || (e.touches && e.touches[0]?.clientX);
       if (x > window.innerWidth / 2) showNext();
       else showPrev();
     });
 
+    // Mouse wheel zoom
     container.addEventListener("wheel", e => {
       e.preventDefault();
       zoom(e.deltaY < 0 ? 1.1 : 0.9);
     }, { passive: false });
 
+    // Touch pinch zoom
     let startDist = null;
     container.addEventListener("touchmove", e => {
       if (e.touches.length === 2) {
@@ -173,4 +152,3 @@
   </script>
 </body>
 </html>
-
