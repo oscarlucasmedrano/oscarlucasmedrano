@@ -181,7 +181,7 @@
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
-                    scale = baseScale; // Enforce base scale for all spreads
+                    scale = baseScale;
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}, applying scale: ${scale}`);
                     const leftPage = await pdfDocLeft.getPage(1);
                     const leftViewport = leftPage.getViewport({ scale: scale });
@@ -252,7 +252,7 @@
             const containerRect = canvasContainer.getBoundingClientRect();
             const leftRect = canvasLeft.getBoundingClientRect();
             const rightRect = canvasRight.getBoundingClientRect();
-            const gap = 5; // Slight equidistant gap between PDFs
+            const gap = 5;
             const totalWidth = leftRect.width + gap + rightRect.width;
             const spreadWidth = Math.min(totalWidth, containerRect.width);
             const totalHeight = Math.max(leftRect.height, rightRect.height);
@@ -262,7 +262,7 @@
             canvasLeft.style.top = `${centerOffsetY}px`;
             canvasRight.style.left = `${centerOffsetX + leftRect.width + gap}px`;
             canvasRight.style.top = `${centerOffsetY}px`;
-            const creaseLeft = centerOffsetX + leftRect.width + (gap / 2); // Center crease in the gap
+            const creaseLeft = centerOffsetX + leftRect.width + (gap / 2);
             crease.style.left = `${creaseLeft}px`;
             console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + leftRect.width + gap}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
         }
@@ -293,25 +293,28 @@
             }
         }
 
-        canvasContainer.addEventListener('click', (e) => {
-            const rect = canvasContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
-                currentSpreadIndex--;
-                contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height); // Reset canvas for cover
-                loadSpread(currentSpreadIndex);
-                console.log(`Navigated to index ${currentSpreadIndex}`);
-            } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
-                currentSpreadIndex++;
-                loadSpread(currentSpreadIndex);
-                console.log(`Navigated to index ${currentSpreadIndex}`);
-            }
+        // Restrict navigation to PDF canvases
+        [canvasLeft, canvasRight, canvasSingle].forEach(canvas => {
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                if (clickX < rect.width / 2 && currentSpreadIndex > 0) {
+                    currentSpreadIndex--;
+                    contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height);
+                    loadSpread(currentSpreadIndex);
+                    console.log(`Navigated to index ${currentSpreadIndex} from ${canvas.id}`);
+                } else if (clickX >= rect.width / 2 && currentSpreadIndex < pdfFiles.length - 1) {
+                    currentSpreadIndex++;
+                    loadSpread(currentSpreadIndex);
+                    console.log(`Navigated to index ${currentSpreadIndex} from ${canvas.id}`);
+                }
+            });
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' && currentSpreadIndex > 0) {
                 currentSpreadIndex--;
-                contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height); // Reset canvas for cover
+                contextSingle.clearRect(0, 0, canvasSingle.width, canvasSingle.height);
                 loadSpread(currentSpreadIndex);
                 console.log(`Navigated to index ${currentSpreadIndex}`);
             } else if (e.key === 'ArrowRight' && currentSpreadIndex < pdfFiles.length - 1) {
