@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Oscar-Lucas Medrano</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
@@ -12,10 +12,10 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: black;
       height: 100%;
       width: 100%;
       overflow: hidden;
+      background: black;
       touch-action: none;
     }
 
@@ -23,13 +23,12 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: black;
       touch-action: pan-x pan-y;
     }
 
     #pdf-container {
+      position: absolute;
       display: flex;
       flex-direction: row;
       gap: 10px;
@@ -40,9 +39,9 @@
     }
 
     canvas {
-      display: block;
       background: black;
       border: 1px solid white;
+      display: block;
     }
   </style>
 </head>
@@ -62,59 +61,63 @@
   const container = document.getElementById("pdf-container");
   const viewport = document.getElementById("viewport");
 
-  async function loadCanvas(pdfUrl, scale) {
+  async function loadCanvas(pdfUrl) {
     const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
     const page = await pdf.getPage(1);
-    const viewport = page.getViewport({ scale });
+    const viewport = page.getViewport({ scale: 1 });
     const aspectRatio = viewport.width / viewport.height;
 
     const canvas = document.createElement("canvas");
     canvas.height = fixedCanvasHeight;
     canvas.width = canvas.height * aspectRatio;
 
-    const context = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
+    // Fill canvas with black before rendering
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Fill black background manually
-    context.fillStyle = "black";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    const scale = canvas.height / viewport.height;
+    const scaledViewport = page.getViewport({ scale });
 
-    const renderViewport = page.getViewport({ scale: canvas.height / viewport.height });
-    await page.render({ canvasContext: context, viewport: renderViewport }).promise;
-
+    await page.render({ canvasContext: ctx, viewport: scaledViewport, background: 'black' }).promise;
     return canvas;
-  }
-
-  function applyZoom() {
-    container.style.transform = `scale(${viewScale})`;
   }
 
   async function renderSpread(index) {
     container.innerHTML = '';
+    let canvases = [];
 
-    let pages = [];
     if (index === 0) {
-      pages = [await loadCanvas(pdfFiles[0], basePdfScale)];
+      canvases = [await loadCanvas(pdfFiles[0])];
     } else {
-      const left = await loadCanvas(pdfFiles[index], basePdfScale);
+      const left = await loadCanvas(pdfFiles[index]);
       const rightIndex = index + 1;
-      pages.push(left);
+      canvases.push(left);
       if (rightIndex < pdfFiles.length) {
-        const right = await loadCanvas(pdfFiles[rightIndex], basePdfScale);
-        pages.push(right);
+        const right = await loadCanvas(pdfFiles[rightIndex]);
+        canvases.push(right);
       }
     }
 
-    pages.forEach(c => container.appendChild(c));
-    fitToScreen(pages);
+    canvases.forEach(canvas => container.appendChild(canvas));
+    centerSpread(canvases);
   }
 
-  function fitToScreen(pages) {
-    const totalWidth = pages.reduce((sum, c) => sum + c.width, 0) + (pages.length - 1) * 10;
-    const maxHeight = Math.max(...pages.map(c => c.height));
+  function centerSpread(canvases) {
+    const totalWidth = canvases.reduce((sum, c) => sum + c.width, 0) + (canvases.length - 1) * 10;
+    const maxHeight = Math.max(...canvases.map(c => c.height));
     const scaleX = window.innerWidth * 0.95 / totalWidth;
     const scaleY = window.innerHeight * 0.95 / maxHeight;
     viewScale = Math.min(scaleX, scaleY, 1);
-    applyZoom();
+
+    container.style.transform = `scale(${viewScale})`;
+
+    // Position pdf-container to center spread in window
+    const offsetLeft = (window.innerWidth - totalWidth * viewScale) / 2;
+    const offsetTop = (window.innerHeight - maxHeight * viewScale) / 2;
+
+    container.style.left = `${offsetLeft}px`;
+    container.style.top = `${offsetTop}px`;
   }
 
   function showNext() {
@@ -128,23 +131,21 @@
     renderSpread(currentIndex);
   }
 
-  // Mouse + trackpad zoom
+  // Zoom on cursor or fingers
   viewport.addEventListener("wheel", (e) => {
     if (e.ctrlKey || Math.abs(e.deltaY) < 50) {
       e.preventDefault();
       const factor = e.deltaY > 0 ? 0.95 : 1.05;
       viewScale = Math.max(0.3, Math.min(viewScale * factor, 5));
-
       const rect = container.getBoundingClientRect();
       const offsetX = e.clientX - rect.left;
       const offsetY = e.clientY - rect.top;
       container.style.transformOrigin = `${offsetX}px ${offsetY}px`;
-
-      applyZoom();
+      container.style.transform = `scale(${viewScale})`;
     }
   }, { passive: false });
 
-  // Mobile pinch zoom
+  // Pinch to zoom mobile
   let lastDist = null;
   viewport.addEventListener("touchmove", (e) => {
     if (e.touches.length === 2) {
@@ -156,22 +157,20 @@
       if (lastDist) {
         const factor = dist > lastDist ? 1.02 : 0.98;
         viewScale = Math.max(0.3, Math.min(viewScale * factor, 5));
-
         const midX = (t1.clientX + t2.clientX) / 2;
         const midY = (t1.clientY + t2.clientY) / 2;
         const rect = container.getBoundingClientRect();
         const offsetX = midX - rect.left;
         const offsetY = midY - rect.top;
         container.style.transformOrigin = `${offsetX}px ${offsetY}px`;
-
-        applyZoom();
+        container.style.transform = `scale(${viewScale})`;
       }
       lastDist = dist;
     }
   }, { passive: false });
   viewport.addEventListener("touchend", () => lastDist = null);
 
-  // Navigation: keys & click
+  // Navigation
   document.addEventListener("keydown", e => {
     if (e.key === "ArrowRight") showNext();
     if (e.key === "ArrowLeft") showPrev();
@@ -187,6 +186,3 @@
 </script>
 </body>
 </html>
-
-
-
