@@ -19,7 +19,7 @@
             align-items: center;
             overflow: hidden;
         }
-        #flipbook {
+        #flipbook-container {
             position: relative;
             perspective: 1000px;
             display: flex;
@@ -31,41 +31,39 @@
             height: auto;
             border: 1px solid white;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             transition: transform 0.5s ease, opacity 0.3s ease;
             opacity: 1;
         }
         .pdf-canvas.out {
-            transform: translate(-50%, -50%) translateX(100%) rotateY(20deg);
+            transform: translateX(100%) rotateY(20deg);
             opacity: 0;
         }
         .pdf-canvas.in {
-            transform: translate(-50%, -50%) translateX(-100%) rotateY(-20deg);
+            transform: translateX(-100%) rotateY(-20deg);
             opacity: 0;
         }
         #canvas-left, #canvas-right {
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        #canvas-left {
-            left: calc(50% - 287.215px); /* Half of 574.43px */
-        }
-        #canvas-right {
-            left: calc(50% + 287.215px); /* Half of 574.43px */
         }
         .spread {
             display: flex;
             width: 1148.86px; /* 574.43px * 2 */
         }
+        #canvas-left {
+            left: 50%;
+            transform: translateX(-100%);
+        }
+        #canvas-right {
+            left: 50%;
+        }
     </style>
 </head>
 <body>
-    <div id="flipbook">
-        <canvas id="canvas-left" class="pdf-canvas"></canvas>
-        <canvas id="canvas-right" class="pdf-canvas"></canvas>
+    <div id="flipbook-container">
+        <div id="flipbook" class="spread">
+            <canvas id="canvas-left" class="pdf-canvas"></canvas>
+            <canvas id="canvas-right" class="pdf-canvas"></canvas>
+        </div>
     </div>
     <audio id="page-turn-sound" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -92,6 +90,7 @@
             { type: 'spread', left: 'page32.pdf', right: 'page33.pdf' }
         ];
         let currentIndex = 0;
+        const container = document.getElementById('flipbook-container');
         const canvasLeft = document.getElementById('canvas-left');
         const canvasRight = document.getElementById('canvas-right');
         const contextLeft = canvasLeft.getContext('2d');
@@ -121,8 +120,12 @@
                     viewport: adjustedViewport,
                     transform: [dpr, 0, 0, dpr, 0, 0]
                 };
-                await page.render(renderContext).promise;
-                canvasRight.style.display = 'none';
+                try {
+                    await page.render(renderContext).promise;
+                    console.log(`Loaded single: ${spread.file}, width: ${TARGET_WIDTH}px, height: ${adjustedViewport.height / dpr}px`);
+                } catch (error) {
+                    console.error('Render error for single page:', error);
+                }
             } else if (spread.type === 'spread') {
                 const pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                 const pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
@@ -154,10 +157,24 @@
                     viewport: rightAdjustedViewport,
                     transform: [dpr, 0, 0, dpr, 0, 0]
                 };
-                await leftPage.render(renderContextLeft).promise;
-                await rightPage.render(renderContextRight).promise;
-                console.log(`Loaded spread: ${spread.left} + ${spread.right}, left width: ${TARGET_WIDTH}px, right width: ${TARGET_WIDTH}px`);
+                try {
+                    await leftPage.render(renderContextLeft).promise;
+                    await rightPage.render(renderContextRight).promise;
+                    console.log(`Loaded spread: ${spread.left} + ${spread.right}, left width: ${TARGET_WIDTH}px, right width: ${TARGET_WIDTH}px`);
+                } catch (error) {
+                    console.error('Render error for spread:', error);
+                }
             }
+            centerLayout();
+        }
+
+        function centerLayout() {
+            const flipbook = document.getElementById('flipbook');
+            const containerRect = container.getBoundingClientRect();
+            const flipbookRect = flipbook.getBoundingClientRect();
+            const offsetX = (containerRect.width - flipbookRect.width) / 2;
+            flipbook.style.left = `${offsetX}px`;
+            flipbook.style.top = `${(containerRect.height - Math.max(flipbookRect.height, containerRect.height)) / 2}px`;
         }
 
         async function turnPage(direction) {
@@ -165,8 +182,8 @@
             const oldRight = canvasRight.cloneNode();
             oldLeft.className = 'pdf-canvas out';
             oldRight.className = 'pdf-canvas out';
-            flipbook.appendChild(oldLeft);
-            flipbook.appendChild(oldRight);
+            container.appendChild(oldLeft);
+            container.appendChild(oldRight);
             contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
             contextRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
             canvasLeft.className = 'pdf-canvas in';
@@ -185,11 +202,11 @@
                 oldLeft.remove();
                 oldRight.remove();
             }, 500);
+            centerLayout();
         }
 
-        const flipbook = document.getElementById('flipbook');
-        flipbook.addEventListener('click', (e) => {
-            const rect = flipbook.getBoundingClientRect();
+        container.addEventListener('click', (e) => {
+            const rect = container.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const halfWidth = rect.width / 2;
             if (clickX < halfWidth && currentIndex > 0) {
