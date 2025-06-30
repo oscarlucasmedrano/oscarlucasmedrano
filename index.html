@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Oscar-Lucas Medrano</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js';
   </script>
 
   <style>
@@ -22,133 +21,148 @@
       touch-action: none;
     }
 
+    #viewport {
+      width: 100%;
+      height: 100%;
+      overflow: scroll;
+      position: relative;
+      touch-action: pan-x pan-y;
+    }
+
     #pdf-container {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
+      transform: translate(-50%, -50%) scale(1);
+      transform-origin: center center;
+      transition: transform 0.05s linear;
     }
 
     canvas {
       border: 1px solid white;
-      height: auto;
-      width: auto;
       display: block;
     }
   </style>
 </head>
 <body>
+
+<div id="viewport">
   <div id="pdf-container"></div>
+</div>
 
-  <script>
-    const totalPages = 32;
-    const pdfFiles = Array.from({ length: totalPages }, (_, i) => `page${i + 1}.pdf`);
-    let currentIndex = 0;
-    let scale = 1.5;
+<script>
+  const totalPages = 32;
+  const pdfFiles = Array.from({ length: totalPages }, (_, i) => `page${i + 1}.pdf`);
+  let currentIndex = 0;
+  let pdfScale = 1.5;
+  let viewScale = 1;
 
-    const container = document.getElementById("pdf-container");
+  const container = document.getElementById("pdf-container");
+  const viewport = document.getElementById("viewport");
 
-    function clearCanvas() {
-      container.innerHTML = '';
-    }
+  async function loadCanvas(pdfUrl, scale) {
+    const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: context, viewport }).promise;
+    return canvas;
+  }
 
-    async function loadCanvas(pdfUrl, useScale = scale) {
-      const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: useScale });
+  async function renderSpread(index) {
+    container.innerHTML = '';
 
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
+    if (index === 0) {
+      const canvas = await loadCanvas(pdfFiles[0], pdfScale);
+      container.appendChild(canvas);
+    } else {
+      const leftIndex = index;
+      const rightIndex = index + 1;
 
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+      const leftCanvas = await loadCanvas(pdfFiles[leftIndex], pdfScale);
+      container.appendChild(leftCanvas);
 
-      await page.render({ canvasContext: context, viewport }).promise;
-      return canvas;
-    }
-
-    async function renderSpread(index) {
-      clearCanvas();
-
-      // Force recenters on any render
-      container.style.top = '50%';
-      container.style.left = '50%';
-      container.style.transform = 'translate(-50%, -50%)';
-
-      if (index === 0) {
-        const canvas = await loadCanvas(pdfFiles[0]);
-        container.appendChild(canvas);
-      } else {
-        const leftIndex = index;
-        const rightIndex = index + 1;
-
-        const leftCanvas = await loadCanvas(pdfFiles[leftIndex]);
-        container.appendChild(leftCanvas);
-
-        if (rightIndex < pdfFiles.length) {
-          const rightCanvas = await loadCanvas(pdfFiles[rightIndex]);
-          container.appendChild(rightCanvas);
-        }
+      if (rightIndex < pdfFiles.length) {
+        const rightCanvas = await loadCanvas(pdfFiles[rightIndex], pdfScale);
+        container.appendChild(rightCanvas);
       }
     }
 
-    function showNext() {
-      currentIndex = currentIndex === 0 ? 1 : currentIndex + 2;
-      if (currentIndex >= pdfFiles.length) currentIndex = pdfFiles.length - 1;
-      renderSpread(currentIndex);
-    }
+    resetZoom(); // Recenter after render
+  }
 
-    function showPrev() {
-      currentIndex = currentIndex <= 1 ? 0 : currentIndex - 2;
-      renderSpread(currentIndex);
-    }
-
-    function zoom(factor) {
-      const newScale = scale * factor;
-      scale = Math.max(0.5, Math.min(newScale, 5));
-      renderSpread(currentIndex);
-    }
-
-    // Arrow key navigation
-    document.addEventListener("keydown", e => {
-      if (e.key === "ArrowRight") showNext();
-      if (e.key === "ArrowLeft") showPrev();
-    });
-
-    // Tap/click navigation
-    container.addEventListener("click", e => {
-      const x = e.clientX || (e.touches && e.touches[0]?.clientX);
-      if (x > window.innerWidth / 2) showNext();
-      else showPrev();
-    });
-
-    // Mouse wheel zoom
-    container.addEventListener("wheel", e => {
-      e.preventDefault();
-      zoom(e.deltaY < 0 ? 1.1 : 0.9);
-    }, { passive: false });
-
-    // Touch pinch zoom
-    let startDist = null;
-    container.addEventListener("touchmove", e => {
-      if (e.touches.length === 2) {
-        const dx = e.touches[0].clientX - e.touches[1].clientX;
-        const dy = e.touches[0].clientY - e.touches[1].clientY;
-        const dist = Math.hypot(dx, dy);
-        if (startDist) {
-          zoom(dist > startDist ? 1.02 : 0.98);
-        }
-        startDist = dist;
-      }
-    }, { passive: false });
-
-    container.addEventListener("touchend", () => startDist = null);
-
+  function showNext() {
+    currentIndex = currentIndex === 0 ? 1 : currentIndex + 2;
+    if (currentIndex >= pdfFiles.length) currentIndex = pdfFiles.length - 1;
     renderSpread(currentIndex);
-  </script>
+  }
+
+  function showPrev() {
+    currentIndex = currentIndex <= 1 ? 0 : currentIndex - 2;
+    renderSpread(currentIndex);
+  }
+
+  function applyZoom() {
+    container.style.transform = `translate(-50%, -50%) scale(${viewScale})`;
+  }
+
+  function resetZoom() {
+    viewScale = 1;
+    applyZoom();
+    viewport.scrollTop = (container.offsetHeight - viewport.clientHeight) / 2;
+    viewport.scrollLeft = (container.offsetWidth - viewport.clientWidth) / 2;
+  }
+
+  // Trackpad / mouse wheel zoom
+  viewport.addEventListener("wheel", (e) => {
+    if (e.ctrlKey || Math.abs(e.deltaY) < 50) {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
+      viewScale = Math.max(0.5, Math.min(viewScale * zoomFactor, 4));
+      applyZoom();
+    }
+  }, { passive: false });
+
+  // Pinch zoom for mobile
+  let lastDist = null;
+  viewport.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      if (lastDist) {
+        const scaleChange = dist > lastDist ? 1.02 : 0.98;
+        viewScale = Math.max(0.5, Math.min(viewScale * scaleChange, 4));
+        applyZoom();
+      }
+      lastDist = dist;
+    }
+  }, { passive: false });
+
+  viewport.addEventListener("touchend", () => {
+    lastDist = null;
+  });
+
+  // Tap / click for navigation
+  viewport.addEventListener("click", e => {
+    const x = e.clientX;
+    if (x > window.innerWidth / 2) showNext();
+    else showPrev();
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") showNext();
+    if (e.key === "ArrowLeft") showPrev();
+  });
+
+  renderSpread(currentIndex);
+</script>
+
 </body>
 </html>
