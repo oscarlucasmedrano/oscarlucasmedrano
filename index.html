@@ -59,11 +59,11 @@
 <body>
     <div class="pdf-container" id="pdfContainer">
         <div id="coverPage">
-            <embed src="page1.pdf" class="pdf-page" id="pdf1">
+            <embed src="page1.pdf#toolbar=0" class="pdf-page" id="pdf1">
         </div>
         <div id="doublePage" class="hidden pdf-double">
-            <embed src="page2.pdf" class="pdf-page" id="pdf2">
-            <embed src="page3.pdf" class="pdf-page" id="pdf3">
+            <embed src="page2.pdf#toolbar=0" class="pdf-page" id="pdf2">
+            <embed src="page3.pdf#toolbar=0" class="pdf-page" id="pdf3">
         </div>
     </div>
 
@@ -98,6 +98,7 @@
         let translateY = 0;
         let isPanning = false;
         let startX, startY;
+        let touchStartTime = 0;
 
         // Desktop zoom and pan
         pdfContainer.addEventListener('wheel', (e) => {
@@ -138,6 +139,7 @@
         // Mobile zoom and pan
         let lastDist = 0;
         pdfContainer.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
             if (e.touches.length === 2) {
                 lastDist = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
@@ -169,29 +171,33 @@
             pdfContainer.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
         });
 
-        pdfContainer.addEventListener('touchend', () => {
+        pdfContainer.addEventListener('touchend', (e) => {
+            if (!isPanning && e.changedTouches.length === 1) {
+                const touchDuration = Date.now() - touchStartTime;
+                if (touchDuration < 300) { // Short tap, not a pan
+                    const rect = pdfContainer.getBoundingClientRect();
+                    const touchX = e.changedTouches[0].clientX - rect.left;
+                    if (touchX < rect.width / 2) {
+                        if (currentPage === 1) showPage(0);
+                    } else {
+                        if (currentPage === 0) showPage(1);
+                    }
+                }
+            }
             lastDist = 0;
             isPanning = false;
         });
 
-        // Page flip on click
+        // Desktop page flip
         pdfContainer.addEventListener('click', (e) => {
-            const rect = pdfContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            if (clickX < rect.width / 2) {
-                if (currentPage === 1) showPage(0);
-            } else {
-                if (currentPage === 0) showPage(1);
-            }
-        });
-
-        pdfContainer.addEventListener('touchend', (e) => {
-            const rect = pdfContainer.getBoundingClientRect();
-            const touchX = e.changedTouches[0].clientX - rect.left;
-            if (touchX < rect.width / 2) {
-                if (currentPage === 1) showPage(0);
-            } else {
-                if (currentPage === 0) showPage(1);
+            if (!isPanning) {
+                const rect = pdfContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                if (clickX < rect.width / 2) {
+                    if (currentPage === 1) showPage(0);
+                } else {
+                    if (currentPage === 0) showPage(1);
+                }
             }
         });
 
