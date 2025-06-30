@@ -1,195 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Oscar-Lucas Medrano</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js';
-  </script>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      background: black;
-      overflow: hidden;
-      touch-action: none;
-    }
-
-    #viewport {
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background: black;
-      position: relative;
-      touch-action: pan-x pan-y;
-    }
-
-    #pdf-container {
-      position: absolute;
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      transform: scale(1);
-      transform-origin: center center;
-      transition: transform 0.05s linear;
-    }
-
-    canvas {
-      display: block;
-      background: black;
-      border: 1px solid white;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Book Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .pdf-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+        }
+        .pdf-page {
+            border: 1px solid white;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .pdf-double {
+            display: flex;
+            gap: 2px;
+        }
+        .pdf-double .pdf-page {
+            width: 50%;
+        }
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            padding: 10px;
+        }
+        .arrow-left {
+            left: 10px;
+        }
+        .arrow-right {
+            right: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <div id="viewport">
-    <div id="pdf-container"></div>
-  </div>
+    <div class="pdf-container" id="pdfContainer">
+        <div id="coverPage">
+            <embed src="page1.pdf" class="pdf-page" id="pdf1">
+        </div>
+        <div id="doublePage" class="hidden pdf-double">
+            <embed src="page2.pdf" class="pdf-page" id="pdf2">
+            <embed src="page3.pdf" class="pdf-page" id="pdf3">
+        </div>
+        <div class="arrow arrow-left" id="arrowLeft" onclick="prevPage()">&#9664;</div>
+        <div class="arrow arrow-right" id="arrowRight" onclick="nextPage()">&#9654;</div>
+    </div>
 
-  <script>
-    const totalPages = 32;
-    const pdfFiles = Array.from({ length: totalPages }, (_, i) => `page${i + 1}.pdf`);
-    let currentIndex = 0;
-    let basePdfScale = 1.5;
-    let viewScale = 1;
-    const fixedCanvasHeight = 1100;
+    <script>
+        let currentPage = 0;
+        const coverPage = document.getElementById('coverPage');
+        const doublePage = document.getElementById('doublePage');
+        const arrowLeft = document.getElementById('arrowLeft');
+        const arrowRight = document.getElementById('arrowRight');
+        const pdfContainer = document.getElementById('pdfContainer');
 
-    const container = document.getElementById("pdf-container");
-    const viewport = document.getElementById("viewport");
-
-    async function loadCanvas(pdfUrl) {
-      const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1 });
-      const aspectRatio = viewport.width / viewport.height;
-
-      const canvas = document.createElement("canvas");
-      canvas.height = fixedCanvasHeight;
-      canvas.width = canvas.height * aspectRatio;
-
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const scale = canvas.height / viewport.height;
-      const scaledViewport = page.getViewport({ scale });
-      await page.render({ canvasContext: ctx, viewport: scaledViewport, background: 'black' }).promise;
-
-      return canvas;
-    }
-
-    function applyZoom() {
-      container.style.transform = `scale(${viewScale})`;
-    }
-
-    function centerSpread(canvases) {
-      const totalWidth = canvases.reduce((sum, c) => sum + c.width, 0) + (canvases.length - 1) * 10;
-      const maxHeight = Math.max(...canvases.map(c => c.height));
-      const scaleX = window.innerWidth * 0.95 / totalWidth;
-      const scaleY = window.innerHeight * 0.95 / maxHeight;
-      viewScale = Math.min(scaleX, scaleY, 1);
-      applyZoom();
-
-      const offsetLeft = (window.innerWidth - totalWidth * viewScale) / 2;
-      const offsetTop = (window.innerHeight - maxHeight * viewScale) / 2;
-      container.style.left = `${offsetLeft}px`;
-      container.style.top = `${offsetTop}px`;
-    }
-
-    function scrollToCenter() {
-      const rect = container.getBoundingClientRect();
-      const scrollX = container.offsetLeft + container.offsetWidth / 2 - window.innerWidth / 2;
-      const scrollY = container.offsetTop + container.offsetHeight / 2 - window.innerHeight / 2;
-      viewport.scrollTo({ top: scrollY, left: scrollX, behavior: 'instant' });
-    }
-
-    async function renderSpread(index) {
-      container.innerHTML = '';
-      let canvases = [];
-
-      if (index === 0) {
-        canvases = [await loadCanvas(pdfFiles[0])];
-      } else {
-        const left = await loadCanvas(pdfFiles[index]);
-        const rightIndex = index + 1;
-        canvases.push(left);
-        if (rightIndex < pdfFiles.length) {
-          const right = await loadCanvas(pdfFiles[rightIndex]);
-          canvases.push(right);
+        function showPage(page) {
+            if (page === 0) {
+                coverPage.classList.remove('hidden');
+                doublePage.classList.add('hidden');
+                arrowLeft.classList.add('hidden');
+                arrowRight.classList.remove('hidden');
+            } else {
+                coverPage.classList.add('hidden');
+                doublePage.classList.remove('hidden');
+                arrowLeft.classList.remove('hidden');
+                arrowRight.classList.add('hidden');
+            }
+            currentPage = page;
         }
-      }
 
-      canvases.forEach(canvas => container.appendChild(canvas));
-      centerSpread(canvases);
-      requestAnimationFrame(() => scrollToCenter());
-    }
-
-    function showNext() {
-      currentIndex = currentIndex === 0 ? 1 : currentIndex + 2;
-      if (currentIndex >= pdfFiles.length) currentIndex = pdfFiles.length - 1;
-      renderSpread(currentIndex);
-    }
-
-    function showPrev() {
-      currentIndex = currentIndex <= 1 ? 0 : currentIndex - 2;
-      renderSpread(currentIndex);
-    }
-
-    // Zoom via trackpad/mouse
-    viewport.addEventListener("wheel", (e) => {
-      if (e.ctrlKey || Math.abs(e.deltaY) < 50) {
-        e.preventDefault();
-        const factor = e.deltaY > 0 ? 0.95 : 1.05;
-        viewScale = Math.max(0.3, Math.min(viewScale * factor, 5));
-        const rect = container.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-        container.style.transformOrigin = `${offsetX}px ${offsetY}px`;
-        applyZoom();
-      }
-    }, { passive: false });
-
-    // Pinch to zoom on mobile
-    let lastDist = null;
-    viewport.addEventListener("touchmove", (e) => {
-      if (e.touches.length === 2) {
-        const [t1, t2] = e.touches;
-        const dx = t1.clientX - t2.clientX;
-        const dy = t1.clientY - t2.clientY;
-        const dist = Math.hypot(dx, dy);
-        if (lastDist) {
-          const factor = dist > lastDist ? 1.02 : 0.98;
-          viewScale = Math.max(0.3, Math.min(viewScale * factor, 5));
-          const midX = (t1.clientX + t2.clientX) / 2;
-          const midY = (t1.clientY + t2.clientY) / 2;
-          const rect = container.getBoundingClientRect();
-          const offsetX = midX - rect.left;
-          const offsetY = midY - rect.top;
-          container.style.transformOrigin = `${offsetX}px ${offsetY}px`;
-          applyZoom();
+        function nextPage() {
+            if (currentPage === 0) {
+                showPage(1);
+            }
         }
-        lastDist = dist;
-      }
-    }, { passive: false });
-    viewport.addEventListener("touchend", () => lastDist = null);
 
-    // Navigation
-    document.addEventListener("keydown", e => {
-      if (e.key === "ArrowRight") showNext();
-      if (e.key === "ArrowLeft") showPrev();
-    });
-    viewport.addEventListener("click", e => {
-      if (e.clientX > window.innerWidth / 2) showNext();
-      else showPrev();
-    });
+        function prevPage() {
+            if (currentPage === 1) {
+                showPage(0);
+            }
+        }
 
-    window.addEventListener("resize", () => renderSpread(currentIndex));
+        // Zoom functionality
+        let scale = 1;
+        pdfContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            scale = Math.min(Math.max(1, scale + delta), 3); // Limit zoom 1x to 3x
+            pdfContainer.style.transform = `scale(${scale})`;
+        });
 
-    renderSpread(currentIndex);
-  </script>
+        // Pinch to zoom for mobile
+        let lastDist = 0;
+        pdfContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                lastDist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+        });
+
+        pdfContainer.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const dist = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                if (lastDist > 0) {
+                    const delta = dist - lastDist;
+                    scale = Math.min(Math.max(1, scale + delta * 0.005), 3);
+                    pdfContainer.style.transform = `scale(${scale})`;
+                }
+                lastDist = dist;
+            }
+        });
+
+        pdfContainer.addEventListener('touchend', () => {
+            lastDist = 0;
+        });
+
+        // Initialize
+        showPage(0);
+
+        // Ensure PDFs are reloaded on refresh to maintain position
+        window.addEventListener('load', () => {
+            showPage(0);
+            pdfContainer.style.transform = `scale(1)`;
+            scale = 1;
+        });
+    </script>
 </body>
 </html>
