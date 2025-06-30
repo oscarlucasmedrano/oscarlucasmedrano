@@ -74,12 +74,12 @@
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // Replace with your PDF paths or use the sample PDF for testing
+    // Replace with your PDF paths or test with the sample PDF
     const pdfUrls = [
       'page1.pdf',
       'page2.pdf',
       'page3.pdf'
-      // For testing CORS: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey.pdf'
+      // Test with: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey.pdf'
     ];
     let currentPageIndex = 0;
     let pdfDoc = null;
@@ -106,17 +106,15 @@
         console.error('Error loading PDF:', error);
         canvas.style.border = '1px solid red';
         errorMessage.style.display = 'block';
-        if (error.name === 'UnknownErrorException' && error.message.includes('CORS')) {
-          errorMessage.textContent = `CORS error: Cannot load ${pdfUrls[index]}. Host PDFs on the same server or enable CORS on the PDF server.`;
-        } else {
-          errorMessage.textContent = `Failed to load ${pdfUrls[index]}. Check file path or server.`;
-        }
+        errorMessage.textContent = `Failed to load ${pdfUrls[index]}. ${error.message}`;
       }
     }
 
     async function renderPage() {
       try {
+        console.log('Starting PDF rendering...');
         const page = await pdfDoc.getPage(1);
+        console.log('Page loaded');
         const viewport = page.getViewport({ scale: 1 });
 
         const containerWidth = container.clientWidth;
@@ -124,18 +122,27 @@
         const scaleX = containerWidth / viewport.width * 0.9;
         const scaleY = containerHeight / viewport.height * 0.9;
         scale = Math.min(scaleX, scaleY);
+        console.log(`Scale calculated: ${scale}`);
 
         const scaledViewport = page.getViewport({ scale });
         canvas.width = scaledViewport.width;
         canvas.height = scaledViewport.height;
+        console.log(`Canvas size set: ${canvas.width}x${canvas.height}`);
 
         if (currentPageIndex === 1) {
           canvas.width = scaledViewport.width * 2;
+          console.log(`Doubled canvas width for side-by-side: ${canvas.width}`);
         }
 
         translateX = (containerWidth - canvas.width) / 2;
         translateY = (containerHeight - canvas.height) / 2;
         updateTransform();
+        console.log(`Transform set: translate(${translateX}px, ${translateY}px) scale(${scale})`);
+
+        // Test canvas visibility
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(0, 0, 50, 50); // Draw a blue square in top-left
+        console.log('Test rectangle drawn');
 
         if (currentPageIndex === 1) {
           const renderContext1 = {
@@ -143,6 +150,7 @@
             viewport: scaledViewport,
           };
           await page.render(renderContext1).promise;
+          console.log('Rendered page2.pdf');
 
           try {
             const page3Doc = await pdfjsLib.getDocument(pdfUrls[2]).promise;
@@ -153,6 +161,7 @@
               transform: [1, 0, 0, 1, scaledViewport.width, 0],
             };
             await page3.render(renderContext2).promise;
+            console.log('Rendered page3.pdf');
           } catch (error) {
             console.error('Error loading page3.pdf:', error);
             errorMessage.style.display = 'block';
@@ -164,12 +173,13 @@
             viewport: scaledViewport,
           };
           await page.render(renderContext).promise;
+          console.log('Rendered single page');
         }
       } catch (error) {
         console.error('Error rendering PDF:', error);
         canvas.style.border = '1px solid red';
         errorMessage.style.display = 'block';
-        errorMessage.textContent = 'Failed to render PDF';
+        errorMessage.textContent = `Failed to render PDF: ${error.message}`;
       }
     }
 
