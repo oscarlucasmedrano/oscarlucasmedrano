@@ -28,17 +28,20 @@
         .pdf-page {
             border: 1px solid white;
             object-fit: contain;
+            width: 100%;
+            height: 100%;
         }
         .pdf-double {
             display: flex;
             gap: 2px;
+            width: 100%;
+            height: 100%;
         }
         @media (max-width: 768px) {
             .pdf-container {
                 width: 90vw;
                 height: 90vh;
-                align-items: flex-start;
-                padding-top: 2vh; /* Adjusted higher for search bar */
+                align-items: center;
             }
             .pdf-page {
                 width: 45vw;
@@ -46,25 +49,23 @@
             }
             .pdf-double .pdf-page {
                 width: 45vw;
+                height: 60vw;
             }
         }
         @media (min-width: 769px) {
             .pdf-container {
-                width: 100vw;
+                width: 50vw;
                 height: 100vh;
             }
             .pdf-page {
-                max-width: 50vw;
-                max-height: 100vh;
-                width: auto;
+                width: 50vw;
                 height: 100vh;
             }
             .pdf-double {
-                max-width: 100vw;
+                width: 50vw;
             }
             .pdf-double .pdf-page {
-                max-width: 25vw;
-                width: auto;
+                width: 25vw;
                 height: 100vh;
             }
         }
