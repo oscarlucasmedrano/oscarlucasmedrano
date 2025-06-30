@@ -56,6 +56,12 @@
             border: 1px solid white; /* Thinner white boundary around PDFs */
             margin: 0 5px; /* Small margin between canvases */
         }
+        #pdf-canvas-single {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) translate(-1px, -1px); /* Adjust for border */
+        }
         #crease {
             position: absolute;
             left: 50%;
@@ -148,11 +154,11 @@
                     let maxWidth = window.innerWidth * 0.9;
                     let maxHeight = window.innerHeight * 0.9;
                     if (window.innerWidth <= 600) {
-                        maxWidth -= 200; // Total 200px reduction on mobile
-                        maxHeight -= 200; // Total 200px reduction on mobile
+                        maxWidth -= 240; // Total 240px reduction on mobile
+                        maxHeight -= 240; // Total 240px reduction on mobile
                     } else {
-                        maxWidth -= 30; // 30px reduction on desktop
-                        maxHeight -= 30; // 30px reduction on desktop
+                        maxWidth -= 55; // Total 55px reduction on desktop
+                        maxHeight -= 55; // Total 55px reduction on desktop
                     }
                     const scaleX = maxWidth / coverWidth;
                     const scaleY = maxHeight / coverHeight;
@@ -193,15 +199,12 @@
                         console.error('Right page render failed, retrying...');
                         await renderPage(pdfDocRight, 1, canvasRight, contextRight); // Retry once
                     }
-                    // Check and adjust position if off-screen
-                    const containerRect = canvasContainer.getBoundingClientRect();
-                    const rightRect = canvasRight.getBoundingClientRect();
-                    if (rightRect.right > containerRect.right) {
-                        const leftWidth = canvasLeft.getBoundingClientRect().width;
-                        canvasRight.style.left = `${leftWidth + 10}px`; // Reset with margin
-                        console.log(`Adjusted canvasRight position, new left: ${leftWidth + 10}px`);
-                    }
-                    console.log(`Set canvasRight left to: ${canvasRight.style.left}, canvasRight width: ${canvasRight.getBoundingClientRect().width}px`);
+                    // Position canvases relative to crease
+                    const containerWidth = canvasContainer.getBoundingClientRect().width;
+                    const leftWidth = canvasLeft.getBoundingClientRect().width;
+                    canvasLeft.style.left = `${(containerWidth / 2 - leftWidth - 5) / 2}px`; // Center left page
+                    canvasRight.style.left = `${containerWidth / 2 + 5}px`; // Start right page after crease with margin
+                    console.log(`Set canvasLeft left to: ${(containerWidth / 2 - leftWidth - 5) / 2}px, canvasRight left to: ${containerWidth / 2 + 5}px`);
                     console.log('Spread rendered successfully');
                 } catch (error) {
                     console.error('Error loading spread PDFs:', error);
@@ -220,11 +223,11 @@
             let maxWidth = window.innerWidth * 0.9;
             let maxHeight = window.innerHeight * 0.9;
             if (window.innerWidth <= 600) {
-                maxWidth -= 200; // Total 200px reduction on mobile
-                maxHeight -= 200; // Total 200px reduction on mobile
+                maxWidth -= 240; // Total 240px reduction on mobile
+                maxHeight -= 240; // Total 240px reduction on mobile
             } else {
-                maxWidth -= 30; // 30px reduction on desktop
-                maxHeight -= 30; // 30px reduction on desktop
+                maxWidth -= 55; // Total 55px reduction on desktop
+                maxHeight -= 55; // Total 55px reduction on desktop
             }
             const scaleX = maxWidth / coverWidth;
             const scaleY = maxHeight / coverHeight;
@@ -263,11 +266,11 @@
             let maxWidth = window.innerWidth * 0.9;
             let maxHeight = window.innerHeight * 0.9;
             if (window.innerWidth <= 600) {
-                maxWidth -= 200; // Total 200px reduction on mobile
-                maxHeight -= 200; // Total 200px reduction on mobile
+                maxWidth -= 240; // Total 240px reduction on mobile
+                maxHeight -= 240; // Total 240px reduction on mobile
             } else {
-                maxWidth -= 30; // 30px reduction on desktop
-                maxHeight -= 30; // 30px reduction on desktop
+                maxWidth -= 55; // Total 55px reduction on desktop
+                maxHeight -= 55; // Total 55px reduction on desktop
             }
             const scaleX = maxWidth / coverWidth;
             const scaleY = maxHeight / coverHeight;
@@ -312,17 +315,12 @@
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasRight.style.display = 'block';
+                const containerWidth = canvasContainer.getBoundingClientRect().width;
                 const leftWidth = canvasLeft.getBoundingClientRect().width;
-                canvasRight.style.left = `${leftWidth + 10}px`; // Add 10px margin
+                canvasLeft.style.left = `${(containerWidth / 2 - leftWidth - 5) / 2}px`; // Center left page
+                canvasRight.style.left = `${containerWidth / 2 + 5}px`; // Start right page after crease with margin
                 canvasSingle.style.display = 'none';
                 crease.style.display = 'block';
-                // Check and adjust position if off-screen
-                const containerRect = canvasContainer.getBoundingClientRect();
-                const rightRect = canvasRight.getBoundingClientRect();
-                if (rightRect.right > containerRect.right) {
-                    canvasRight.style.left = `${leftWidth + 10}px`; // Reset with margin
-                    console.log(`Adjusted canvasRight position, new left: ${leftWidth + 10}px`);
-                }
                 console.log(`Adjusted to spread: ${pdfFiles[currentSpreadIndex].left} + ${pdfFiles[currentSpreadIndex].right}, leftWidth: ${leftWidth}px, rightWidth: ${canvasRight.getBoundingClientRect().width}px`);
             }
         }
