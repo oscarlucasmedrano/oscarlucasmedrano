@@ -29,20 +29,22 @@
 
     #pdf-container {
       display: flex;
-      gap: 10px;
       justify-content: center;
       align-items: center;
+      gap: 10px;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(1);
       transform-origin: center center;
       transition: transform 0.05s linear;
+      background: black;
     }
 
     canvas {
       border: 1px solid white;
       display: block;
+      background: black;
     }
   </style>
 </head>
@@ -57,6 +59,7 @@
   let currentIndex = 0;
   let basePdfScale = 1.5;
   let viewScale = 1;
+  const fixedCanvasHeight = 1100;
 
   const container = document.getElementById("pdf-container");
   const viewport = document.getElementById("viewport");
@@ -65,17 +68,16 @@
     const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale });
+    const aspectRatio = viewport.width / viewport.height;
     const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-    // Force uniform size
-    const fixedWidth = 800;
-    const aspectRatio = viewport.height / viewport.width;
-    canvas.width = fixedWidth;
-    canvas.height = fixedWidth * aspectRatio;
+    canvas.height = fixedCanvasHeight;
+    canvas.width = canvas.height * aspectRatio;
 
-    const renderViewport = page.getViewport({ scale: canvas.width / viewport.width });
-    await page.render({ canvasContext: context, viewport: renderViewport }).promise;
+    const renderViewport = page.getViewport({ scale: canvas.height / viewport.height });
+    await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
+
     return canvas;
   }
 
@@ -86,8 +88,8 @@
   async function renderSpread(index) {
     container.innerHTML = '';
     container.style.transformOrigin = "center center";
-    let pages = [];
 
+    let pages = [];
     if (index === 0) {
       pages = [await loadCanvas(pdfFiles[0], basePdfScale)];
     } else {
@@ -124,12 +126,12 @@
     renderSpread(currentIndex);
   }
 
-  // Zoom on mouse wheel (on cursor)
+  // Mouse zoom (wheel + cursor zoom center)
   viewport.addEventListener("wheel", (e) => {
     if (e.ctrlKey || Math.abs(e.deltaY) < 50) {
       e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
-      viewScale = Math.max(0.3, Math.min(viewScale * zoomFactor, 5));
+      const factor = e.deltaY > 0 ? 0.95 : 1.05;
+      viewScale = Math.max(0.3, Math.min(viewScale * factor, 5));
 
       const rect = container.getBoundingClientRect();
       const offsetX = e.clientX - rect.left;
@@ -140,7 +142,7 @@
     }
   }, { passive: false });
 
-  // Pinch zoom on mobile centered on finger midpoint
+  // Pinch zoom (mobile center on fingers)
   let lastDist = null;
   viewport.addEventListener("touchmove", (e) => {
     if (e.touches.length === 2) {
@@ -165,23 +167,21 @@
       lastDist = dist;
     }
   }, { passive: false });
-
   viewport.addEventListener("touchend", () => lastDist = null);
 
-  // Navigation
+  // Arrow key + click nav
   document.addEventListener("keydown", e => {
     if (e.key === "ArrowRight") showNext();
     if (e.key === "ArrowLeft") showPrev();
   });
-
   viewport.addEventListener("click", e => {
     if (e.clientX > window.innerWidth / 2) showNext();
     else showPrev();
   });
 
   window.addEventListener("resize", () => renderSpread(currentIndex));
-
   renderSpread(currentIndex);
 </script>
 </body>
 </html>
+
