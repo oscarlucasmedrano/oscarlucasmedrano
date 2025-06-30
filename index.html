@@ -153,11 +153,16 @@
                     const viewport = page.getViewport({ scale: scale });
                     coverWidth = viewport.width;
                     coverHeight = viewport.height;
-                    const maxWidth = window.innerWidth * 0.9; // Use 90% of window width for cover
+                    const maxWidth = window.innerWidth * 0.9;
                     const maxHeight = window.innerHeight * 0.9;
                     const scaleX = maxWidth / coverWidth;
                     const scaleY = maxHeight / coverHeight;
                     let fitScale = Math.min(scaleX, scaleY);
+                    if (window.innerWidth > 600) {
+                        fitScale *= 1.1; // Reduced desktop scale
+                    } else {
+                        fitScale *= 1.3; // Reduced mobile scale
+                    }
                     fitScale *= scale;
                     const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
                     canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
@@ -170,7 +175,7 @@
                         transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
                     };
                     await page.render(renderContext).promise;
-                    console.log(`Loaded single page: ${spread.file}, width: ${coverWidth}px, height: ${coverHeight}px`);
+                    console.log(`Loaded single page: ${spread.file}, width: ${coverWidth}px, height: ${coverHeight}px, rendered width: ${adjustedViewport.width}px`);
                 } catch (error) {
                     console.error('Error loading single PDF:', error);
                 }
@@ -184,7 +189,8 @@
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}`);
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
-                    await renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                    const renderResult = await renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                    if (!renderResult) console.error('Right page render failed');
                     // Set canvasRight position after rendering with margin
                     const leftWidth = canvasLeft.getBoundingClientRect().width;
                     canvasRight.style.left = `${leftWidth + 10}px`; // Add 10px margin
@@ -206,9 +212,9 @@
             const scaleY = maxHeight / coverHeight;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // Current desktop scale
+                fitScale *= 1.1; // Reduced desktop scale
             } else {
-                fitScale *= 1.76; // Current mobile scale
+                fitScale *= 1.3; // Reduced mobile scale
             }
             fitScale *= scale;
 
@@ -223,7 +229,13 @@
                 viewport: adjustedViewport,
                 transform: [window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0]
             };
-            await page.render(renderContext).promise;
+            try {
+                await page.render(renderContext).promise;
+                return true;
+            } catch (error) {
+                console.error('Render error:', error);
+                return false;
+            }
         }
 
         async function renderSinglePage(pdfDoc, pageNum, canvas, context) {
@@ -236,9 +248,9 @@
             const scaleY = maxHeight / coverHeight;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.265; // Current desktop scale
+                fitScale *= 1.1; // Reduced desktop scale
             } else {
-                fitScale *= 1.76; // Current mobile scale
+                fitScale *= 1.3; // Reduced mobile scale
             }
             fitScale *= scale;
 
@@ -267,7 +279,8 @@
                 console.log('Adjusted to single page:', pdfFiles[currentSpreadIndex].file);
             } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
                 renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
-                renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                const renderResult = renderPage(pdfDocRight, 1, canvasRight, contextRight);
+                if (!renderResult) console.error('Right page render failed in adjustCanvases');
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasRight.style.display = 'block';
