@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oscar-Lucas Medrano</title>
 
-  <!-- PDF.js from Mozilla GitHub (stable + complete) -->
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -21,23 +21,26 @@
       height: 100%;
       touch-action: none;
     }
-
     #pdf-container {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100%;
       width: 100%;
-      position: relative;
     }
-
+    .spread {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
     canvas {
-      max-width: 100%;
-      height: auto;
       box-shadow: 0 0 0 white;
       transition: box-shadow 0.3s ease;
+      height: auto;
+      max-height: 95vh;
+      max-width: 48vw;
     }
-
     canvas.active {
       box-shadow: 0 0 4px 2px white;
     }
@@ -58,56 +61,99 @@
       container.innerHTML = '';
     }
 
-    async function renderPDF(index) {
-      clearCanvas();
+    async function loadCanvas(pdfUrl, scaleOverride = null) {
+      const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: scaleOverride || scale });
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
 
-      const url = pdfFiles[index];
-      const loadingTask = pdfjsLib.getDocument(url);
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
 
-      try {
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.classList.add("active");
-
-        container.appendChild(canvas);
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport
-        };
-
-        await page.render(renderContext).promise;
-      } catch (err) {
-        console.error(`Failed to load ${url}`, err);
-      }
+      await page.render({ canvasContext: context, viewport }).promise;
+      return { canvas, width: viewport.width, height: viewport.height };
     }
 
-    function showPage(i) {
-      if (i < 0 || i >= pdfFiles.length) return;
-      currentIndex = i;
-      renderPDF(currentIndex);
+    async function renderSpread(index) {
+      clearCanvas();
+
+      const spread = document.createElement("div");
+      spread.classList.add("spread");
+
+      // Cover (first page alone)
+      if (index === 0) {
+        const { canvas } = await loadCanvas(pdfFiles[0]);
+        canvas.classList.add("active");
+        spread.appendChild(canvas);
+      } else {
+        const leftIndex = index;
+        const rightIndex = index + 1;
+
+        const leftPromise = loadCanvas(pdfFiles[leftIndex]);
+        const rightPromise = rightIndex < pdfFiles.length
+          ? loadCanvas(pdfFiles[rightIndex])
+          : null;
+
+        const [left, right] = await Promise.all([leftPromise, rightPromise]);
+
+        // Match scale so they are same height
+        const maxHeight = Math.max(left.height, right?.height || 0);
+        const matchedScale = scale * (95 * window.innerHeight / 100) / maxHeight;
+
+        const [leftFinal, rightFinal] = await Promise.all([
+          loadCanvas(pdfFiles[leftIndex], matchedScale),
+          right ? loadCanvas(pdfFiles[rightIndex], matchedScale) : null
+        ]);
+
+        leftFinal.canvas.classList.add("active");
+        spread.appendChild(leftFinal.canvas);
+
+        if (rightFinal) {
+          rightFinal.canvas.classList.add("active");
+          spread.appendChild(rightFinal.canvas);
+        }
+      }
+
+      container.appendChild(spread);
+    }
+
+    function showNext() {
+      if (currentIndex === 0) {
+        currentIndex = 1;
+      } else {
+        currentIndex += 2;
+      }
+      if (currentIndex >= pdfFiles.length) {
+        currentIndex = pdfFiles.length - 1;
+      }
+      renderSpread(currentIndex);
+    }
+
+    function showPrev() {
+      if (currentIndex <= 1) {
+        currentIndex = 0;
+      } else {
+        currentIndex -= 2;
+      }
+      renderSpread(currentIndex);
     }
 
     function zoom(factor) {
       scale = Math.max(0.5, Math.min(scale * factor, 5));
-      showPage(currentIndex);
+      renderSpread(currentIndex);
     }
 
+    // Controls
     document.addEventListener("keydown", e => {
-      if (e.key === "ArrowRight") showPage(currentIndex + 1);
-      if (e.key === "ArrowLeft") showPage(currentIndex - 1);
+      if (e.key === "ArrowRight") showNext();
+      if (e.key === "ArrowLeft") showPrev();
     });
 
     container.addEventListener("click", e => {
       const x = e.clientX || (e.touches && e.touches[0]?.clientX);
-      if (x > window.innerWidth / 2) showPage(currentIndex + 1);
-      else showPage(currentIndex - 1);
+      if (x > window.innerWidth / 2) showNext();
+      else showPrev();
     });
 
     container.addEventListener("wheel", e => {
@@ -115,6 +161,7 @@
       zoom(e.deltaY < 0 ? 1.1 : 0.9);
     }, { passive: false });
 
+    // Pinch zoom
     let startDist = null;
     container.addEventListener("touchmove", e => {
       if (e.touches.length === 2) {
@@ -127,11 +174,12 @@
         startDist = dist;
       }
     }, { passive: false });
-
     container.addEventListener("touchend", () => startDist = null);
 
-    renderPDF(currentIndex);
+    // Initial load
+    renderSpread(currentIndex);
   </script>
 </body>
 </html>
+
 
