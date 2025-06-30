@@ -48,15 +48,16 @@
     };
 
     let scale = 1, startScale = 1, startDist = 0;
-    let currentSpread = 0; // 0 = cover, 1 = pages 2–3, 2 = pages 4–5, ...
+    let panX = 0, panY = 0;
+    let dragging = false, lastX = 0, lastY = 0;
+    let currentSpread = 0;
+
+    // Build spreads array: [page1], [page2,page3], ..., [page30,page31], [page32]
     const spreads = [["page1.pdf"]];
-
-    // Add spreads [page2, page3], [page4, page5], ..., [page32.pdf]
-    for (let i = 2; i <= 32; i += 2) {
-      spreads.push([`page${i}.pdf`, `page${i + 1}.pdf`]);
+    for (let i = 2; i < 32; i += 2) {
+      spreads.push([`page${i}.pdf`, `page${i+1}.pdf`]);
     }
-
-    let panX = 0, panY = 0, dragging = false, lastX = 0, lastY = 0;
+    spreads.push(["page32.pdf"]); // Back cover as last page
 
     function clearViewer() {
       viewer.innerHTML = '';
@@ -67,8 +68,10 @@
         pdf.getPage(1).then(page => {
           const viewport = page.getViewport({ scale: 1 });
           const dpi = window.devicePixelRatio || 1;
-          const availableWidth = window.innerWidth / pagesWide * 0.95;
-          const scaleToFit = availableWidth / viewport.width;
+
+          const targetWidth = window.innerWidth / pagesWide * 0.95;
+          const scaleToFit = targetWidth / viewport.width;
+
           const scaledViewport = page.getViewport({ scale: scaleToFit });
 
           canvas.style.width = scaledViewport.width + 'px';
@@ -88,14 +91,15 @@
     function renderCurrentSpread() {
       clearViewer();
       const files = spreads[currentSpread];
-      const pagesWide = files.length;
+      const pagesWide = files.length === 1 ? 2 : 2; // Always render with same width assumption
       files.forEach((pdf, i) => {
         const canvas = document.createElement('canvas');
         viewer.appendChild(canvas);
         renderPDF(pdf, canvas, pagesWide);
         canvas.addEventListener('click', () => {
-          if (pagesWide === 1) {
-            currentSpread = 1;
+          if (files.length === 1) {
+            if (currentSpread === 0) currentSpread = 1; // cover to page2–3
+            else if (currentSpread === spreads.length - 1) currentSpread = spreads.length - 2; // back to last spread
           } else if (i === 0) {
             currentSpread = Math.max(currentSpread - 1, 0);
           } else {
@@ -117,7 +121,7 @@
       applyTransform();
     }
 
-    // Zoom and pan
+    // Zoom
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomIntensity = 0.05;
@@ -126,6 +130,7 @@
       applyTransform();
     }, { passive: false });
 
+    // Touch zoom + drag
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -158,6 +163,7 @@
 
     window.addEventListener('touchend', () => dragging = false);
 
+    // Desktop drag (mouse or trackpad)
     window.addEventListener('mousedown', (e) => {
       dragging = true;
       lastX = e.clientX;
@@ -176,6 +182,7 @@
 
     window.addEventListener('mouseup', () => dragging = false);
 
+    // Keyboard nav
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') {
         currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
@@ -189,6 +196,7 @@
       }
     });
 
+    // Resize handler
     window.addEventListener('resize', () => {
       resetTransform();
       renderCurrentSpread();
@@ -198,7 +206,3 @@
   </script>
 </body>
 </html>
-
-
-
-
