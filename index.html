@@ -18,28 +18,33 @@
       background: black;
       overflow: hidden;
       height: 100%;
+      width: 100%;
       touch-action: none;
     }
+
     #pdf-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100%;
-      width: 100%;
-    }
-    .spread {
-      display: flex;
+      flex-direction: row;
       gap: 10px;
-      justify-content: center;
-      align-items: center;
+      max-width: 100%;
+      max-height: 100%;
+      flex-wrap: nowrap;
     }
+
     canvas {
       border: 1px solid white;
-      transition: border 0.3s ease;
       height: auto;
       max-height: 95vh;
       max-width: 48vw;
+      transition: border 0.2s ease;
     }
+
     canvas.active {
       border: 1px solid white;
     }
@@ -60,49 +65,58 @@
       container.innerHTML = '';
     }
 
-    async function loadCanvas(pdfUrl, customScale = null) {
+    async function loadCanvas(pdfUrl, useScale = scale) {
       const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
       const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: customScale || scale });
+      const viewport = page.getViewport({ scale: useScale });
+
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
-
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
       await page.render({ canvasContext: context, viewport }).promise;
-      return { canvas, width: viewport.width, height: viewport.height };
+      return { canvas, height: viewport.height };
     }
 
     async function renderSpread(index) {
       clearCanvas();
 
-      const spread = document.createElement("div");
-      spread.classList.add("spread");
+      // Keep PDFs centered on refresh/zoom
+      container.style.top = '50%';
+      container.style.left = '50%';
+      container.style.transform = 'translate(-50%, -50%)';
 
       if (index === 0) {
-        const { canvas } = await loadCanvas(pdfFiles[0], scale);
-        canvas.classList.add("active");
-        spread.appendChild(canvas);
+        const { canvas } = await loadCanvas(pdfFiles[0]);
+        canvas.classList.add('active');
+        container.appendChild(canvas);
       } else {
         const leftIndex = index;
         const rightIndex = index + 1;
 
-        const [left, right] = await Promise.all([
-          loadCanvas(pdfFiles[leftIndex], scale),
-          rightIndex < pdfFiles.length ? loadCanvas(pdfFiles[rightIndex], scale) : null
+        const left = await loadCanvas(pdfFiles[leftIndex]);
+        const right = rightIndex < pdfFiles.length
+          ? await loadCanvas(pdfFiles[rightIndex])
+          : null;
+
+        // Match height (rescale both if needed)
+        const maxHeight = Math.max(left.height, right?.height || 0);
+        const fitScale = scale * (0.95 * window.innerHeight / maxHeight);
+
+        const [leftFinal, rightFinal] = await Promise.all([
+          loadCanvas(pdfFiles[leftIndex], fitScale),
+          right ? loadCanvas(pdfFiles[rightIndex], fitScale) : null
         ]);
 
-        left.canvas.classList.add("active");
-        spread.appendChild(left.canvas);
+        leftFinal.canvas.classList.add('active');
+        container.appendChild(leftFinal.canvas);
 
-        if (right) {
-          right.canvas.classList.add("active");
-          spread.appendChild(right.canvas);
+        if (rightFinal) {
+          rightFinal.canvas.classList.add('active');
+          container.appendChild(rightFinal.canvas);
         }
       }
-
-      container.appendChild(spread);
     }
 
     function showNext() {
@@ -119,7 +133,8 @@
     }
 
     function zoom(factor) {
-      scale = Math.max(0.5, Math.min(scale * factor, 5));
+      const newScale = scale * factor;
+      scale = Math.max(0.5, Math.min(newScale, 5));
       renderSpread(currentIndex);
     }
 
@@ -139,7 +154,6 @@
       zoom(e.deltaY < 0 ? 1.1 : 0.9);
     }, { passive: false });
 
-    // Pinch zoom support
     let startDist = null;
     container.addEventListener("touchmove", e => {
       if (e.touches.length === 2) {
@@ -159,3 +173,4 @@
   </script>
 </body>
 </html>
+
