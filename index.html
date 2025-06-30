@@ -25,7 +25,7 @@
     }
     canvas {
       border: 1px solid white;
-      box-shadow: 0 0 10px #000;
+      box-sizing: border-box;
       max-width: 100vw;
       max-height: 100vh;
       width: auto;
@@ -47,23 +47,29 @@
     };
 
     let scale = 1, startDist = 0, startScale = 1;
-    let currentView = 1; // 1 = cover, 2 = book
+    let currentView = 1;
 
     function clearViewer() {
       viewer.innerHTML = '';
     }
 
-    function renderPDF(url, canvas, callback) {
+    function renderPDF(url, canvas, pagesWide = 1, callback) {
       pdfjsLib.getDocument(url).promise.then(pdf => {
         pdf.getPage(1).then(page => {
-          const desiredWidth = window.innerWidth / (currentView === 2 ? 2 : 1) * 0.95;
           const viewport = page.getViewport({ scale: 1 });
-          const scaleToFit = desiredWidth / viewport.width;
+          const dpi = window.devicePixelRatio || 1;
+          const availableWidth = window.innerWidth / pagesWide * 0.95;
+          const scaleToFit = availableWidth / viewport.width;
           const scaledViewport = page.getViewport({ scale: scaleToFit });
 
-          canvas.width = scaledViewport.width;
-          canvas.height = scaledViewport.height;
+          canvas.style.width = scaledViewport.width + 'px';
+          canvas.style.height = scaledViewport.height + 'px';
+          canvas.width = scaledViewport.width * dpi;
+          canvas.height = scaledViewport.height * dpi;
+
           const context = canvas.getContext('2d');
+          context.setTransform(dpi, 0, 0, dpi, 0, 0); // apply pixel ratio scaling
+
           page.render({ canvasContext: context, viewport: scaledViewport }).promise.then(() => {
             if (callback) callback();
           });
@@ -76,8 +82,9 @@
       clearViewer();
       const canvas = document.createElement('canvas');
       viewer.appendChild(canvas);
-      renderPDF('page1.pdf', canvas);
-      canvas.addEventListener('click', showBook);
+      renderPDF('page1.pdf', canvas, 1, () => {
+        canvas.addEventListener('click', showBook);
+      });
     }
 
     function showBook() {
@@ -87,20 +94,20 @@
       const canvas2 = document.createElement('canvas');
       viewer.appendChild(canvas1);
       viewer.appendChild(canvas2);
-      renderPDF('page2.pdf', canvas1, () => {
+      renderPDF('page2.pdf', canvas1, 2, () => {
         canvas1.addEventListener('click', showCover);
       });
-      renderPDF('page3.pdf', canvas2, () => {
+      renderPDF('page3.pdf', canvas2, 2, () => {
         canvas2.addEventListener('click', showBook);
       });
     }
 
-    // Zoom handling
+    // Zoom logic
     function applyTransform() {
       viewer.style.transform = `translate(-50%, -50%) scale(${scale})`;
     }
 
-    // Wheel zoom (desktop)
+    // Desktop zoom
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
       const zoomIntensity = 0.05;
@@ -109,7 +116,7 @@
       applyTransform();
     }, { passive: false });
 
-    // Touch pinch zoom (mobile)
+    // Mobile pinch zoom
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -137,16 +144,17 @@
       if (e.key === 'ArrowLeft') showCover();
     });
 
-    // Initialize
-    showCover();
-
-    // Optional: auto re-center on resize
+    // Resize = re-render
     window.addEventListener('resize', () => {
       scale = 1;
       applyTransform();
       currentView === 1 ? showCover() : showBook();
     });
+
+    // Load cover
+    showCover();
   </script>
 </body>
 </html>
+
 
