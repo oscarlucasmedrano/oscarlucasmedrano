@@ -40,7 +40,8 @@
             height: 100%;
             margin: 0 auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            text-align: center;
+            border: 2px solid white; /* White line around boundary */
+            padding: 5px; /* Inner padding to frame content */
         }
         #canvas-container.spread {
             display: flex;
@@ -153,15 +154,19 @@
                     const viewport = page.getViewport({ scale: scale });
                     coverWidth = viewport.width;
                     coverHeight = viewport.height;
-                    const maxWidth = window.innerWidth * 0.9;
-                    const maxHeight = window.innerHeight * 0.9;
+                    let maxWidth = window.innerWidth * 0.9;
+                    let maxHeight = window.innerHeight * 0.9;
+                    if (window.innerWidth <= 600) {
+                        maxWidth -= 100; // Reduce mobile width by 100px
+                        maxHeight -= 100; // Reduce mobile height by 100px
+                    }
                     const scaleX = maxWidth / coverWidth;
                     const scaleY = maxHeight / coverHeight;
                     let fitScale = Math.min(scaleX, scaleY);
                     if (window.innerWidth > 600) {
-                        fitScale *= 1.1; // Reduced desktop scale
+                        fitScale *= 1.1; // Desktop scale
                     } else {
-                        fitScale *= 1.3; // Reduced mobile scale
+                        fitScale *= 1.3; // Mobile scale
                     }
                     fitScale *= scale;
                     const adjustedViewport = page.getViewport({ scale: Math.min(Math.max(fitScale, minScale), maxScale) });
@@ -190,7 +195,10 @@
                     console.log(`Loading PDFs: ${spread.left} and ${spread.right}`);
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                     const renderResult = await renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                    if (!renderResult) console.error('Right page render failed');
+                    if (!renderResult) {
+                        console.error('Right page render failed, retrying...');
+                        await renderPage(pdfDocRight, 1, canvasRight, contextRight); // Retry once
+                    }
                     // Set canvasRight position after rendering with margin
                     const leftWidth = canvasLeft.getBoundingClientRect().width;
                     canvasRight.style.left = `${leftWidth + 10}px`; // Add 10px margin
@@ -203,18 +211,26 @@
         }
 
         async function renderPage(pdfDoc, pageNum, canvas, context) {
+            if (!context) {
+                console.error('Canvas context is null for:', canvas.id);
+                return false;
+            }
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.9; // Match cover's max width
-            const maxHeight = window.innerHeight * 0.9; // Match cover's max height
+            let maxWidth = window.innerWidth * 0.9;
+            let maxHeight = window.innerHeight * 0.9;
+            if (window.innerWidth <= 600) {
+                maxWidth -= 100; // Reduce mobile width by 100px
+                maxHeight -= 100; // Reduce mobile height by 100px
+            }
             const scaleX = maxWidth / coverWidth;
             const scaleY = maxHeight / coverHeight;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.1; // Reduced desktop scale
+                fitScale *= 1.1; // Desktop scale
             } else {
-                fitScale *= 1.3; // Reduced mobile scale
+                fitScale *= 1.3; // Mobile scale
             }
             fitScale *= scale;
 
@@ -233,7 +249,7 @@
                 await page.render(renderContext).promise;
                 return true;
             } catch (error) {
-                console.error('Render error:', error);
+                console.error('Render error for canvas:', canvas.id, error);
                 return false;
             }
         }
@@ -242,15 +258,19 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale });
 
-            const maxWidth = window.innerWidth * 0.9; // Match cover's max width
-            const maxHeight = window.innerHeight * 0.9; // Match cover's max height
+            let maxWidth = window.innerWidth * 0.9;
+            let maxHeight = window.innerHeight * 0.9;
+            if (window.innerWidth <= 600) {
+                maxWidth -= 100; // Reduce mobile width by 100px
+                maxHeight -= 100; // Reduce mobile height by 100px
+            }
             const scaleX = maxWidth / coverWidth;
             const scaleY = maxHeight / coverHeight;
             let fitScale = Math.min(scaleX, scaleY);
             if (window.innerWidth > 600) {
-                fitScale *= 1.1; // Reduced desktop scale
+                fitScale *= 1.1; // Desktop scale
             } else {
-                fitScale *= 1.3; // Reduced mobile scale
+                fitScale *= 1.3; // Mobile scale
             }
             fitScale *= scale;
 
@@ -280,7 +300,10 @@
             } else if (pdfFiles[currentSpreadIndex].type === 'spread') {
                 renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
                 const renderResult = renderPage(pdfDocRight, 1, canvasRight, contextRight);
-                if (!renderResult) console.error('Right page render failed in adjustCanvases');
+                if (!renderResult) {
+                    console.error('Right page render failed, retrying...');
+                    renderPage(pdfDocRight, 1, canvasRight, contextRight); // Retry once
+                }
                 canvasContainer.classList.add('spread');
                 canvasLeft.style.display = 'block';
                 canvasRight.style.display = 'block';
