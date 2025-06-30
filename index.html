@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oscar-Lucas Medrano</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
   <style>
@@ -19,13 +19,14 @@
       justify-content: center;
       align-items: center;
       height: 100%;
+      width: 100%;
       position: relative;
     }
     canvas {
-      box-shadow: 0 0 0px white;
-      transition: box-shadow 0.3s ease;
       max-width: 100%;
       height: auto;
+      box-shadow: 0 0 0 white;
+      transition: box-shadow 0.3s ease;
     }
     canvas.active {
       box-shadow: 0 0 4px 2px white;
@@ -36,10 +37,10 @@
   <div id="pdf-container"></div>
 
   <script>
-    const pdfFiles = Array.from({ length: 32 }, (_, i) => `page${i + 1}.pdf`);
+    const totalPages = 32;
+    const pdfFiles = Array.from({ length: totalPages }, (_, i) => `page${i + 1}.pdf`);
     let currentIndex = 0;
     let scale = 1.5;
-
     const container = document.getElementById("pdf-container");
 
     function clearCanvas() {
@@ -58,7 +59,7 @@
       const context = canvas.getContext("2d");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      canvas.classList.add('active');
+      canvas.classList.add("active");
 
       const renderContext = {
         canvasContext: context,
@@ -80,21 +81,20 @@
       showPage(currentIndex);
     }
 
-    // Keyboard flip
+    // Keyboard navigation
     document.addEventListener("keydown", e => {
       if (e.key === "ArrowRight") showPage(currentIndex + 1);
       if (e.key === "ArrowLeft") showPage(currentIndex - 1);
     });
 
-    // Click/tap flip
+    // Click/tap to flip pages
     container.addEventListener("click", e => {
-      const x = e.clientX || e.touches?.[0]?.clientX;
-      if (!x) return;
+      const x = e.clientX || (e.touches && e.touches[0]?.clientX);
       if (x > window.innerWidth / 2) showPage(currentIndex + 1);
       else showPage(currentIndex - 1);
     });
 
-    // Zoom with wheel
+    // Mouse wheel zoom
     container.addEventListener("wheel", e => {
       e.preventDefault();
       zoom(e.deltaY < 0 ? 1.1 : 0.9);
@@ -121,3 +121,4 @@
   </script>
 </body>
 </html>
+
