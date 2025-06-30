@@ -123,6 +123,7 @@
         const debounceDelay = 16;
         let lastMoveTime = 0;
         let baseScale = 1.0;
+        const TARGET_WIDTH = 574.43; // Match cover's rendered width
 
         async function loadSpread(index) {
             contextLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
@@ -181,13 +182,12 @@
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.left).promise;
                     pdfDocRight = await pdfjsLib.getDocument(spread.right).promise;
-                    scale = baseScale; // Enforce cover's baseScale for all spreads
-                    console.log(`Loading PDFs: ${spread.left} and ${spread.right}, applying scale: ${scale}`);
                     const leftPage = await pdfDocLeft.getPage(1);
-                    const leftViewport = leftPage.getViewport({ scale: scale });
                     const rightPage = await pdfDocRight.getPage(1);
-                    const rightViewport = rightPage.getViewport({ scale: scale });
-                    if (leftViewport.width !== rightViewport.width || leftViewport.height !== rightViewport.height) {
+                    const leftViewport = leftPage.getViewport({ scale: 1.0 });
+                    const rightViewport = rightPage.getViewport({ scale: 1.0 });
+                    scale = TARGET_WIDTH / leftViewport.width; // Force target width
+                    if (Math.abs(leftViewport.width - rightViewport.width) > 1 || Math.abs(leftViewport.height - rightViewport.height) > 1) {
                         console.warn(`Dimension mismatch: left ${leftViewport.width}x${leftViewport.height}, right ${rightViewport.width}x${rightViewport.height}, forcing scale ${scale}`);
                     }
                     await renderPage(pdfDocLeft, 1, canvasLeft, contextLeft);
@@ -205,8 +205,9 @@
                 canvasSingle.style.display = 'block';
                 try {
                     pdfDocLeft = await pdfjsLib.getDocument(spread.file).promise;
-                    scale = baseScale;
                     const page = await pdfDocLeft.getPage(1);
+                    const viewport = page.getViewport({ scale: 1.0 });
+                    scale = TARGET_WIDTH / viewport.width; // Force target width
                     const adjustedViewport = page.getViewport({ scale: scale });
                     canvasSingle.height = adjustedViewport.height * window.devicePixelRatio;
                     canvasSingle.width = adjustedViewport.width * window.devicePixelRatio;
@@ -256,7 +257,7 @@
             const containerRect = canvasContainer.getBoundingClientRect();
             const leftRect = canvasLeft.getBoundingClientRect();
             const rightRect = canvasRight.getBoundingClientRect();
-            const totalGap = 0; // No gap, PDFs meet at crease
+            const totalGap = 0;
             const totalWidth = leftRect.width + totalGap + rightRect.width;
             const spreadWidth = Math.min(totalWidth, containerRect.width);
             const totalHeight = Math.max(leftRect.height, rightRect.height);
@@ -264,16 +265,16 @@
             const centerOffsetY = (containerRect.height - totalHeight) / 2;
             canvasLeft.style.left = `${centerOffsetX}px`;
             canvasLeft.style.top = `${centerOffsetY}px`;
-            canvasRight.style.left = `${centerOffsetX + leftRect.width}px`; // Edge-to-edge with crease
+            canvasRight.style.left = `${centerOffsetX + leftRect.width}px`;
             canvasRight.style.top = `${centerOffsetY}px`;
-            const creaseLeft = centerOffsetX + leftRect.width; // Crease at the boundary
+            const creaseLeft = centerOffsetX + leftRect.width;
             crease.style.left = `${creaseLeft}px`;
             console.log(`Centered spread: canvasLeft left: ${centerOffsetX}px, top: ${centerOffsetY}px, canvasRight left: ${centerOffsetX + leftRect.width}px, top: ${centerOffsetY}px, crease at: ${creaseLeft}px, containerWidth: ${containerRect.width}px, spreadWidth: ${spreadWidth}px, totalHeight: ${totalHeight}px`);
         }
 
         function adjustCanvases() {
             if (pdfFiles[currentSpreadIndex].type === 'single') {
-                renderPage(pdfDocLeft, 1, canvasSingle, contextSingle); // Fixed undefined function
+                renderPage(pdfDocLeft, 1, canvasSingle, contextSingle);
                 canvasSingle.style.display = 'block';
                 canvasLeft.style.display = 'none';
                 canvasRight.style.display = 'none';
