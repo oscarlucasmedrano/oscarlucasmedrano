@@ -116,7 +116,7 @@
       border-radius: 4px;
       font-size: 14px;
       outline: none;
-      appearance: none;            /* Standard property for compatibility */
+      appearance: none;
       -webkit-appearance: none;
       -moz-appearance: textfield;
     }
@@ -186,6 +186,24 @@
       zooming = false,
       lastX = 0,
       lastY = 0;
+    let sliderActive = false;
+
+    slider.addEventListener('pointerdown', e => {
+      sliderActive = true;
+      e.stopPropagation();
+    });
+    slider.addEventListener('pointerup', e => {
+      sliderActive = false;
+      e.stopPropagation();
+    });
+    slider.addEventListener('pointercancel', e => {
+      sliderActive = false;
+      e.stopPropagation();
+    });
+    slider.addEventListener('pointerleave', e => {
+      sliderActive = false;
+      e.stopPropagation();
+    });
 
     function clearViewer() {
       while (viewer.firstChild) viewer.removeChild(viewer.firstChild);
@@ -226,30 +244,37 @@
     }
 
     function renderCurrentSpread() {
-      clearViewer();
-      updatePageNumberUI();
       const files = spreads[currentSpread];
       const pagesWide = files.length === 1 ? 2 : 2;
+      const newCanvases = [];
+      let loadedCount = 0;
+
       files.forEach((pdf, i) => {
         const canvas = document.createElement('canvas');
-        viewer.appendChild(canvas);
         renderPDF(pdf, canvas, pagesWide, () => {
-          canvas.onclick = () => {
-            if (dragging || zooming) return;
-            if (files.length === 1) {
-              if (currentSpread === 0) currentSpread = 1;
-              else if (currentSpread === spreads.length - 1)
-                currentSpread = spreads.length - 2;
-            } else if (i === 0) {
-              currentSpread = Math.max(currentSpread - 1, 0);
-            } else {
-              currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
-            }
-            resetTransform();
-            renderCurrentSpread();
-          };
+          loadedCount++;
+          if (loadedCount === files.length) {
+            clearViewer();
+            newCanvases.forEach(c => viewer.appendChild(c));
+          }
         });
+        canvas.onclick = () => {
+          if (dragging || zooming || sliderActive) return;
+          if (files.length === 1) {
+            if (currentSpread === 0) currentSpread = 1;
+            else if (currentSpread === spreads.length - 1)
+              currentSpread = spreads.length - 2;
+          } else if (i === 0) {
+            currentSpread = Math.max(currentSpread - 1, 0);
+          } else {
+            currentSpread = Math.min(currentSpread + 1, spreads.length - 1);
+          }
+          resetTransform();
+          renderCurrentSpread();
+        };
+        newCanvases.push(canvas);
       });
+      updatePageNumberUI();
     }
 
     function applyTransform() {
@@ -266,6 +291,7 @@
     window.addEventListener(
       'wheel',
       (e) => {
+        if (sliderActive) return;
         e.preventDefault();
         zooming = true;
         const zoomIntensity = 0.05;
@@ -279,6 +305,7 @@
 
     // Touch Zoom + Drag
     window.addEventListener('touchstart', (e) => {
+      if (sliderActive) return;
       if (e.touches.length === 2) {
         zooming = true;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -295,6 +322,7 @@
     window.addEventListener(
       'touchmove',
       (e) => {
+        if (sliderActive) return;
         if (e.touches.length === 2) {
           e.preventDefault();
           const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -320,12 +348,14 @@
 
     // Desktop Drag
     window.addEventListener('mousedown', (e) => {
+      if (sliderActive) return;
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
     });
 
     window.addEventListener('mousemove', (e) => {
+      if (sliderActive) return;
       if (dragging) {
         panX += e.clientX - lastX;
         panY += e.clientY - lastY;
