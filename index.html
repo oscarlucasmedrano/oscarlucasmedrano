@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Oscar-Lucas Medrano</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      font-family: Arial, sans-serif;
+      font-family: 'Inconsolata', monospace;
       color: white;
       background-color: black;
     }
@@ -51,16 +52,17 @@
     }
     .header-left {
       text-align: left;
+      cursor: pointer;
     }
     .header-left h1 {
       margin: 0;
       font-size: 24px;
-      font-weight: bold;
+      font-weight: 200;
     }
     .header-left p {
       margin: 5px 0 0;
       font-size: 18px;
-      font-weight: normal;
+      font-weight: 200;
     }
     .header-right {
       position: relative;
@@ -107,10 +109,12 @@
     .content h2 {
       font-size: 28px;
       margin-bottom: 20px;
+      font-weight: 200;
     }
     .content p {
       font-size: 18px;
       line-height: 1.6;
+      font-weight: 200;
     }
     .contact-form {
       display: flex;
@@ -123,6 +127,7 @@
       text-align: left;
       width: 100%;
       max-width: 400px;
+      font-weight: 200;
     }
     .contact-form input,
     .contact-form textarea {
@@ -135,6 +140,8 @@
       color: white;
       font-size: 16px;
       box-sizing: border-box;
+      font-family: 'Inconsolata', monospace;
+      font-weight: 200;
     }
     .contact-form textarea {
       height: 150px;
@@ -148,6 +155,8 @@
       font-size: 18px;
       cursor: pointer;
       transition: background-color 0.3s;
+      font-family: 'Inconsolata', monospace;
+      font-weight: 200;
     }
     .contact-form button:hover {
       background-color: #777;
@@ -205,24 +214,24 @@
   <section id="about">
     <div class="content">
       <h2>About</h2>
-      <p>[About: Woodbury University, B.Arch.]</p>
+      <p>Woodbury University B.Arch, Computer Science Design Computation Minor</p>
     </div>
   </section>
   <section id="projects">
     <div class="content">
       <h2>Projects</h2>
-      <p>[project1.]</p>
+      <p>.01 The Primo Chateau</p>
     </div>
   </section>
   <section id="contact">
     <div class="content">
       <h2>Contact</h2>
-      <form class="contact-form" action="/submit" method="POST">
+      <form class="contact-form" action="https://formspree.io/f/oscar-lucas.medrano@woodbury.edu" method="POST">
         <label for="name">Name</label>
         <input type="text" id="name" name="name" placeholder="Your Name" required>
         <label for="email">Email</label>
         <input type="email" id="email" name="email" placeholder="Your Email" required>
-        <label for="phone">Phone (Optional)</label>
+        <label for="phone">Phone</label>
         <input type="tel" id="phone" name="phone" placeholder="Your Phone Number">
         <label for="message">Message</label>
         <textarea id="message" name="message" placeholder="Your Message" required></textarea>
@@ -231,7 +240,7 @@
     </div>
   </section>
   <div class="header">
-    <div class="header-left">
+    <div class="header-left" onclick="showSection('home')">
       <h1>Oscar-Lucas Medrano</h1>
       <p>An Architectural Design Studio</p>
     </div>
@@ -242,7 +251,6 @@
         <div></div>
       </div>
       <div class="menu" id="menu">
-        <a onclick="showSection('home')">Home</a>
         <a onclick="showSection('about')">About</a>
         <a onclick="showSection('projects')">Projects</a>
         <a onclick="showSection('contact')">Contact</a>
@@ -258,7 +266,7 @@
         section.classList.remove('active');
       });
       document.getElementById(sectionId).classList.add('active');
-      toggleMenu(); // Close menu after selection
+      toggleMenu();
     }
   </script>
 </body>
